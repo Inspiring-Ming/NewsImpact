@@ -20,7 +20,9 @@ RUN uv sync --no-dev --extra anthropic
 
 # 3. Runtime: no build tools, non-root user
 FROM python:3.12-slim
-RUN useradd --create-home --uid 10001 app
+# Latest Debian security fixes (e.g. zlib) - the base image can lag behind them.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 10001 app
 COPY --from=build /opt/venv /opt/venv
 COPY --from=build /app/src /app/src
 COPY --from=web /web/dist /app/web/dist

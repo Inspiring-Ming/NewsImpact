@@ -43,13 +43,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t newsimpact:ci .
+      # Vulnerabilities in the image (OS + Python packages). Secrets are checked in the
+      # repository scan below: third-party library docs trigger false "secret" alarms here.
       - name: Image vulnerability scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0, pinned by commit (tags were re-issued in 2026)
         with:
           image-ref: newsimpact:ci
+          scanners: vuln
           severity: CRITICAL,HIGH
           exit-code: "1"
           ignore-unfixed: true
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Our own files are where a key could leak (e.g. pasted into .env.example).
+      - name: Repository secret scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          exit-code: "1"
 
   terraform:
     runs-on: ubuntu-latest
