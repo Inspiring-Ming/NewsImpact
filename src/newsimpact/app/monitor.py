@@ -3,7 +3,10 @@
 One round:
   1. sources.collect()                read every enabled outlet (oldest first)
   2. sources.follow_up()              search listed outlets for next stages
-  3. validation.assess_and_store()    re-check every storyline against evidence;
+  3. update_track_records()           reliability learns which sources' reports
+                                      other sources later confirmed
+  4. validation.assess_and_store()    re-check every storyline against evidence
+                                      (claims re-scored with current reliability);
                                       market checks that were "pending" mature
                                       as trading days pass
 Where rounds come from is a deployment choice, not business logic:
@@ -38,11 +41,19 @@ class RoundResult:
         return sum(self.new_by_outlet.values()) + self.from_follow_up
 
 
+def update_track_records(svc: Services) -> None:
+    """Feed validation's corroboration counts into each source's reliability."""
+    weight = svc.validation.policy.unconfirmed_weight
+    for r in svc.validation.track_records():
+        svc.reliability.set_corroboration(r.source_id, r.confirmed, r.unconfirmed * weight)
+
+
 def run_round(svc: Services, *, follow_up: bool = True) -> RoundResult:
     if svc.llm is not None:
         svc.llm.new_round()
     counts = svc.sources.collect()
     found = svc.sources.follow_up() if follow_up else 0
+    update_track_records(svc)  # from the last assessments, so this round's scores use them
     updated = svc.validation.assess_and_store(svc.storyline_store.all())
     result = RoundResult(datetime.now(UTC), counts, found, len(svc.sources.active_watches),
                          len(updated))  # fmt: skip

@@ -43,15 +43,39 @@ from newsimpact.validation.models import (
     Finding,
     StageChannelCalibration,
     StageCheck,
+    TrackRecord,
     ValidationPolicy,
     Verdict,
     WindowCalibration,
 )
 
-MODEL_VERSION = "validation-rules-v0.5"
+MODEL_VERSION = "validation-rules-v0.6"
 AUTHORITATIVE_TYPES = frozenset({SourceType.REGULATORY_FILING, SourceType.COMPANY_PRESS_RELEASE})
 AUTHORITATIVE_ATTRIBUTION = frozenset({"company_statement", "filing"})
 MEASURED = frozenset({"consistent", "inconsistent", "not_significant"})
+
+
+# ------------------------------------------------------------ track record
+def track_records(
+    assessments: Sequence[Assessment], now: datetime, policy: ValidationPolicy
+) -> list[TrackRecord]:
+    """Per source: reports later confirmed by an independent origin vs. never confirmed.
+
+    A report is judged only once `confirmation_days` have passed since the update,
+    so a fresh scoop is not held against its source.
+    """
+    confirmed: dict[str, int] = defaultdict(int)
+    unconfirmed: dict[str, int] = defaultdict(int)
+    cutoff = now - timedelta(days=policy.confirmation_days)
+    for a in assessments:
+        for st in a.stages:
+            backed = st.claim.status != "single_source"
+            if not backed and st.published_at > cutoff:
+                continue
+            for source_id in st.claim.outlets:
+                (confirmed if backed else unconfirmed)[source_id] += 1
+    return [TrackRecord(source_id=s, confirmed=confirmed[s], unconfirmed=unconfirmed[s])
+            for s in sorted(set(confirmed) | set(unconfirmed))]  # fmt: skip
 
 
 # ------------------------------------------------------------------ claims

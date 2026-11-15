@@ -1,20 +1,21 @@
-// The watchlist: one compact row per company, paged, so the page never gets long.
-// Every column header explains itself on hover (see TERMS in labels.ts).
+// The watchlist: one compact row per company, paged. Each cell pairs a number with a small
+// visual; on phones every row becomes a card (see styles.css "watchlist cards").
 import type { S } from "../../api/client";
 import { COUNTRY, date, NO_MOVE, pct, SAID_BY, SECTOR_SHORT, tone, vsWords } from "../../shared/labels";
-import { Pill } from "../../shared/ui";
 import { Term } from "../../shared/Term";
+import { confidenceTone, Dots, Meter, MoveBar } from "../../shared/viz";
+
+const TONE_ICON = { good: "▲", bad: "▼", neutral: "●" } as Record<string, string>;
 
 function NewsSays({ e }: { e: S["EventCard"] }) {
   const t = tone(e.tone);
   return (
     <div className="says">
-      <div className="says-chips">
-        <Pill tone={t.tone}>{t.text}</Pill>
-        <Pill tone={e.is_rumour ? "warn" : "neutral"}>{e.is_rumour ? "Rumour" : "Stated as fact"}</Pill>
-      </div>
-      <div className="muted small">From: {SAID_BY[e.said_by] ?? e.said_by}</div>
-      {e.next_update && <div className="small">Next: <b>{e.next_update}</b></div>}
+      <span className={`says-line ${t.tone}`}><span className="icon">{TONE_ICON[t.tone]}</span> {t.text} tone</span>
+      <span className={`says-line ${e.is_rumour ? "warn" : ""}`}>
+        <span className="icon">{e.is_rumour ? "?" : "✓"}</span> {e.is_rumour ? "Rumour" : "Stated as fact"}
+      </span>
+      <span className="says-line muted"><span className="icon">❝</span> {SAID_BY[e.said_by] ?? e.said_by}</span>
     </div>
   );
 }
@@ -26,8 +27,7 @@ export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
         <thead>
           <tr>
             <th>Company · <Term id="sector" /></th><th><Term id="event" /></th><th><Term id="says" /></th>
-            <th className="num"><Term id="move" /></th>
-            <th className="num"><Term id="sources" /> · <Term id="confidence" /></th>
+            <th><Term id="move" /></th><th><Term id="sources" /> · <Term id="confidence" /></th>
           </tr>
         </thead>
         <tbody>
@@ -36,19 +36,27 @@ export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
             const href = e ? `#/event/${e.event_id}` : undefined;
             return (
               <tr key={c.ticker} className={href ? "clickable" : ""} onClick={() => href && (window.location.hash = href)}>
-                <td className="company-cell">
+                <td className="c-company">
                   <b>{c.name}</b>
                   <div className="muted small">
                     {COUNTRY[c.country]?.flag} {c.ticker} · <Term tip={`${c.sector} (GICS sector)`}>{SECTOR_SHORT[c.sector] ?? c.sector}</Term>
                   </div>
                 </td>
-                <td className="event-cell">
+                <td className="c-event">
                   {e ? (
                     <>
-                      <span className="tag">{e.event_type}</span>
-                      {c.events.length > 1 && <span className="muted small"> +{c.events.length - 1} more</span>}
+                      <div className="event-top">
+                        <span className="tag">{e.event_type}</span>
+                        <span className="progress" title={`${e.updates.length} of ${e.stages_total} usual updates`}>
+                          <Dots n={e.updates.length} of={Math.max(e.stages_total, e.updates.length)} />
+                        </span>
+                        {c.events.length > 1 && <span className="muted small">+{c.events.length - 1} more</span>}
+                      </div>
                       <div className="headline-1">{e.latest_headline}</div>
-                      <div className="muted small">{e.latest_source} · {date(e.updates[e.updates.length - 1].published_at)}</div>
+                      <div className="muted small">
+                        {e.latest_source} · {date(e.updates[e.updates.length - 1].published_at)}
+                        {e.next_update && <> · next: <b>{e.next_update}</b></>}
+                      </div>
                     </>
                   ) : c.latest_news ? (
                     <>
@@ -57,25 +65,26 @@ export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
                     </>
                   ) : <span className="muted small">No recent news</span>}
                 </td>
-                <td>{e ? <NewsSays e={e} /> : <span className="muted">—</span>}</td>
-                <td className="num">
+                <td className="c-says">{e ? <NewsSays e={e} /> : null}</td>
+                <td className="c-move">
                   {e && e.stock_move != null ? (
                     <>
-                      <b className={e.stock_move_unusual ? (e.stock_move < 0 ? "bad" : "good") : ""}>{pct(e.stock_move)}</b>
-                      <div className="muted small">{vsWords(e.stock_move, c.index_name)}</div>
-                      <div className={`small ${e.stock_move_unusual ? "warn" : "muted"}`}>
-                        {e.stock_move_period} · {e.stock_move_unusual ? "Unusual move" : "Normal range"}
+                      <div className="move-top">
+                        <b className={e.stock_move_unusual ? (e.stock_move < 0 ? "bad" : "good") : ""}>{pct(e.stock_move)}</b>
+                        <MoveBar value={e.stock_move} unusual={e.stock_move_unusual} />
                       </div>
+                      <div className="muted small">{vsWords(e.stock_move, c.index_name)} · {e.stock_move_period}</div>
+                      <div className={`small ${e.stock_move_unusual ? "warn" : "muted"}`}>{e.stock_move_unusual ? "⚠ Unusual move" : "Normal range"}</div>
                     </>
-                  ) : e ? <span className="muted small">{NO_MOVE[e.stock_move_status] ?? "—"}</span> : <span className="muted">—</span>}
+                  ) : e ? <span className="muted small">{NO_MOVE[e.stock_move_status] ?? ""}</span> : null}
                 </td>
-                <td className="num">
+                <td className="c-sources">
                   {e ? (
                     <>
-                      <b>{e.sources} {e.sources === 1 ? "source" : "sources"}</b>
-                      <div className={`small ${e.confidence >= 0.9 ? "good" : "warn"}`}>{Math.round(e.confidence * 100)}% confidence</div>
+                      <div className="src-top"><Dots n={e.sources} /> <b>{e.sources}</b> <span className="muted small">{e.sources === 1 ? "source" : "sources"}</span></div>
+                      <div className="conf"><Meter value={e.confidence} tone={confidenceTone(e.confidence)} /> <span className="small">{Math.round(e.confidence * 100)}% confidence</span></div>
                     </>
-                  ) : <span className="muted">—</span>}
+                  ) : null}
                 </td>
               </tr>
             );

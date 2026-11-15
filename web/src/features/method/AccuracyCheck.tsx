@@ -1,37 +1,33 @@
-// How accurately we read the news: scored on hand-checked sentences.
-import { useState } from "react";
-import { api, type S } from "../../api/client";
+// How accurately we read the news: our reading of 56 hand-labelled sentences compared with
+// the human label. Shown automatically; computed once per server start.
+import { api } from "../../api/client";
 import { humanize } from "../../shared/labels";
-import { Fact, State } from "../../shared/ui";
+import { State } from "../../shared/ui";
+import { Term } from "../../shared/Term";
+import { useApi } from "../../shared/useApi";
+import { Meter } from "../../shared/viz";
 
 const FIELD_NAMES: Record<string, string> = {
-  event_type: "Recognising the event", attribution_kind: "Knowing who said it",
+  event_type: "Which event it is", attribution_kind: "Who said it",
   is_speculative: "Rumour or fact", is_background: "New news or old background",
 };
 
 export function AccuracyCheck({ llmPreset }: { llmPreset: string }) {
-  const [result, setResult] = useState<S["Evaluation"] | null>(null);
-  const [state, setState] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
-  const run = () => {
-    setState({ busy: true, error: null });
-    api.evaluation().then((r) => { setResult(r); setState({ busy: false, error: null }); })
-      .catch((e: Error) => setState({ busy: false, error: e.message }));
-  };
+  const result = useApi(api.evaluation);
   return (
     <div className="accuracy">
-      <h3>How accurately we read the news</h3>
-      <p className="small">Scored on hand-checked example sentences before any reading method is trusted.
-        Reading method in use: <b>{llmPreset === "off" ? "word lists" : `language model (${llmPreset})`}</b>.</p>
-      <button className="primary small" onClick={run} disabled={state.busy}>{state.busy ? "Checking…" : "Run the accuracy check"}</button>
-      <State error={state.error}>
-        {result && (
-          <div className="facts">
-            {result.fields.map((f) => (
-              <Fact key={f.field} label={FIELD_NAMES[f.field] ?? humanize(f.field)} value={`${Math.round(f.accuracy * 100)}% correct`}
-                    tone={f.accuracy >= 0.9 ? "good" : f.accuracy >= 0.75 ? "ok" : "warn"} />
-            ))}
-          </div>
-        )}
+      <h3><Term id="accuracy" /></h3>
+      <p className="small muted">Reading method: {llmPreset === "off" ? "word lists" : `language model (${llmPreset})`} · checked on {result.data?.examples ?? "…"} sentences labelled by hand</p>
+      <State error={result.error} loading={result.loading}>
+        <div className="accuracy-rows">
+          {result.data?.fields.map((f) => (
+            <div key={f.field} className="accuracy-row">
+              <span>{FIELD_NAMES[f.field] ?? humanize(f.field)}</span>
+              <Meter value={f.accuracy} tone={f.accuracy >= 0.9 ? "good" : f.accuracy >= 0.75 ? "warn" : "bad"} />
+              <b>{Math.round(f.accuracy * 100)}%</b>
+            </div>
+          ))}
+        </div>
       </State>
     </div>
   );

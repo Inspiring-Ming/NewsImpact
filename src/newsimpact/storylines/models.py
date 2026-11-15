@@ -117,6 +117,13 @@ class PlaybookStage(Model):
     decisions: tuple[ExpectedDecision, ...] = ()
 
 
+class ResearchFinding(Model):
+    """A published finding on how markets usually react, with its source."""
+
+    finding: str
+    source: str = Field(description="authors (year), journal")
+
+
 class Playbook(Model):
     """The typical progression of one kind of story (reference data, not code)."""
 
@@ -130,6 +137,8 @@ class Playbook(Model):
     window_why: str
     triggers: tuple[str, ...]
     stages: tuple[PlaybookStage, ...]
+    research: tuple[ResearchFinding, ...] = ()
+    watch: tuple[str, ...] = Field(default=(), description="what investors typically check next")
 
     def stage_of(self, event_type: str) -> int | None:
         return next((i for i, s in enumerate(self.stages) if event_type in s.event_types), None)

@@ -65,12 +65,16 @@
       "window_quantile": "A storyline's link window should cover the time to the next stage in most observed cases: the 90th percentile of observed gaps between stages.",
       "window_margin": "+25% on top of that percentile, because small samples underestimate the tail and a slightly long window costs little (a few extra searches).",
       "significance_z": "Same two-sided 5% threshold as for single events, applied to the cross-sectional (BMP) statistic.",
-      "overlap_trading_days": "Stages closer than the longest measurement window (volatility, day 0 to +4) share trading days, so their separate reactions cannot be told apart. Example: a leader's misconduct story and resignation within a week. The assessment then also reports one combined reaction for the whole sequence."
+      "overlap_trading_days": "Stages closer than the longest measurement window (volatility, day 0 to +4) share trading days, so their separate reactions cannot be told apart. Example: a leader's misconduct story and resignation within a week. The assessment then also reports one combined reaction for the whole sequence.",
+      "confirmation_days": "Other outlets follow up a real company story within days. A report that no independent source has confirmed after 7 days counts against its source's track record; younger reports are not judged yet.",
+      "unconfirmed_weight": "'Not confirmed by anyone else' is weaker evidence than 'shown to be wrong' (a true scoop can stay exclusive), so it counts half as much as a confirmation. Idea from truth-discovery research: sources whose claims others corroborate are more trustworthy (Yin, Han & Yu 2008, IEEE TKDE)."
     },
     "window_quantile": 0.9,
     "window_margin": 1.25,
     "significance_z": 1.96,
-    "overlap_trading_days": 4
+    "overlap_trading_days": 4,
+    "confirmation_days": 7,
+    "unconfirmed_weight": 0.5
   },
   "sources": {
     "near_duplicate_jaccard": 0.8,

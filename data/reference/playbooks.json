@@ -1,5 +1,5 @@
 {
-  "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions).",
+  "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions). 'research' = published findings on how markets usually react to this kind of event (shown with their source); 'watch' = what investors typically check next, from common analyst practice.",
   "version": "playbooks-v0.7",
   "late_report_days": 3,
   "late_report_why": "Outlets publish the same events in a different order than they happened (e.g. 'interim CEO in charge' before the resignation story). A resolved story therefore still absorbs reports of its earlier stages published within 3 days of its latest stage; later ones start a new story. 3 days covers same-week reporting across time zones (US and Australian outlets) without merging a new crisis weeks later.",
@@ -148,6 +148,22 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "Share price swings rise after a CEO change, more so when the departure is forced, and settle once the succession is clear.",
+          "source": "Clayton, Hartzell & Rosenberg (2005), Journal of Business"
+        },
+        {
+          "finding": "After a forced CEO change, company performance tends to improve, more so when the successor comes from outside.",
+          "source": "Huson, Malatesta & Parrino (2004), Journal of Financial Economics"
+        }
+      ],
+      "watch": [
+        "Forced or planned: a forced exit carries more uncertainty than a planned retirement.",
+        "Who leads next: interim or permanent, insider or outsider.",
+        "Analyst rating and forecast changes in the following days.",
+        "The board's stated reason and any regulator or legal follow-up."
       ]
     },
     {
@@ -260,6 +276,18 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "Product recalls lead to share price losses that are often larger than the direct cost of the recall, and can spread to competitors.",
+          "source": "Jarrell & Peltzman (1985), Journal of Political Economy"
+        }
+      ],
+      "watch": [
+        "Scale: number of units, injuries, countries.",
+        "Whether a regulator opens an investigation or orders more action.",
+        "Lawsuits and the company's estimate of the cost.",
+        "Competitors' share prices (the problem may affect the whole product type)."
       ]
     },
     {
@@ -331,6 +359,22 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "Takeover targets' shares typically jump when a deal is announced; buyers' shares on average move little or fall.",
+          "source": "Andrade, Mitchell & Stafford (2001), Journal of Economic Perspectives"
+        },
+        {
+          "finding": "After a deal is announced, the gap between the share price and the offer price reflects how likely the market thinks the deal is to fail.",
+          "source": "Mitchell & Pulvino (2001), Journal of Finance"
+        }
+      ],
+      "watch": [
+        "Is the company the target or the buyer? The reactions differ.",
+        "Offer price compared with the current share price.",
+        "Regulator and shareholder approvals, and any rival bid.",
+        "Whether the report is confirmed by the company (rumours often fade)."
       ]
     },
     {
@@ -380,6 +424,17 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "After an earnings surprise, share prices tend to keep drifting in the direction of the surprise for weeks.",
+          "source": "Bernard & Thomas (1989), Journal of Accounting Research"
+        }
+      ],
+      "watch": [
+        "Guidance for the next period: a beat with weaker guidance can still fall.",
+        "Analyst forecast revisions over the next one to two weeks.",
+        "Whether revenue, not only profit, beat expectations."
       ]
     },
     {
@@ -429,6 +484,17 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "After an earnings surprise, share prices tend to keep drifting in the direction of the surprise for weeks.",
+          "source": "Bernard & Thomas (1989), Journal of Accounting Research"
+        }
+      ],
+      "watch": [
+        "Guidance for the next period and any cut to targets.",
+        "Analyst forecast cuts over the next one to two weeks.",
+        "Whether the miss is one-off (costs) or lasting (demand)."
       ]
     },
     {
@@ -519,6 +585,18 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "Cyberattacks lower share prices on average, with larger losses when customers' personal financial information is taken.",
+          "source": "Kamiya, Kang, Kim, Milidonis & Stulz (2021), Journal of Financial Economics"
+        }
+      ],
+      "watch": [
+        "What data was taken and how many customers are affected.",
+        "How long systems are down.",
+        "Regulator inquiries, fines and class actions.",
+        "Customer losses mentioned in later updates or results."
       ]
     },
     {
@@ -568,6 +646,17 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "Layoff announcements are met with share price falls on average, especially when the cuts come from financial trouble rather than a planned restructuring.",
+          "source": "Worrell, Davidson & Sharma (1991), Academy of Management Journal"
+        }
+      ],
+      "watch": [
+        "The reason given: falling demand, cost savings, or restructuring.",
+        "Size of the cuts compared with the workforce.",
+        "Expected savings, one-off costs and any change to guidance."
       ]
     },
     {
@@ -617,6 +706,18 @@
             }
           ]
         }
+      ],
+      "research": [
+        {
+          "finding": "Announcements of supply chain disruptions are followed by large share price falls, and the damage often lasts.",
+          "source": "Hendricks & Singhal (2003), Journal of Operations Management"
+        }
+      ],
+      "watch": [
+        "How long the disruption lasts and what share of supply it affects.",
+        "Alternative suppliers and stock on hand.",
+        "Guidance cuts or lost sales in later updates.",
+        "Suppliers and competitors exposed to the same problem."
       ]
     }
   ]

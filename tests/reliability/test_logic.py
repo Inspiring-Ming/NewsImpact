@@ -24,3 +24,7 @@ def test_retractions_lower_score() -> None:
 def test_corroboration_raises_and_speculation_lowers_claim_reliability() -> None:
     assert claim_reliability(0.6, [0.7, 0.5]) > claim_reliability(0.6)
     assert claim_reliability(0.8, is_speculative=True) < claim_reliability(0.8)
+
+
+def test_every_source_type_starts_with_the_same_weight_of_evidence() -> None:
+    assert {round(a + b, 6) for a, b in PRIORS.values()} == {10.0}

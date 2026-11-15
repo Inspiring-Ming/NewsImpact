@@ -3,6 +3,7 @@
 import { useState, type ComponentType } from "react";
 import { api } from "../../api/client";
 import { COUNTRY, NO_MOVE, pct, vsWords } from "../../shared/labels";
+import { confidenceTone, Dots, Meter, MoveBar, RatioBar } from "../../shared/viz";
 import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
@@ -13,10 +14,10 @@ import { Scorecard } from "./Scorecard";
 import { Updates } from "./Updates";
 
 const TABS: { id: string; label: string; component: ComponentType<EventData> }[] = [
-  { id: "overview", label: "Overview", component: Overview },
+  { id: "overview", label: "Overview & what to know", component: Overview },
   { id: "updates", label: "Updates", component: Updates },
   { id: "reaction", label: "Expected vs actual", component: Scorecard },
-  { id: "data", label: "Analyst data", component: AnalystData },
+  { id: "data", label: "How we measured", component: AnalystData },
 ];
 
 export function EventPage({ id }: { id: string }) {
@@ -27,6 +28,8 @@ export function EventPage({ id }: { id: string }) {
   const [tab, setTab] = useState(TABS[0].id);
   const company = summary.data, card = company?.events[0], s = story.data, a = assessment.data;
   const country = company ? COUNTRY[company.country] : undefined;
+  const checks = a ? a.stages.flatMap((st) => st.decisions).filter((d) => ["consistent", "inconsistent", "not_significant"].includes(d.verdict)) : [];
+  const measured = checks, hits = checks.filter((d) => d.verdict === "consistent").length;
   const Body = TABS.find((t) => t.id === tab)!.component;
   return (
     <>
@@ -48,14 +51,20 @@ export function EventPage({ id }: { id: string }) {
                     value={card.stock_move == null ? "–" : pct(card.stock_move)}
                     tone={card.stock_move_unusual ? (card.stock_move! < 0 ? "bad" : "good") : undefined}
                     sub={card.stock_move == null ? NO_MOVE[card.stock_move_status]
-                      : <>{vsWords(card.stock_move, company.index_name)} · {card.stock_move_period} · <Term id="unusual">{card.stock_move_unusual ? "unusual move" : "normal range"}</Term></>} />
-              <Fact label="Updates" value={card.updates.length} sub={card.ongoing ? "more may follow" : "event complete"} />
+                      : <><MoveBar value={card.stock_move} unusual={card.stock_move_unusual} />
+                          <div>{vsWords(card.stock_move, company.index_name)} · {card.stock_move_period}</div>
+                          <Term id="unusual">{card.stock_move_unusual ? "⚠ unusual move" : "normal range"}</Term></>} />
+              <Fact label={<Term id="volume" />} value={card.volume_ratio == null ? "–" : `${card.volume_ratio.toFixed(1)}×`}
+                    sub={card.volume_ratio == null ? "not measured yet"
+                      : <><RatioBar value={card.volume_ratio} /><div>{card.volume_ratio >= 2 ? "far above" : "close to"} a normal day (1×)</div></>} />
               <Fact label={<Term id="confidence">News confidence</Term>} value={`${Math.round(card.confidence * 100)}%`}
-                    tone={card.confidence >= 0.9 ? "good" : "warn"}
-                    sub={`${card.sources} ${card.sources === 1 ? "source" : "independent sources"}`} />
+                    tone={confidenceTone(card.confidence)}
+                    sub={<><Meter value={card.confidence} tone={confidenceTone(card.confidence)} />
+                          <div><Dots n={card.sources} /> {card.sources} {card.sources === 1 ? "source" : "independent sources"}</div></>} />
               <Fact label={<Term id="expected">Reactions as expected</Term>}
-                    value={a.market_support == null ? "–" : `${Math.round(a.market_support * 100)}%`}
-                    sub="of those measurable in prices" />
+                    value={measured.length ? `${hits} of ${measured.length}` : "–"}
+                    sub={measured.length ? <><Meter value={hits / measured.length} tone={hits / measured.length >= 0.6 ? "good" : "warn"} />
+                          <div>measured market reactions that matched</div></> : "none measured yet"} />
             </div>
             <Tabs tabs={TABS} active={tab} onChange={setTab} />
             <Body company={company} card={card} story={s} assessment={a} prices={prices.data ?? null} />

@@ -117,3 +117,31 @@ def test_stages_within_a_trading_week_overlap(validation_policy: ValidationPolic
     times = [fri, fri.replace(day=12), fri.replace(day=13), fri.replace(day=30)]
     # Fri -> Thu = 4 trading days (overlap), Thu -> Fri = 1, Fri -> Mon 2+ weeks = no
     assert overlapping(times, validation_policy) == [False, True, True, False]
+
+
+def test_track_records_count_confirmed_and_old_unconfirmed_reports(
+    validation_policy: ValidationPolicy,
+) -> None:
+    from datetime import timedelta
+
+    from newsimpact.validation.logic import track_records
+    from newsimpact.validation.models import Assessment, Provenance
+
+    def stage(reports: list[Report], at: datetime) -> StageCheck:
+        return StageCheck(stage=0, stage_name="s", published_at=at,
+                          claim=check_claim(reports, validation_policy), decisions=())  # fmt: skip
+
+    old, fresh = T - timedelta(days=30), T - timedelta(days=1)
+    a = Assessment(
+        storyline_id="x", ticker="X", theme="t", status="developing", as_of=T,
+        stages=(stage([_report("a"), _report("b")], old),  # confirmed by an independent source
+                stage([_report("a")], old),                # never confirmed, judged
+                stage([_report("c")], fresh)),             # too fresh to judge
+        market_support=None, combined_reaction=None, confidence="low", conclusion="",
+        suggestions=(), disclaimer="", model_version="v",
+        provenance=Provenance(components={}, reference_data={}),
+    )  # fmt: skip
+    records = {r.source_id: r for r in track_records([a], T, validation_policy)}
+    assert (records["a"].confirmed, records["a"].unconfirmed) == (1, 1)
+    assert (records["b"].confirmed, records["b"].unconfirmed) == (1, 0)
+    assert "c" not in records

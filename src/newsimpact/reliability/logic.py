@@ -15,20 +15,30 @@ from collections.abc import Sequence
 
 from newsimpact.sources.models import SourceType
 
-MODEL_VERSION = "reliability-beta-v0.1"
+MODEL_VERSION = "reliability-beta-v0.2"
 
-# (alpha, beta) prior pseudo-counts. Expert judgement until calibrated on
-# resolved claims.
+# Starting estimate per source type: the chance a report holds up before any
+# track record exists. The order follows how content is checked before
+# publication: filings carry legal liability; agencies and newspapers have
+# editors and correction policies; press releases are accurate about the
+# company's own actions but selective; aggregators mix original reporting with
+# syndicated opinion; blogs and social posts are unchecked.
+PRIOR_MEANS: dict[SourceType, float] = {
+    SourceType.REGULATORY_FILING: 0.95,
+    SourceType.WIRE: 0.80,
+    SourceType.MAJOR_OUTLET: 0.75,
+    SourceType.COMPANY_PRESS_RELEASE: 0.67,
+    SourceType.AGGREGATOR: 0.67,
+    SourceType.BLOG: 0.50,
+    SourceType.SOCIAL: 0.33,
+    SourceType.UNKNOWN: 0.50,
+}
+# Every type starts with the weight of 10 reports, so the track record moves
+# all sources at the same pace: after 10 judged reports, the record and the
+# starting estimate count equally.
+PRIOR_STRENGTH = 10.0
 PRIORS: dict[SourceType, tuple[float, float]] = {
-    SourceType.REGULATORY_FILING: (19.0, 1.0),
-    SourceType.WIRE: (8.0, 2.0),
-    SourceType.MAJOR_OUTLET: (6.0, 2.0),
-    SourceType.COMPANY_PRESS_RELEASE: (6.0, 3.0),
-    # Mixes original reporting with syndicated analysis and opinion pieces.
-    SourceType.AGGREGATOR: (4.0, 2.0),
-    SourceType.BLOG: (2.0, 2.0),
-    SourceType.SOCIAL: (1.0, 2.0),
-    SourceType.UNKNOWN: (1.0, 1.0),
+    t: (m * PRIOR_STRENGTH, (1 - m) * PRIOR_STRENGTH) for t, m in PRIOR_MEANS.items()
 }
 
 SPECULATIVE_PENALTY = 0.7

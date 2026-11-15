@@ -8,11 +8,11 @@ calibrate()         does each stage really move each channel? are link windows r
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 
 from newsimpact.market.models import ChannelObservation, WindowNotComplete
-from newsimpact.storylines.models import ExpectedDecision, Storyline, StorylineEvent
+from newsimpact.storylines.models import ExpectedDecision, Report, Storyline, StorylineEvent
 from newsimpact.validation.logic import (
     MODEL_VERSION,
     calibrate_reactions,
@@ -23,6 +23,7 @@ from newsimpact.validation.logic import (
     confidence,
     market_support,
     overlapping,
+    track_records,
 )
 from newsimpact.validation.models import (
     Assessment,
@@ -30,6 +31,7 @@ from newsimpact.validation.models import (
     Provenance,
     StageChannelCalibration,
     StageCheck,
+    TrackRecord,
     ValidationPolicy,
     WindowCalibration,
 )
@@ -46,8 +48,13 @@ class ValidationService:
         store: AssessmentStore,
         policy: ValidationPolicy,
         provenance: Provenance,
+        current_reliability: Callable[[str, bool], float] | None = None,
     ) -> None:
+        """`current_reliability(source_id, is_rumour)`: today's chance a report from that source
+        holds up. Given, claims are re-scored with it, so confidence follows each source's
+        track record; otherwise the score stored when the report arrived is used."""
         self._playbooks = {p.theme: p for p in playbooks.playbooks()}
+        self._reliability = current_reliability
         self._market = market
         self._store = store
         self._policy = policy
@@ -64,7 +71,7 @@ class ValidationService:
                 stage=e.stage,
                 stage_name=e.stage_name,
                 published_at=e.published_at,
-                claim=check_claim(e.reports, self._policy),
+                claim=check_claim(self._rescored(e), self._policy),
                 decisions=tuple(
                     self._check(storyline.ticker, d, e.published_at)
                     for d in playbook.stages[e.stage].decisions
@@ -107,6 +114,23 @@ class ValidationService:
         """The stored assessment, unless it was made under older rules (then re-assess)."""
         found = self._store.latest(storyline_id)
         return found if found and found.model_version == MODEL_VERSION else None
+
+    def _rescored(self, event: StorylineEvent) -> tuple[Report, ...]:
+        if self._reliability is None:
+            return event.reports
+        score = self._reliability
+        return tuple(
+            r.model_copy(update={"claim_reliability": score(r.source_id, event.is_rumour)})
+            for r in event.reports
+        )
+
+    @property
+    def policy(self) -> ValidationPolicy:
+        return self._policy
+
+    def track_records(self, now: datetime | None = None) -> list[TrackRecord]:
+        """Per source: reports later confirmed by an independent origin vs. never confirmed."""
+        return track_records(self._store.latest_all(), now or datetime.now(UTC), self._policy)
 
     def calibrate(
         self, storylines: Sequence[Storyline]

@@ -36,4 +36,7 @@ class SqliteEvidenceStore:
     def record(self, source_id: str, topic: str, supported: bool, weight: float = 1.0) -> None:
         s, r = self.counts(source_id, topic)
         s, r = (s + weight, r) if supported else (s, r + weight)
-        self._c.put(f"{source_id}|{topic}", json.dumps([s, r]), tag=source_id)
+        self.replace(source_id, topic, s, r)
+
+    def replace(self, source_id: str, topic: str, supported: float, refuted: float) -> None:
+        self._c.put(f"{source_id}|{topic}", json.dumps([supported, refuted]), tag=source_id)

@@ -537,14 +537,6 @@
       "EventCard": {
         "additionalProperties": false,
         "properties": {
-          "actions": {
-            "description": "what to watch or do next, most important first",
-            "items": {
-              "type": "string"
-            },
-            "title": "Actions",
-            "type": "array"
-          },
           "confidence": {
             "description": "chance the news is true, 0-1: the weakest update's combined confidence across its independent sources",
             "title": "Confidence",
@@ -584,9 +576,25 @@
             "description": "the update this kind of event usually brings next",
             "title": "Next Update"
           },
+          "notes": {
+            "description": "status of the checks, e.g. what is still pending",
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
           "ongoing": {
             "title": "Ongoing",
             "type": "boolean"
+          },
+          "research": {
+            "description": "how markets usually react, cited",
+            "items": {
+              "$ref": "#/components/schemas/ResearchFinding"
+            },
+            "title": "Research",
+            "type": "array"
           },
           "said_by": {
             "description": "who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous",
@@ -603,6 +611,11 @@
           "sources": {
             "description": "independent news sources that reported the event",
             "title": "Sources",
+            "type": "integer"
+          },
+          "stages_total": {
+            "description": "updates this kind of event usually has",
+            "title": "Stages Total",
             "type": "integer"
           },
           "stock_move": {
@@ -643,6 +656,26 @@
             },
             "title": "Updates",
             "type": "array"
+          },
+          "volume_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "highest trading volume vs normal, e.g. 3.7",
+            "title": "Volume Ratio"
+          },
+          "watch": {
+            "description": "what investors typically check next",
+            "items": {
+              "type": "string"
+            },
+            "title": "Watch",
+            "type": "array"
           }
         },
         "required": [
@@ -659,7 +692,11 @@
           "sources",
           "source_names",
           "confidence",
-          "actions",
+          "notes",
+          "research",
+          "watch",
+          "stages_total",
+          "volume_ratio",
           "tone",
           "is_rumour",
           "said_by",
@@ -1168,6 +1205,14 @@
             "title": "Link Window Days",
             "type": "integer"
           },
+          "research": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ResearchFinding"
+            },
+            "title": "Research",
+            "type": "array"
+          },
           "stages": {
             "items": {
               "$ref": "#/components/schemas/PlaybookStage"
@@ -1190,6 +1235,15 @@
               "type": "string"
             },
             "title": "Triggers",
+            "type": "array"
+          },
+          "watch": {
+            "default": [],
+            "description": "what investors typically check next",
+            "items": {
+              "type": "string"
+            },
+            "title": "Watch",
             "type": "array"
           },
           "window_basis": {
@@ -1374,6 +1428,21 @@
             "title": "Model Version",
             "type": "string"
           },
+          "prior": {
+            "default": 0.0,
+            "description": "starting estimate for the source type",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Prior",
+            "type": "number"
+          },
+          "refuted": {
+            "default": 0.0,
+            "description": "reports refuted, or never confirmed (weighted)",
+            "minimum": 0.0,
+            "title": "Refuted",
+            "type": "number"
+          },
           "score": {
             "description": "posterior mean P(claim holds up)",
             "maximum": 1.0,
@@ -1384,6 +1453,13 @@
           "source_id": {
             "title": "Source Id",
             "type": "string"
+          },
+          "supported": {
+            "default": 0.0,
+            "description": "reports later confirmed",
+            "minimum": 0.0,
+            "title": "Supported",
+            "type": "number"
           },
           "topic": {
             "default": "all",
@@ -1449,6 +1525,27 @@
           "origin"
         ],
         "title": "Report",
+        "type": "object"
+      },
+      "ResearchFinding": {
+        "additionalProperties": false,
+        "description": "A published finding on how markets usually react, with its source.",
+        "properties": {
+          "finding": {
+            "title": "Finding",
+            "type": "string"
+          },
+          "source": {
+            "description": "authors (year), journal",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "finding",
+          "source"
+        ],
+        "title": "ResearchFinding",
         "type": "object"
       },
       "Source": {
@@ -2106,7 +2203,7 @@
     },
     "/v1/evaluation": {
       "get": {
-        "description": "Analysis quality on the hand-labelled set (calls the LLM if a preset is on).",
+        "description": "Analysis quality on the hand-labelled set. Computed once per server start: the\nlabelled set and the reading chain only change with a deploy, and the website shows\nit on every visit (with an LLM preset each run would cost money).",
         "operationId": "evaluation_v1_evaluation_get",
         "responses": {
           "200": {

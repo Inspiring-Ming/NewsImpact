@@ -45,6 +45,7 @@ from newsimpact.market.service import MarketService
 from newsimpact.reliability.adapters.memory import InMemoryEvidenceStore, InMemoryTrackedSources
 from newsimpact.reliability.adapters.sqlite import SqliteEvidenceStore, SqliteTrackedSources
 from newsimpact.reliability.logic import MODEL_VERSION as RELIABILITY_VERSION
+from newsimpact.reliability.logic import claim_reliability
 from newsimpact.reliability.ports import EvidenceStore, TrackedSources
 from newsimpact.reliability.service import ReliabilityService
 from newsimpact.semantics.adapters.json_file import JsonEntityResolver, load_taxonomy
@@ -307,16 +308,23 @@ def build_services(settings: Settings | None = None) -> Services:
         },
         reference_data={f"{p.parent.name}/{p.name}": _fingerprint(p) for p in reference},
     )
+
+    reliability = ReliabilityService(bus, stores.tracked_sources, stores.evidence)
+
+    def current_reliability(source_id: str, is_rumour: bool) -> float:
+        score = reliability.score_source(source_id).score
+        return claim_reliability(score, is_speculative=is_rumour)
+
     validation = ValidationService(catalog, market, stores.assessments,
                                    ValidationPolicy.model_validate(method["validation"]),
-                                   provenance)  # fmt: skip
+                                   provenance, current_reliability)  # fmt: skip
 
     services = Services(
         settings=s,
         bus=bus,
         sources=sources,
         semantics=semantics,
-        reliability=ReliabilityService(bus, stores.tracked_sources, stores.evidence),
+        reliability=reliability,
         storylines=StorylinesService(bus, stores.storylines, catalog),
         impact=ImpactService(bus, graph, stores.impacts),
         market=market,

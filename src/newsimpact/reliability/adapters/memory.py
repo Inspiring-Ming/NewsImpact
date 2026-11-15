@@ -32,3 +32,6 @@ class InMemoryEvidenceStore:
 
     def record(self, source_id: str, topic: str, supported: bool, weight: float = 1.0) -> None:
         self._counts[(source_id, topic)][0 if supported else 1] += weight
+
+    def replace(self, source_id: str, topic: str, supported: float, refuted: float) -> None:
+        self._counts[(source_id, topic)] = [supported, refuted]

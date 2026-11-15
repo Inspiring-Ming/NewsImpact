@@ -18,7 +18,7 @@ from newsimpact.semantics.models import Claim, Company, EntityMention
 from newsimpact.shared.events import Model
 from newsimpact.sources.logic import coverage
 from newsimpact.sources.models import Article, OutletCoverage
-from newsimpact.storylines.models import Storyline
+from newsimpact.storylines.models import ResearchFinding, Storyline
 from newsimpact.validation.models import Assessment
 
 
@@ -156,7 +156,11 @@ class EventCard(Model):
         description="chance the news is true, 0-1: the weakest update's combined confidence "
         "across its independent sources"
     )
-    actions: tuple[str, ...] = Field(description="what to watch or do next, most important first")
+    notes: tuple[str, ...] = Field(description="status of the checks, e.g. what is still pending")
+    research: tuple[ResearchFinding, ...] = Field(description="how markets usually react, cited")
+    watch: tuple[str, ...] = Field(description="what investors typically check next")
+    stages_total: int = Field(description="updates this kind of event usually has")
+    volume_ratio: float | None = Field(description="highest trading volume vs normal, e.g. 3.7")
     tone: float = Field(description="sentiment of the latest update, -1 (negative) to 1")
     is_rumour: bool = Field(description="the latest update is hedged or rumoured")
     said_by: str = Field(
@@ -191,9 +195,9 @@ def companies(svc: Services) -> list[CompanyCard]:
     cards = [_company_card(svc, c, mentions.get(c.ticker, []), events.get(c.ticker, []), names)
              for c in svc.companies]  # fmt: skip
 
-    def latest(c: CompanyCard) -> float:
+    def latest(c: CompanyCard) -> float:  # newest update of any event
         if c.events:
-            return c.events[0].updates[-1].published_at.timestamp()
+            return max(e.updates[-1].published_at for e in c.events).timestamp()
         return c.latest_news.published_at.timestamp() if c.latest_news else 0.0
 
     return sorted(cards, key=lambda c: (not c.events, -latest(c), c.name))
@@ -229,7 +233,10 @@ def _company_card(
         latest_news=NewsItem(title=latest.title, url=latest.url,
                              source=names.get(latest.source_id, latest.source_id),
                              published_at=latest.published_at) if latest else None,
-        events=tuple(sorted(events, key=lambda e: e.updates[-1].published_at, reverse=True)),
+        # Lead with news backed by 2+ sources, then the most recent: a single-source
+        # misreading must not hide a confirmed event.
+        events=tuple(sorted(events, key=lambda e: (e.sources >= 2, e.updates[-1].published_at),
+                            reverse=True)),
     )  # fmt: skip
 
 
@@ -276,7 +283,13 @@ def _event_card(svc: Services, story: Storyline, names: dict[str, str]) -> Event
         sources=len(source_ids),
         source_names=tuple(names.get(s, s) for s in source_ids),
         confidence=min((st.claim.confidence for st in a.stages), default=0.0),
-        actions=a.suggestions,
+        notes=a.suggestions,
+        research=playbook.research if playbook else (),
+        watch=playbook.watch if playbook else (),
+        stages_total=len(playbook.stages) if playbook else len(a.stages),
+        volume_ratio=max((d.evidence.value for st in a.stages for d in st.decisions
+                          if d.evidence is not None and d.evidence.channel == "volume"),
+                         default=None),
         tone=latest.tone,
         is_rumour=latest.is_rumour,
         said_by=latest.reports[0].attribution_kind if latest.reports else "own_reporting",

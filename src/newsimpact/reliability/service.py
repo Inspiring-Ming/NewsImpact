@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 
 from newsimpact.reliability.logic import (
     MODEL_VERSION,
+    PRIOR_MEANS,
     PRIORS,
     beta_posterior,
     claim_reliability,
@@ -19,6 +20,8 @@ from newsimpact.shared.events import EventEnvelope
 from newsimpact.sources.models import Source, SourceRegistered, SourceType
 
 EVENT_SOURCE = "/reliability"
+# Evidence topic for the corroboration record (see set_corroboration).
+CORROBORATION = "corroboration"
 
 
 class ReliabilityService:
@@ -36,6 +39,9 @@ class ReliabilityService:
     def score_source(self, source_id: str, topic: str = "all") -> ReliabilityScore:
         source_type = self._source_type(source_id)
         supported, refuted = self._evidence.counts(source_id, topic)
+        if topic == "all":  # plus the corroboration record rebuilt each round
+            s2, r2 = self._evidence.counts(source_id, CORROBORATION)
+            supported, refuted = supported + s2, refuted + r2
         mean, low, high = beta_posterior(PRIORS[source_type], supported, refuted)
         return ReliabilityScore(
             source_id=source_id,
@@ -44,6 +50,9 @@ class ReliabilityService:
             ci_low=round(low, 6),
             ci_high=round(high, 6),
             evidence_count=supported + refuted,
+            prior=PRIOR_MEANS[source_type],
+            supported=supported,
+            refuted=refuted,
             as_of=datetime.now(UTC),
             model_version=MODEL_VERSION,
         )
@@ -58,6 +67,11 @@ class ReliabilityService:
         self._evidence.record(source_id, topic, supported)
         if topic != "all":
             self._evidence.record(source_id, "all", supported)
+
+    def set_corroboration(self, source_id: str, confirmed: float, unconfirmed: float) -> None:
+        """Replace a source's corroboration record: reports later confirmed by an independent
+        source count for it; reports never confirmed count against it (already weighted)."""
+        self._evidence.replace(source_id, CORROBORATION, confirmed, unconfirmed)
 
     # ----------------------------------------------------- event handlers
     def on_source_registered(self, envelope: EventEnvelope) -> None:

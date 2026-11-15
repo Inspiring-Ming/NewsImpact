@@ -224,6 +224,21 @@
           "title": "Model Version",
           "type": "string"
         },
+        "prior": {
+          "default": 0.0,
+          "description": "starting estimate for the source type",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Prior",
+          "type": "number"
+        },
+        "refuted": {
+          "default": 0.0,
+          "description": "reports refuted, or never confirmed (weighted)",
+          "minimum": 0.0,
+          "title": "Refuted",
+          "type": "number"
+        },
         "score": {
           "description": "posterior mean P(claim holds up)",
           "maximum": 1.0,
@@ -234,6 +249,13 @@
         "source_id": {
           "title": "Source Id",
           "type": "string"
+        },
+        "supported": {
+          "default": 0.0,
+          "description": "reports later confirmed",
+          "minimum": 0.0,
+          "title": "Supported",
+          "type": "number"
         },
         "topic": {
           "default": "all",

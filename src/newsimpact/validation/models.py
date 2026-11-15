@@ -32,6 +32,16 @@ class ValidationPolicy(Model):
     overlap_trading_days: int = Field(ge=0)
     window_quantile: float = Field(gt=0, le=1)
     window_margin: float = Field(ge=1)
+    confirmation_days: int = Field(gt=0)
+    unconfirmed_weight: float = Field(ge=0, le=1)
+
+
+class TrackRecord(Model):
+    """How often a source's reports were later confirmed by an independent source."""
+
+    source_id: str
+    confirmed: int = Field(ge=0, description="reports backed by another independent origin")
+    unconfirmed: int = Field(ge=0, description="reports nobody confirmed within the window")
 
 
 class ClaimCheck(Model):

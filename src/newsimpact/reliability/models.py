@@ -19,6 +19,13 @@ class ReliabilityScore(Model):
     ci_low: float = Field(ge=0.0, le=1.0)
     ci_high: float = Field(ge=0.0, le=1.0)
     evidence_count: float = Field(ge=0.0)
+    prior: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="starting estimate for the source type"
+    )
+    supported: float = Field(default=0.0, ge=0.0, description="reports later confirmed")
+    refuted: float = Field(
+        default=0.0, ge=0.0, description="reports refuted, or never confirmed (weighted)"
+    )
     as_of: datetime
     model_version: str
 

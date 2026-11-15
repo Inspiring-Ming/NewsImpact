@@ -11,7 +11,7 @@ import { VerifyStep } from "./VerifyStep";
 type Data = { method: S["Method"]; calibration: S["Calibration"] | null };
 
 const TABS: { id: string; label: string; render: (d: Data) => ReactNode }[] = [
-  { id: "sources", label: "1. News sources", render: () => <MonitorStep /> },
+  { id: "sources", label: "1. News sources", render: (d) => <MonitorStep method={d.method} /> },
   { id: "events", label: "2. Events we detect", render: (d) => <ConnectStep {...d} /> },
   { id: "market", label: "3. Does it move the stock?", render: (d) => <VerifyStep method={d.method} /> },
 ];

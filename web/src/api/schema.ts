@@ -124,7 +124,9 @@ export interface paths {
         };
         /**
          * Evaluation
-         * @description Analysis quality on the hand-labelled set (calls the LLM if a preset is on).
+         * @description Analysis quality on the hand-labelled set. Computed once per server start: the
+         *     labelled set and the reading chain only change with a deploy, and the website shows
+         *     it on every visit (with an LLM preset each run would cost money).
          */
         get: operations["evaluation_v1_evaluation_get"];
         put?: never;
@@ -595,11 +597,6 @@ export interface components {
         /** EventCard */
         EventCard: {
             /**
-             * Actions
-             * @description what to watch or do next, most important first
-             */
-            actions: string[];
-            /**
              * Confidence
              * @description chance the news is true, 0-1: the weakest update's combined confidence across its independent sources
              */
@@ -625,8 +622,18 @@ export interface components {
              * @description the update this kind of event usually brings next
              */
             next_update: string | null;
+            /**
+             * Notes
+             * @description status of the checks, e.g. what is still pending
+             */
+            notes: string[];
             /** Ongoing */
             ongoing: boolean;
+            /**
+             * Research
+             * @description how markets usually react, cited
+             */
+            research: components["schemas"]["ResearchFinding"][];
             /**
              * Said By
              * @description who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous
@@ -639,6 +646,11 @@ export interface components {
              * @description independent news sources that reported the event
              */
             sources: number;
+            /**
+             * Stages Total
+             * @description updates this kind of event usually has
+             */
+            stages_total: number;
             /**
              * Stock Move
              * @description stock return minus its index, e.g. -0.185
@@ -666,6 +678,16 @@ export interface components {
             tone: number;
             /** Updates */
             updates: components["schemas"]["UpdateItem"][];
+            /**
+             * Volume Ratio
+             * @description highest trading volume vs normal, e.g. 3.7
+             */
+            volume_ratio: number | null;
+            /**
+             * Watch
+             * @description what investors typically check next
+             */
+            watch: string[];
         };
         /** ExpectedDecision */
         ExpectedDecision: {
@@ -903,6 +925,11 @@ export interface components {
              * @description how long a story stays open for new stages
              */
             link_window_days: number;
+            /**
+             * Research
+             * @default []
+             */
+            research: components["schemas"]["ResearchFinding"][];
             /** Stages */
             stages: components["schemas"]["PlaybookStage"][];
             /** Theme */
@@ -915,6 +942,12 @@ export interface components {
             title: string;
             /** Triggers */
             triggers: string[];
+            /**
+             * Watch
+             * @description what investors typically check next
+             * @default []
+             */
+            watch: string[];
             /**
              * Window Basis
              * @description where the window comes from: judgment prior | calibrated
@@ -1014,12 +1047,30 @@ export interface components {
             /** Model Version */
             model_version: string;
             /**
+             * Prior
+             * @description starting estimate for the source type
+             * @default 0
+             */
+            prior: number;
+            /**
+             * Refuted
+             * @description reports refuted, or never confirmed (weighted)
+             * @default 0
+             */
+            refuted: number;
+            /**
              * Score
              * @description posterior mean P(claim holds up)
              */
             score: number;
             /** Source Id */
             source_id: string;
+            /**
+             * Supported
+             * @description reports later confirmed
+             * @default 0
+             */
+            supported: number;
             /**
              * Topic
              * @default all
@@ -1053,6 +1104,19 @@ export interface components {
             /** Source Id */
             source_id: string;
             source_type: components["schemas"]["SourceType"];
+        };
+        /**
+         * ResearchFinding
+         * @description A published finding on how markets usually react, with its source.
+         */
+        ResearchFinding: {
+            /** Finding */
+            finding: string;
+            /**
+             * Source
+             * @description authors (year), journal
+             */
+            source: string;
         };
         /**
          * Source

@@ -69,6 +69,7 @@ def create_app(services: Services | None = None) -> FastAPI:
     svc = services or build_services()
     monitor = BackgroundMonitor(svc, svc.settings.monitor_every_minutes)
     state = {"demo_loaded": False}
+    evaluated: dict[str, queries.Evaluation] = {}
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -198,8 +199,12 @@ def create_app(services: Services | None = None) -> FastAPI:
 
     @app.get("/v1/evaluation", response_model=queries.Evaluation)
     def evaluation() -> queries.Evaluation:
-        """Analysis quality on the hand-labelled set (calls the LLM if a preset is on)."""
-        return queries.evaluation(svc)
+        """Analysis quality on the hand-labelled set. Computed once per server start: the
+        labelled set and the reading chain only change with a deploy, and the website shows
+        it on every visit (with an LLM preset each run would cost money)."""
+        if "result" not in evaluated:
+            evaluated["result"] = queries.evaluation(svc)
+        return evaluated["result"]
 
     @app.get("/v1/method", response_model=Method)
     def method() -> Method:
