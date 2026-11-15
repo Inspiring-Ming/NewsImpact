@@ -13,15 +13,16 @@ log = logging.getLogger(__name__)
 
 
 class AlertsService:
-    def __init__(self, state: AlertState, notifier: Notifier | None, site_url: str) -> None:
-        """notifier None = alerts are worked out and remembered but not sent (no channel set)."""
+    def __init__(self, state: AlertState, notifiers: Sequence[Notifier], site_url: str) -> None:
+        """Every alert goes to every channel (Discord, email...). No channels = alerts are
+        worked out and remembered but not sent."""
         self._state = state
-        self._notifier = notifier
+        self._notifiers = tuple(notifiers)
         self._site = site_url.rstrip("/")
 
     @property
     def channel(self) -> str:
-        return "on" if self._notifier else "off"
+        return "on" if self._notifiers else "off"
 
     def followed(self) -> set[str]:
         return self._state.followed()
@@ -39,12 +40,15 @@ class AlertsService:
         for alert in changes(previous, events, self._state.followed()):
             if self._state.was_sent(alert.key):
                 continue
-            if self._notifier is not None:
+            delivered = 0
+            for notifier in self._notifiers:
                 try:
-                    self._notifier.send(alert, self.link(alert.event_id))
+                    notifier.send(alert, self.link(alert.event_id))
+                    delivered += 1
                 except Exception:
                     log.exception("alert not sent", extra={"kind": alert.kind})
-                    continue
+            if self._notifiers and not delivered:
+                continue  # every channel failed: try again next round
             self._state.mark_sent(alert.key)
             sent.append(alert)
         return sent
@@ -54,12 +58,11 @@ class AlertsService:
 
     def test(self) -> None:
         """Send one test message, to check the channel works."""
-        if self._notifier is None:
+        if not self._notifiers:
             raise RuntimeError("no alert channel configured")
-        self._notifier.send(
-            Alert(key="test", kind="new_event", ticker="TEST", event_id="", article_url="",
-                  title="NewsImpact alerts are on",
-                  text="You will get a message here when something changes for a company you "
-                       "follow."),
-            self._site,
-        )  # fmt: skip
+        alert = Alert(key="test", kind="new_event", ticker="TEST", event_id="", article_url="",
+                      title="NewsImpact alerts are on",
+                      text="You will get a message here when something changes for a company "
+                           "you follow.")  # fmt: skip
+        for notifier in self._notifiers:
+            notifier.send(alert, self._site)

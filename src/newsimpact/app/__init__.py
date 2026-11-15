@@ -1,8 +1,9 @@
 """APP - settings, wiring and the entry points (HTTP API + website, monitor).
 
 config.py   deployment settings from NI_* environment variables (.env)
-wiring.py   picks the technology behind every port (the only place that does)
-api.py      versioned JSON API (/v1) and the website (web/dist) at /
+wiring/     picks the technology behind every port (the only place that does);
+            plugins.py has one table per kind of technology
+api/        versioned JSON API (/v1), one router file per area, and the website at /
 monitor.py  the hourly round: collect, follow up, check evidence, briefs, alerts
 demo.py     loads the fictional demo data through the real pipeline
 logs.py     JSON logging

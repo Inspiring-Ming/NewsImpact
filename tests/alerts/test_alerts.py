@@ -27,7 +27,7 @@ class Collect:
 
 def test_baseline_then_changes_for_followed_companies_only() -> None:
     out = Collect()
-    svc = AlertsService(InMemoryAlertState(), out, "http://site.test")
+    svc = AlertsService(InMemoryAlertState(), [out], "http://site.test")
     svc.follow("NVDA")
     assert svc.check([_event(), _event(event_id="e2", ticker="AAPL")]) == []  # baseline
     changed = _event(confirmed=True, updates=2, stock_move=-0.185, unusual=True)

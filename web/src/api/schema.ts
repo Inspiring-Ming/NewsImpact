@@ -52,7 +52,7 @@ export interface paths {
         put?: never;
         /**
          * Alerts Test
-         * @description Send one test message to the configured channel.
+         * @description Send one test message to every configured channel.
          */
         post: operations["alerts_test_v1_alerts_test_post"];
         delete?: never;
@@ -87,7 +87,7 @@ export interface paths {
         };
         /**
          * Calibration
-         * @description Across storylines: does each stage move each channel as expected? Do windows fit?
+         * @description Across events: does each update move each measure as expected? Do windows fit?
          */
         get: operations["calibration_v1_calibration_get"];
         put?: never;
@@ -127,7 +127,7 @@ export interface paths {
         };
         /**
          * Coverage
-         * @description Evidence for which outlets to keep, add or drop (docs/07).
+         * @description Evidence for which sources to keep, add or drop (docs/07).
          */
         get: operations["coverage_v1_coverage_get"];
         put?: never;
@@ -239,7 +239,7 @@ export interface paths {
         put?: never;
         /**
          * Run Monitor Round
-         * @description Collect from every outlet, chase follow-ups, re-check evidence - now.
+         * @description Run one full round now (every step in app/monitor.py ROUND).
          */
         post: operations["run_monitor_round_v1_monitor_run_post"];
         delete?: never;
@@ -342,7 +342,7 @@ export interface paths {
         };
         /**
          * Assess Storyline
-         * @description Evidence check of every stage, conclusion and suggestions (with provenance).
+         * @description Evidence check of every update, conclusion and notes (with provenance).
          *
          *     The latest stored assessment from monitoring, else assessed now.
          */
@@ -364,7 +364,7 @@ export interface paths {
         };
         /**
          * Storyline Prices
-         * @description Stock vs. benchmark around the story (rebased to 100); null without price data.
+         * @description Stock vs. its index around the event (rebased to 100); null without price data.
          */
         get: operations["storyline_prices_v1_storylines__storyline_id__prices_get"];
         put?: never;
@@ -900,7 +900,7 @@ export interface components {
         MarketChannel: "price" | "volatility" | "volume" | "liquidity" | "analyst_revisions" | "credit_spreads" | "peer_spillover" | "confidence";
         /**
          * Method
-         * @description Every setting with its reason - what the website's "Method" page shows.
+         * @description Every setting with its reason - what the website's "How it works" page shows.
          */
         Method: {
             /** Late Report Days */

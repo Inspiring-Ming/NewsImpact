@@ -36,3 +36,19 @@ to add or change a function, a service or a page.
 ## Consequences
 + Each concern has one file, and each extension has one documented place.
 - Supplier/peer impact must be rebuilt when real relationship data arrives.
+
+## Follow-up (same day): plug-in points for every kind of change
+* **`app/wiring/plugins.py`**: one table per kind of technology (storage,
+  event bus, feed kinds, market data, AI providers, text steps, alert
+  channels). Adding one = its adapter + one table entry; an unknown name fails
+  at start-up listing the known ones. `NI_EVENT_BUS` selects the bus, so a
+  cloud bus is one more entry. Alerts accept several channels at once.
+* **`app/api/`**: one router file per area, listed in `ROUTES`. The OpenAPI
+  contract was unchanged by the split (only descriptions).
+* **`app/monitor.py` `ROUND`**: the hourly round as named steps; a new step is
+  one function + one line, and `run_step()` runs one alone (a cloud job).
+* **Docs**: where tests go for each kind of change, how to move to the cloud
+  or rewrite one module in another language (events are JSON-Schema
+  contracts), and a glossary of website words vs code words. The code keeps
+  "storyline"/"stage" because "event" means a bus message in code; renaming
+  public events and API paths would break integrations for little gain.

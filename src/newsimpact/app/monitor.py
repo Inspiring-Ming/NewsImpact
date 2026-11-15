@@ -1,28 +1,29 @@
-"""Automatic monitoring: collect from every listed outlet, chase follow-ups, repeat.
+"""The hourly round: the steps that turn new news into events, checks, briefs and alerts.
 
-One round:
-  1. sources.collect()                read every enabled outlet (oldest first)
-  2. sources.follow_up()              search listed outlets for next stages
-  3. update_track_records()           reliability learns which sources' reports
-                                      other sources later confirmed
-  4. validation.assess_and_store()    re-check every storyline against evidence
-                                      (claims re-scored with current reliability);
-                                      market checks that were "pending" mature
-                                      as trading days pass
-  5. write_briefs()                   three-line AI briefs for events that changed
-  6. send_alerts()                    tell followers what changed (Discord, ...)
-Where rounds come from is a deployment choice, not business logic:
-  * the web server:  NI_MONITOR_EVERY_MINUTES=15 runs BackgroundMonitor; the
-                     website's "Run a round now" button triggers one on demand
-  * AWS:             EventBridge Scheduler -> Lambda calling `run_round()`
-Use NI_STORE=sqlite so state survives restarts.
+ROUND lists the steps in order; each is one small function. To add a step,
+write the function and add one line to ROUND. Each step can also run alone
+(`run_step`), e.g. as its own cloud function later.
+
+  collect        read every enabled source (oldest first)
+  follow_up      search the listed sources for each open event's next update
+  track_records  reliability learns which sources' reports others confirmed
+  assess         re-check every event against evidence; market checks that were
+                 "pending" mature as trading days pass
+  briefs         three-line AI briefs for events whose facts changed
+  alerts         tell followers what changed (Discord, ...)
+
+Where rounds come from is a deployment choice, not business logic: the web
+server runs them every NI_MONITOR_EVERY_MINUTES (and on "Update now"); on AWS,
+EventBridge Scheduler -> a function calling `run_round()`. Use NI_STORE=sqlite
+so state survives restarts.
 """
 
 from __future__ import annotations
 
 import logging
 import threading
-from dataclasses import dataclass
+from collections.abc import Callable, Collection
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from newsimpact.alerts.models import EventSnapshot
@@ -36,14 +37,14 @@ log = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class RoundResult:
     at: datetime
-    new_by_outlet: dict[str, int]
+    new_by_source: dict[str, int]
     from_follow_up: int
     open_watches: int
     assessments_updated: int
 
     @property
     def new_total(self) -> int:
-        return sum(self.new_by_outlet.values()) + self.from_follow_up
+        return sum(self.new_by_source.values()) + self.from_follow_up
 
 
 def update_track_records(svc: Services) -> None:
@@ -89,19 +90,66 @@ def send_alerts(svc: Services) -> None:
         log.info("alerts sent", extra={"count": len(sent)})
 
 
-def run_round(svc: Services, *, follow_up: bool = True) -> RoundResult:
+@dataclass
+class RoundState:
+    """What the steps of one round report, for the round's result."""
+
+    new_by_source: dict[str, int] = field(default_factory=dict)
+    from_follow_up: int = 0
+    assessments_updated: int = 0
+
+
+def _collect(svc: Services, r: RoundState) -> None:
+    r.new_by_source = svc.sources.collect()
+
+
+def _follow_up(svc: Services, r: RoundState) -> None:
+    r.from_follow_up = svc.sources.follow_up()
+
+
+def _track_records(svc: Services, r: RoundState) -> None:
+    update_track_records(svc)  # from the last assessments, so this round's scores use them
+
+
+def _assess(svc: Services, r: RoundState) -> None:
+    r.assessments_updated = len(svc.validation.assess_and_store(svc.storyline_store.all()))
+
+
+def _briefs(svc: Services, r: RoundState) -> None:
+    write_briefs(svc)
+
+
+def _alerts(svc: Services, r: RoundState) -> None:
+    send_alerts(svc)
+
+
+ROUND: tuple[tuple[str, Callable[[Services, RoundState], None]], ...] = (
+    ("collect", _collect),
+    ("follow_up", _follow_up),
+    ("track_records", _track_records),
+    ("assess", _assess),
+    ("briefs", _briefs),
+    ("alerts", _alerts),
+)
+
+
+def run_round(svc: Services, *, skip: Collection[str] = ()) -> RoundResult:
+    """Run every step of ROUND in order (minus `skip`)."""
     if svc.llm is not None:
         svc.llm.new_round()
-    counts = svc.sources.collect()
-    found = svc.sources.follow_up() if follow_up else 0
-    update_track_records(svc)  # from the last assessments, so this round's scores use them
-    updated = svc.validation.assess_and_store(svc.storyline_store.all())
-    write_briefs(svc)
-    send_alerts(svc)
-    result = RoundResult(datetime.now(UTC), counts, found, len(svc.sources.active_watches),
-                         len(updated))  # fmt: skip
-    log.info("monitor round", extra={"new": result.new_total, "follow_up": found})
+    r = RoundState()
+    for name, step in ROUND:
+        if name not in skip:
+            step(svc, r)
+    result = RoundResult(datetime.now(UTC), r.new_by_source, r.from_follow_up,
+                         len(svc.sources.active_watches), r.assessments_updated)  # fmt: skip
+    log.info("monitor round", extra={"new": result.new_total, "follow_up": r.from_follow_up})
     return result
+
+
+def run_step(svc: Services, name: str) -> None:
+    """Run one step alone (a separate scheduled job or cloud function)."""
+    dict(ROUND)[name](svc, RoundState())
 
 
 class BackgroundMonitor:

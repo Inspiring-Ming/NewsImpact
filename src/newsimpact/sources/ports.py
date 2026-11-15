@@ -22,7 +22,7 @@ class Feed(Protocol):
     def fetch(self, since: datetime | None = None) -> Iterable[Article]: ...
 
 
-# Builds the right Feed for a FeedConfig.kind; supplied by app/wiring.py.
+# Builds the right Feed for a FeedConfig.kind; supplied by app/wiring (plugins.py FEEDS).
 FeedFactory = Callable[[Source, FeedConfig], Feed]
 
 

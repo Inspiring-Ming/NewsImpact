@@ -28,19 +28,20 @@ class Settings(BaseSettings):
     data_dir: Path = _REPO_ROOT / "data"
     web_dir: Path = _REPO_ROOT / "web" / "dist"  # built website, served at /
     # Where state lives: memory (lost on exit) or sqlite (survives restarts).
-    store: Literal["memory", "sqlite"] = "memory"
+    store: str = "memory"  # memory | sqlite (wiring/plugins.py STORES)
+    event_bus: str = "memory"  # memory; cloud buses join wiring/plugins.py EVENT_BUSES
     db_path: Path = _REPO_ROOT / "var" / "newsimpact.db"
     # Automatic monitoring inside the server: minutes between rounds, 0 = only on demand.
     monitor_every_minutes: float = 0
     accept_unlisted_sources: bool = False
     http_user_agent: str = "newsimpact/0.1"
 
-    # Analysis chain after claim extraction (names: app/wiring.py SEMANTIC_STEPS);
+    # Analysis chain after claim extraction (names: app/wiring/plugins.py SEMANTIC_STEPS);
     # the LLM step is added automatically when a preset is on.
     semantic_steps: tuple[str, ...] = ("taxonomy", "attribution", "sentiment", "uncertainty")
 
     # Market data for the live profile (demo always uses synthetic prices).
-    market_data: Literal["none", "eodhd", "csv"] = "none"
+    market_data: str = "none"  # none | eodhd | csv (wiring/plugins.py MARKET_DATA)
     eodhd_api_key: SecretStr | None = None
     market_csv_dir: Path = _REPO_ROOT / "var" / "prices"
 

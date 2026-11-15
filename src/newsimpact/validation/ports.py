@@ -1,5 +1,5 @@
 """What the validation module needs. The market and storylines modules provide
-MarketEvidence and Playbooks in-process (wired in app/wiring.py); over a network
+MarketEvidence and Playbooks in-process (wired in app/wiring); over a network
 they would be API clients."""
 
 from __future__ import annotations

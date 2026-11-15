@@ -3,7 +3,7 @@
 Analysis is a chain: one ClaimExtractor finds the claims, then each
 ClaimStep in turn adds what it knows (event type, sentiment, a new signal...).
 To analyse something new, add one step; to change technique (word lists ->
-LLM), swap the extractor or a step. Steps are chosen in app/wiring.py.
+LLM), swap the extractor or a step. Steps are chosen in app/wiring/plugins.py.
 """
 
 from __future__ import annotations

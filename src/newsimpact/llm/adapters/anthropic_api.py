@@ -1,7 +1,7 @@
 """LlmProvider for Claude, through the official `anthropic` SDK (pip extra: anthropic).
 
 Credentials: ANTHROPIC_API_KEY from the environment or the git-ignored .env
-(passed in by app/wiring.py), else the SDK's own sources. Never in committed files.
+(passed in by app/wiring/plugins.py), else the SDK's own sources. Never in committed files.
 Request choices and why:
   * structured outputs (output_config.format) -> the answer always parses
   * effort "low" by default: classification rarely gains from deep thinking

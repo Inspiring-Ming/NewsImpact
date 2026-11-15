@@ -45,7 +45,7 @@ class Source(Model):
 
 
 class FeedConfig(Model):
-    """How to read one feed of an outlet. `kind` picks the adapter (see app/wiring.py)."""
+    """How to read one feed of a source. `kind` picks the adapter (app/wiring/plugins.py)."""
 
     kind: str = Field(description="rss | rss_per_company | fixture | ...")
     url: str = ""

@@ -66,7 +66,8 @@ src/newsimpact/
   llm/          one budgeted, cached gateway to language models
      every module: __init__.py (what it is) · models.py · logic.py · ports.py · service.py · adapters/
   shared/       event base classes, event bus, text ids, SQLite helper
-  app/          settings, wiring, API, the hourly monitor; views/ = what the website shows
+  app/          settings · wiring/ (plugins.py: every technology by name) · api/ (one router
+                per area) · monitor.py (the hourly round, step by step) · views/ (what the site shows)
 web/src/        the website: features/<page>/, shared/ (labels, badges, charts), routes.tsx
 data/reference/ the real curated data, each value with its reason (sources, companies,
                 event types, playbooks, thresholds, model prices)
@@ -82,9 +83,13 @@ schemas/        generated event schemas   scripts/  their export   docs/  design
 | read another news source | add a row to `data/reference/sources.json` |
 | follow another company | add it to `data/reference/entities.json` (ASX tickers end in `.AX`) |
 | detect another kind of event | `taxonomy.json` (words) + `playbooks.json` (its updates, expected reactions, research) |
-| add an alert channel | one `Notifier` adapter in `alerts/adapters/` + one line in `app/wiring.py` |
+| use another technology (price vendor, storage, AI provider, alert channel) | its adapter in the owning module + one entry in `app/wiring/plugins.py` |
+| add API endpoints | `app/api/routes/<feature>.py` + one entry in `ROUTES` |
+| add a step to the hourly round | one function + one line in `ROUND` (`app/monitor.py`) |
 | add a website page | a folder in `web/src/features/`, one line in `routes.tsx` |
 
+Each change has one test folder to match (tests mirror the code). Moving a step to
+the cloud or a module to another language is a plug-in, not a rewrite.
 Everything else, with the reasons behind the design: [docs/03-architecture.md](docs/03-architecture.md).
 Why every source, window and threshold was chosen: [docs/07-coverage-and-settings.md](docs/07-coverage-and-settings.md).
 

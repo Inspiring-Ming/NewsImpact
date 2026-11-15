@@ -73,7 +73,9 @@ used to check it (⑤–⑥). Conclusions never rest on the news alone.
 |---|---|
 | `src/newsimpact/<module>/` | One business module from the table above. Every module has the same files (next section). |
 | `src/newsimpact/shared/` | The small toolkit every module uses: event base classes, event bus, text ids, and the SQLite helper that only adapters may use. Imports nothing else. |
-| `src/newsimpact/app/` | Settings, wiring, HTTP API + website serving, the hourly monitor, demo loader. The only place that picks technologies. |
+| `src/newsimpact/app/` | Settings (`config.py`), the hourly round (`monitor.py`: `ROUND`, one line per step), demo loader, logging. The only place that picks technologies. |
+| `src/newsimpact/app/wiring/` | `plugins.py`: one table per kind of technology (storage, event bus, feeds, market data, AI providers, text steps, alert channels), picked by name; `__init__.py` builds the services in the order news flows. |
+| `src/newsimpact/app/api/` | The HTTP API: `routes/` has one router file per area (system, companies, storylines, sources, alerts, monitor), listed in `ROUTES`; the website is served at `/`. |
 | `src/newsimpact/app/views/` | What the website and API show, composed from the modules: companies and events, priority and "what to check now" (rules), three-line briefs (AI from our facts, rules fallback), system status. |
 | `web/` | The website (React + TypeScript). `src/routes.tsx` lists every page. `src/features/<page>/` holds one folder per page (watchlist, event, method). `src/shared/` holds UI parts (badges, charts, visuals), `labels.ts` (the only place that turns codes into plain English, including every hover definition) and data hooks. `src/api/` holds the client, generated from the server's OpenAPI document, so API changes that break the site fail CI. |
 | `tests/<module>/`, `tests/app/`, `tests/e2e/` | Tests mirror `src/`; `app/` covers the API, views and monitor; e2e runs the whole demo pipeline. |
@@ -114,28 +116,77 @@ Reading order for a newcomer: `__init__.py` → `models.py` → `service.py`.
 |---|---|---|
 | **Watch another outlet** | Add a row to `data/reference/sources.json` (id, type, domains, feed URL). Monitored and tracked for reliability from the next round. | None |
 | Pause an outlet | `"enabled": false` in its row | None |
-| Read a new **kind** of feed (licensed news API, EDGAR full-text…) | New file in `sources/adapters/`, one line in `_feed_factory` (`app/wiring.py`), use the new `kind` in `sources.json` | 1 file + 1 line |
+| Read a new **kind** of feed (licensed news API, EDGAR full-text…) | New file in `sources/adapters/`, one entry in `FEEDS` (`app/wiring/plugins.py`), use the new `kind` in `sources.json` | 1 file + 1 line |
 | Search beyond the listed outlets | `NI_ACCEPT_UNLISTED_SOURCES=true` – unlisted outlets get the "unknown" reliability prior and `listed=false` | None |
 | **Detect a new kind of event**, aspect, or word list | Edit `data/reference/taxonomy.json` (bump its `version`) | None |
-| **Measure something new in the text** (framing, numbers, forward-looking…) | New `ClaimStep` in `semantics/adapters/`, register it in `SEMANTIC_STEPS` (`app/wiring.py`), add its name to `NI_SEMANTIC_STEPS`. Results go in `Claim.signals` – no schema change. | 1 class + 1 line |
+| **Measure something new in the text** (framing, numbers, forward-looking…) | New `ClaimStep` in `semantics/adapters/`, register it in `SEMANTIC_STEPS` (`app/wiring/plugins.py`), add its name to `NI_SEMANTIC_STEPS`. Results go in `Claim.signals` – no schema change. | 1 class + 1 line |
 | Switch analysis technique (LLM) | Adapter implementing `ClaimExtractor` / `ClaimStep`, fed by the same taxonomy | 1 file + wiring |
 | Add a storyline type | Add a playbook to `data/reference/playbooks.json` (its event types must exist in the taxonomy – checked at start-up) | None |
 | **Validate with a new kind of evidence** (credit spreads, analyst revisions, peers) | Data port + adapter in `market/`, one branch in `MarketService.observe()`; validation picks it up through the decision's `market_channel` | 1 adapter + 1 branch |
 | Change how conclusions are drawn | Thresholds: `methodology.json` (with reason). Rules: `validation/logic.py` (pure, unit-tested); bump `MODEL_VERSION` | data / rules only |
 | **Use an LLM** for analysis | `NI_LLM_PRESET=quality` (Claude Opus 5.5), `economy` (Claude Haiku 5.5) or `local` (Ollama, $0); presets and reasons in `llm_models.json`; set `NI_LLM_MONTHLY_BUDGET_USD`; compare with the accuracy check on How it works first | settings only |
-| Add an LLM provider | One adapter implementing `LlmProvider` in `llm/adapters/`, one branch in `_llm` | 1 file + 1 branch |
-| Connect market data | `NI_MARKET_DATA=eodhd` + `NI_EODHD_API_KEY` (US + ASX), or `csv` (vendor exports); a new vendor = one `MarketData` adapter | settings / 1 file |
+| Add an LLM provider | One adapter implementing `LlmProvider` in `llm/adapters/`, one entry in `LLM_PROVIDERS` (`app/wiring/plugins.py`) | 1 file + 1 line |
+| Connect market data | `NI_MARKET_DATA=eodhd` + `NI_EODHD_API_KEY` (US + ASX), or `csv` (vendor exports); a new vendor = one `MarketData` adapter + one entry in `MARKET_DATA` (`app/wiring/plugins.py`) | settings / 1 file + 1 line |
 | **Watch another market** | Add an exchange (time zone, close, benchmark, vendor code) and its ticker suffix to `methodology.json` → market; add companies to `entities.json` | data only |
 | Change a window or threshold | Edit `methodology.json` / `playbooks.json` with its reason, bump version; check it on How it works | data only |
-| Monitor on a schedule in the cloud | EventBridge Scheduler → Lambda calling `app.monitor.run_round()` | deployment only |
-| Replace storage (Postgres) | `adapters/postgres.py` in each storing module, one branch in `_stores` (`app/wiring.py`) | 1 file per module + 1 branch |
-| Add a module | New folder with the files above (copy `alerts/` as the smallest example); add it to the two import-linter lists in `pyproject.toml`; wire it in `app/wiring.py`. Its events are exported automatically. | new module |
-| **Add an alert channel** (email, Slack) | One `Notifier` adapter in `alerts/adapters/`, one line in `_notifier` (`app/wiring.py`) | 1 file + 1 line |
+| Monitor on a schedule in the cloud | EventBridge Scheduler → a function calling `app.monitor.run_round()`, or one per step with `run_step()` | deployment only |
+| Replace storage (Postgres) | `adapters/postgres.py` in each storing module, one entry in `STORES` (`app/wiring/plugins.py`), then `NI_STORE=postgres` | 1 file per module + 1 line |
+| Add a module | New folder with the files above (copy `alerts/` as the smallest example); add it to the two import-linter lists in `pyproject.toml`; build it in `app/wiring/__init__.py`. Its events are exported automatically. | new module |
+| **Add an alert channel** (email, Slack) | One `Notifier` adapter in `alerts/adapters/`, one entry in `NOTIFIERS` (`app/wiring/plugins.py`); every configured channel is used | 1 file + 1 line |
 | Change what counts as urgent, or the checklist | `app/views/guidance.py` (small, documented rules; tests in `tests/app/test_views.py`) | rules only |
 | Change the brief | the prompt and checks in `app/views/briefs.py`; the facts it may use in `brief_facts` (`app/views/companies.py`) | 1 file |
 | **Add a website page** | A folder in `web/src/features/`, one entry in `web/src/routes.tsx`, its styles as one group in `web/src/styles.css`; new words get a definition in `TERMS` (`shared/labels.ts`) | new folder + 1 line |
 
+| **Add API endpoints** for a feature | `app/api/routes/<feature>.py` with `router(api)`, one entry in `ROUTES` (`app/api/__init__.py`); then `make contracts` regenerates the website's typed client | 1 file + 1 line |
+| **Add a step to the hourly round** | A function in `app/monitor.py` and one line in `ROUND` (order matters) | 1 function + 1 line |
+
 Every change: tests in `tests/<module>/`, `make check`, ADR if a decision was made.
+
+## Testing each kind of change
+
+Tests mirror the code, so the place for a new test is always the folder of the
+thing you changed:
+
+| You changed… | Add or update tests in | Kind |
+|---|---|---|
+| a rule in a module (`logic.py`) | `tests/<module>/test_logic.py` | pure functions, no I/O |
+| a module's workflow (`service.py`) | `tests/<module>/test_service.py` | in-memory adapters |
+| an adapter (`adapters/<tech>.py`) | `tests/<module>/test_adapters.py` (or `test_<tech>.py`) | fake network (`httpx.MockTransport`) or a temp SQLite file |
+| a plug-in table, a round step | `tests/app/test_plugins.py` | names and order |
+| an API route or a view | `tests/app/test_api.py`, `tests/app/test_views.py` | the demo profile through the real wiring |
+| reference data | `tests/e2e/test_reference_data.py` | the real files load and agree |
+| the reading chain | `tests/semantics/test_evaluation.py` | the quality gate on `data/eval/` |
+
+`tests/conftest.py` pins the environment, so tests never read your `.env` or
+touch the network; `make check` runs them all with the other checks.
+
+## Moving to the cloud, or to another language
+
+Nothing in the modules changes; each move is a plug-in or a wiring choice:
+
+| Move | How |
+|---|---|
+| Run the hourly round as cloud jobs | One scheduled function per step: `app.monitor.run_step(svc, "collect")`, `"assess"`, … (or `run_round()` for all) |
+| Split a module into its own service | Add a cloud bus to `EVENT_BUSES` (SNS/SQS or EventBridge) and set `NI_EVENT_BUS`; the service gets its own small wiring that builds just that module |
+| Rewrite one module in another language | The new service reads and publishes the same events: their JSON Schemas are in `schemas/events/` (CloudEvents envelope); stop building the Python module in the wiring |
+| Another client (mobile app, partner) | Uses the same `/v1` API; its OpenAPI document is `web/openapi.json` |
+| Postgres instead of SQLite | `adapters/postgres.py` per storing module + one `STORES` entry |
+
+## Words on the website and in the code
+
+The code keeps a few older names where the website uses plainer ones. In the
+code, "event" already means a message on the event bus, so a news event needs
+another word there:
+
+| On the website | In the code | Why it differs |
+|---|---|---|
+| event | storyline (`storylines` module, `Storyline`) | "event" is a bus message in code |
+| update | stage (`StorylineEvent`, `stage_name`) | stages of a playbook |
+| source | outlet in a few fields (`claim.outlets`, `OutletCoverage`) and source elsewhere | older name; new code says source |
+| confirmed | `verified`, claim status `corroborated` / `confirmed` | – |
+| what to check now | `checks` | – |
+
+New code and new API fields use the website's words where they do not clash.
 
 ## Reproducibility
 

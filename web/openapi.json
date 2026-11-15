@@ -1031,7 +1031,7 @@
       },
       "Method": {
         "additionalProperties": false,
-        "description": "Every setting with its reason - what the website's \"Method\" page shows.",
+        "description": "Every setting with its reason - what the website's \"How it works\" page shows.",
         "properties": {
           "late_report_days": {
             "title": "Late Report Days",
@@ -2247,7 +2247,7 @@
     },
     "/v1/alerts/test": {
       "post": {
-        "description": "Send one test message to the configured channel.",
+        "description": "Send one test message to every configured channel.",
         "operationId": "alerts_test_v1_alerts_test_post",
         "responses": {
           "200": {
@@ -2314,7 +2314,7 @@
     },
     "/v1/calibration": {
       "get": {
-        "description": "Across storylines: does each stage move each channel as expected? Do windows fit?",
+        "description": "Across events: does each update move each measure as expected? Do windows fit?",
         "operationId": "calibration_v1_calibration_get",
         "responses": {
           "200": {
@@ -2356,7 +2356,7 @@
     },
     "/v1/coverage": {
       "get": {
-        "description": "Evidence for which outlets to keep, add or drop (docs/07).",
+        "description": "Evidence for which sources to keep, add or drop (docs/07).",
         "operationId": "coverage_v1_coverage_get",
         "responses": {
           "200": {
@@ -2495,7 +2495,7 @@
     },
     "/v1/monitor/run": {
       "post": {
-        "description": "Collect from every outlet, chase follow-ups, re-check evidence - now.",
+        "description": "Run one full round now (every step in app/monitor.py ROUND).",
         "operationId": "run_monitor_round_v1_monitor_run_post",
         "responses": {
           "200": {
@@ -2692,7 +2692,7 @@
     },
     "/v1/storylines/{storyline_id}/assessment": {
       "get": {
-        "description": "Evidence check of every stage, conclusion and suggestions (with provenance).\n\nThe latest stored assessment from monitoring, else assessed now.",
+        "description": "Evidence check of every update, conclusion and notes (with provenance).\n\nThe latest stored assessment from monitoring, else assessed now.",
         "operationId": "assess_storyline_v1_storylines__storyline_id__assessment_get",
         "parameters": [
           {
@@ -2732,7 +2732,7 @@
     },
     "/v1/storylines/{storyline_id}/prices": {
       "get": {
-        "description": "Stock vs. benchmark around the story (rebased to 100); null without price data.",
+        "description": "Stock vs. its index around the event (rebased to 100); null without price data.",
         "operationId": "storyline_prices_v1_storylines__storyline_id__prices_get",
         "parameters": [
           {

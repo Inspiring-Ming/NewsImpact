@@ -2,7 +2,7 @@
 
 `EventBus` is the interface; `InMemoryEventBus` runs everything in one
 process. Cloud versions (SNS/SQS, EventBridge) implement the same interface
-and are selected in app/wiring.py.
+and are selected by NI_EVENT_BUS (app/wiring/plugins.py EVENT_BUSES).
 """
 
 from __future__ import annotations
