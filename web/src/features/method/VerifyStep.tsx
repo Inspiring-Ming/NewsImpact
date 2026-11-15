@@ -4,7 +4,6 @@ import { api, type S } from "../../api/client";
 import { label, pct } from "../../shared/labels";
 import { State } from "../../shared/ui";
 import { Term } from "../../shared/Term";
-import { typeRecord } from "../../shared/history";
 import { useApi } from "../../shared/useApi";
 import { Meter, MoveBar } from "../../shared/viz";
 import { StepBlock } from "./StepBlock";
@@ -15,7 +14,9 @@ const EXPECT: Record<string, { text: string; tone: string }> = {
 
 export function VerifyStep({ method }: { method: S["Method"] }) {
   const companies = useApi(api.companies);
-  const events = (companies.data ?? []).flatMap((c) => c.events);
+  // The server computes each event type's track record (views/guidance.py); every event
+  // of a type carries the same one.
+  const records = new Map((companies.data ?? []).flatMap((c) => c.events).map((e) => [e.event_type, e.record]));
   return (
     <StepBlock term="marketTab">
       <State error={companies.error} loading={companies.loading}>
@@ -31,7 +32,9 @@ export function VerifyStep({ method }: { method: S["Method"] }) {
             <tbody>
               {method.playbooks.map((p) => {
                 const name = p.title || label(p.theme);
-                const { expected, n, avg, unusual, asExpected: hit } = typeRecord(p, events);
+                const r = records.get(name);
+                const expected = r?.expected ?? p.stages.flatMap((s) => s.decisions).find((d) => d.market_channel === "price")?.expected_direction;
+                const n = r?.n ?? 0, avg = r?.average ?? null, unusual = r?.unusual ?? 0, hit = r?.as_expected ?? 0;
                 return (
                   <tr key={p.theme}>
                     <td><b>{name}</b></td>

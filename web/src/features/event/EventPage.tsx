@@ -3,10 +3,7 @@
 import { useState, type ComponentType } from "react";
 import { api } from "../../api/client";
 import { COUNTRY, date, NO_MOVE, pct, vsWords } from "../../shared/labels";
-import { PriorityBadge } from "../../shared/PriorityBadge";
-import { SourceBadge } from "../../shared/SourceBadge";
 import { Dots, Meter, MoveBar, RatioBar } from "../../shared/viz";
-import { Signals } from "../../shared/Signals";
 import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
@@ -14,6 +11,7 @@ import type { EventData } from "./context";
 import { Overview } from "./Overview";
 import { Scorecard } from "./Scorecard";
 import { Updates } from "./Updates";
+import { PriorityBadge, Signals, SourceBadge } from "../../shared/badges";
 
 const TABS: { id: string; label: string; component: ComponentType<EventData> }[] = [
   { id: "overview", label: "Overview", component: Overview },

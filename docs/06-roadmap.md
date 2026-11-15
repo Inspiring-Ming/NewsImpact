@@ -1,15 +1,15 @@
 # Roadmap (startup, demo-first)
 
-| Phase | Goal | Deliverables | Cloud cost |
-|---|---|---|---|
-| **0 – Foundation** ✅ | Enterprise-shaped skeleton | One template for every module, boundaries enforced in CI; **automatic monitoring of 6 live outlets** with SQLite state; taxonomy-driven analysis chain; reliability; storylines with multi-outlet corroboration; **validation against independent evidence → conclusions + suggestions** with provenance; CI; ADRs; cost guardrails | $0 |
-| **1 – Real data** | Real news & prices for one sector | **EODHD key** (US + ASX adapter ready; commercial licence before client use); 30 days of monitoring → act on `coverage` (e.g. company-specific press-release feeds); EDGAR enabled; grow the labelled set to 200–500; resolved claims feed outlet reliability; supplier links; Postgres adapters | $0 local + data licence |
-| **2 – Smarter semantics** | Beat the lexicon baseline | LLM `ClaimExtractor`/`ClaimStep` driven by `taxonomy.json`; labelled evaluation set (200–500 claims, incl. event types); embedding-based storyline linking; fix background-sentence false triggers | LLM tokens (capped) |
-| **3 – Evidence** | Prove the hypotheses on history | Backtests: reliability vs. reaction, rumour reversal, **which storyline stage moves which channel** – becomes the sales deck | $0–10 |
-| **4 – Client demo** | Something a client can click | Website ✅ (overview, storylines with price chart and evidence, outlets, calibration, quality, method); next: Cognito sign-in, Stage-2 AWS stack | ≈ $5–40/mo |
-| **5 – Pilot** | 1–3 design partners | Multi-tenant, `notifications` capability (webhooks, Slack/Teams), SLAs, onboarding docs | revenue-funded |
+| Phase | Goal | Done | Next | Cloud cost |
+|---|---|---|---|---|
+| **0 – Foundation** ✅ | Enterprise-shaped skeleton | One template for every module, boundaries enforced in CI, ADRs, cost guardrails, contracts (event schemas, OpenAPI) | – | $0 |
+| **1 – Real data** | Real news and prices | 8 sources incl. per-company feeds for all 73 companies; EODHD prices (US + ASX); source track records from corroboration; opinion pieces filtered | A corroborating source: SEC filings (needs a contact email in requests), ASX announcements or a news wire (licensed); grow the labelled set to 200+ | $0 local + data licences |
+| **2 – Smarter semantics** | Beat the word-list baseline | Economy LLM reading (0.96 event accuracy on the labelled set, about $0.06 per 1,000 sentences); AI briefs from our facts with safety checks | Stricter event-type and relevance checks for single-source items; supplier and peer links (spillover) | LLM tokens (capped at $5/month) |
+| **3 – Evidence** | Prove the hypotheses on history | Track record per event type on the website | Backtests: which update moves which measure, rumour reversal, reliability vs reaction | $0–10 |
+| **4 – Client demo** | Something a client can click | Website (watchlist, event pages, how it works), phone layout, Discord alerts | Accounts and sign-in (Cognito), email alerts (AWS SES), the Stage-2 AWS stack | ≈ $5–40/mo |
+| **5 – Pilot** | 1–3 design partners | – | Multi-tenant, more alert channels, SLAs, onboarding | revenue-funded |
 
 ## Definition of done (every change)
 `make check` passes (format, lint, types, architecture rules, tests,
-schemas) · docs/ADR updated if a decision changed · no secrets in code ·
-every new file has a stated reason (module docstring).
+contracts, website build) · docs/ADR updated if a decision changed · no
+secrets in code or logs · every new file has a stated reason (its docstring).

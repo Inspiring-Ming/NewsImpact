@@ -22,7 +22,7 @@ const latestAt = (c: S["CompanyCard"]) => Date.parse(c.events[0]?.updates.at(-1)
 const SORTS: Record<string, { label: string; key: (c: S["CompanyCard"]) => number }> = {
   latest: { label: "Latest", key: latestAt },
   move: { label: "Biggest move", key: (c) => Math.max(-1, ...c.events.map((e) => (e.stock_move == null ? -1 : Math.abs(e.stock_move)))) },
-  sources: { label: "Most sources", key: (c) => (c.events[0]?.sources ?? 0) + (c.events[0]?.confidence ?? 0) },
+  sources: { label: "Most sources", key: (c) => (c.events[0]?.sources ?? 0) + (c.events[0]?.verified ? 0.5 : 0) },
 };
 
 export function WatchlistPage({ refreshKey }: { refreshKey: number }) {

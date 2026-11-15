@@ -8,8 +8,8 @@ job-cut examples; "Helix Cloud said hackers..." is a company statement that
 word lists cannot recognise, so attribution moved from 0.96 to 0.946).
 """
 
-from newsimpact.app import queries
 from newsimpact.app.config import Settings
+from newsimpact.app.views.system import evaluation
 from newsimpact.app.wiring import build_services
 
 MINIMUM_ACCURACY = {
@@ -22,6 +22,6 @@ MINIMUM_ACCURACY = {
 
 def test_baseline_meets_the_quality_gate() -> None:
     svc = build_services(Settings(env="test", profile="demo"))
-    scores = {f.field: f.accuracy for f in queries.evaluation(svc).fields}
+    scores = {f.field: f.accuracy for f in evaluation(svc).fields}
     for field, minimum in MINIMUM_ACCURACY.items():
         assert scores[field] >= minimum, (field, scores[field])

@@ -17,13 +17,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 from newsimpact import __version__
-from newsimpact.app import queries
 from newsimpact.app.config import Settings
 from newsimpact.app.demo import run_demo
 from newsimpact.app.logs import configure_logging
 from newsimpact.app.monitor import BackgroundMonitor, RoundResult
+from newsimpact.app.views import companies as views_companies
+from newsimpact.app.views import system as views_system
+from newsimpact.app.views.companies import CompanyCard
+from newsimpact.app.views.system import Evaluation, Overview
 from newsimpact.app.wiring import Services, build_services
-from newsimpact.impact.models import ImpactAssessment
 from newsimpact.llm.models import LlmPreset
 from newsimpact.market.models import PricePath
 from newsimpact.reliability.models import ReliabilityScore
@@ -69,7 +71,7 @@ def create_app(services: Services | None = None) -> FastAPI:
     svc = services or build_services()
     monitor = BackgroundMonitor(svc, svc.settings.monitor_every_minutes)
     state = {"demo_loaded": False}
-    evaluated: dict[str, queries.Evaluation] = {}
+    evaluated: dict[str, Evaluation] = {}
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -85,18 +87,18 @@ def create_app(services: Services | None = None) -> FastAPI:
         s = svc.settings
         return {"status": "ok", "version": __version__, "env": s.env, "profile": s.profile}
 
-    @app.get("/v1/overview", response_model=queries.Overview)
-    def overview() -> queries.Overview:
-        return queries.overview(svc)
+    @app.get("/v1/overview", response_model=Overview)
+    def overview() -> Overview:
+        return views_system.overview(svc)
 
-    @app.get("/v1/companies", response_model=list[queries.CompanyCard])
-    def companies() -> list[queries.CompanyCard]:
+    @app.get("/v1/companies", response_model=list[CompanyCard])
+    def companies() -> list[CompanyCard]:
         """Every company we follow: sector, latest news, and its events with stock moves."""
-        return queries.companies(svc)
+        return views_companies.companies(svc)
 
-    @app.get("/v1/events/{event_id}/summary", response_model=queries.CompanyCard)
-    def event_summary(event_id: str) -> queries.CompanyCard:
-        card = queries.event_summary(svc, event_id)
+    @app.get("/v1/events/{event_id}/summary", response_model=CompanyCard)
+    def event_summary(event_id: str) -> CompanyCard:
+        card = views_companies.event_summary(svc, event_id)
         if card is None:
             raise HTTPException(404, "unknown event")
         return card
@@ -175,7 +177,7 @@ def create_app(services: Services | None = None) -> FastAPI:
     @app.get("/v1/coverage", response_model=list[OutletCoverage])
     def coverage() -> list[OutletCoverage]:
         """Evidence for which outlets to keep, add or drop (docs/07)."""
-        return queries.outlet_coverage(svc)
+        return views_system.outlet_coverage(svc)
 
     @app.get("/v1/articles", response_model=list[Article])
     def recent_articles(limit: int = 50) -> list[Article]:
@@ -217,10 +219,6 @@ def create_app(services: Services | None = None) -> FastAPI:
         except ValueError:
             return None
 
-    @app.get("/v1/impact/{ticker}", response_model=list[ImpactAssessment])
-    def impact_for_ticker(ticker: str) -> list[ImpactAssessment]:
-        return list(svc.impacts.by_ticker(ticker.upper()))
-
     # ------------------------------------------------------ quality & method
     @app.get("/v1/calibration", response_model=Calibration)
     def calibration() -> Calibration:
@@ -228,13 +226,13 @@ def create_app(services: Services | None = None) -> FastAPI:
         reactions, windows = svc.validation.calibrate(svc.storyline_store.all())
         return Calibration(reactions=tuple(reactions), windows=tuple(windows))
 
-    @app.get("/v1/evaluation", response_model=queries.Evaluation)
-    def evaluation() -> queries.Evaluation:
+    @app.get("/v1/evaluation", response_model=Evaluation)
+    def evaluation() -> Evaluation:
         """Analysis quality on the hand-labelled set. Computed once per server start: the
         labelled set and the reading chain only change with a deploy, and the website shows
         it on every visit (with an LLM preset each run would cost money)."""
         if "result" not in evaluated:
-            evaluated["result"] = queries.evaluation(svc)
+            evaluated["result"] = views_system.evaluation(svc)
         return evaluated["result"]
 
     @app.get("/v1/method", response_model=Method)

@@ -27,28 +27,29 @@ flowchart TB
   bus --> sem[Semantics] -->|ClaimsExtracted| bus
   bus --> rel[Reliability] -->|ClaimsScored| bus
   bus --> sto[Storylines] -->|StorylineUpdated| bus
-  bus --> imp[Impact] -->|ImpactAssessed| bus
   bus -->|StorylineUpdated| src
-  sem & rel & imp & sto --> db[(Postgres + pgvector)]
+  sem & rel & sto --> db[(Postgres + pgvector)]
   mkt[Market measures] --> db
   api[API: Lambda + HTTP API] --> db
   api --> val[Validation] --> mkt
+  sched --> alr[Alerts] -->|Discord, email| people([Followers])
 ```
 
 Today every box runs in **one process** with an in-memory bus. A box becomes
 its own deployable by giving it its own small wiring file – no business-code
 changes.
 
-## The pipeline: seven modules, in the order news flows
+## The pipeline, in the order news flows
 
 ```
-   monitor (every N min) ─▶ ① sources ─ArticleIngested─▶ ② semantics ─ClaimsExtracted─▶ ③ reliability
+   monitor (every hour) ─▶ ① sources ─ArticleIngested─▶ ② semantics ─ClaimsExtracted─▶ ③ reliability
                                ▲                                                          │ ClaimsScored
-                               │                                         ┌────────────────┴───────┐
-                               └── StorylineUpdated: search the ◀── ④ storylines            ⑤ impact
-                                   listed outlets for the next stage     │
-                                                                         ▼ (on request: API / report)
-                                     ⑥ market (prices, volume, volatility) ─▶ ⑦ validation ─▶ conclusion + suggestions
+                               └── StorylineUpdated: search the ◀───── ④ storylines ◀─────┘
+                                   listed sources for the next update        │
+                                                                             ▼
+                              ⑤ market (price, volume, swings) ─▶ ⑥ validation ─▶ confirmed? as expected?
+                                                                             │
+                              app/views (priority, checks, briefs) ─▶ website / API, alerts
 ```
 
 | # | Module | Answers | Publishes |
@@ -57,14 +58,14 @@ changes.
 | ② | `semantics` | What is claimed, about which company, what kind of event, which signals? | `ClaimsExtracted` |
 | ③ | `reliability` | How far should we trust this outlet and this claim? | `ClaimsScored` |
 | ④ | `storylines` | Which story is this part of, which stage, which decisions follow? Which outlets reported it? | `StorylineUpdated` |
-| ⑤ | `impact` | Which companies are affected, directly and via suppliers/peers? | `ImpactAssessed` |
-| ⑥ | `market` | What did prices, volume and volatility actually do? | – (queried) |
-| ⑦ | `validation` | Is each stage backed by independent origins, did the expected decisions show up in the market, what do we conclude, and do playbooks hold across many stories? | – (queried) |
-| – | `llm` | Platform module: one budgeted, cached gateway to local or hosted language models (used only by the optional semantics `llm` step) | – |
+| ⑤ | `market` | What did prices, volume and volatility actually do? | – (queried) |
+| ⑥ | `validation` | Is each stage backed by independent origins, did the expected decisions show up in the market, what do we conclude, and do playbooks hold across many stories? | – (queried) |
+| – | `alerts` | What changed for the companies people follow, and telling them (Discord; email next) | – (sends messages) |
+| – | `llm` | Platform module: one budgeted, cached gateway to local or hosted language models (semantics step, event briefs) | – |
 
-The design separates **what the news claims and predicts** (①–⑤) from
-**independent evidence** (other outlets, authoritative sources, market data)
-used to check it (⑥–⑦). Conclusions never rest on the news alone.
+The design separates **what the news claims and predicts** (①–④) from
+**independent evidence** (other sources, the company, filings, market data)
+used to check it (⑤–⑥). Conclusions never rest on the news alone.
 
 ## Repository map – why each part exists
 
@@ -72,9 +73,10 @@ used to check it (⑥–⑦). Conclusions never rest on the news alone.
 |---|---|
 | `src/newsimpact/<module>/` | One business module from the table above. Every module has the same files (next section). |
 | `src/newsimpact/shared/` | The small toolkit every module uses: event base classes, event bus, text ids, and the SQLite helper that only adapters may use. Imports nothing else. |
-| `src/newsimpact/app/` | Settings, wiring, HTTP API + website serving, read-only queries, monitoring, demo loader. The only place that picks technologies. No business logic. |
-| `web/` | The website (React + TypeScript). `src/routes.tsx` lists every page. `src/features/<page>/` holds one folder per page (watchlist, event, method). `src/shared/` holds UI parts, the price chart and `labels.ts` (the only place that turns codes into plain English). `src/api/` holds the client, generated from the server's OpenAPI document, so API changes that break the site fail CI. |
-| `tests/<module>/`, `tests/e2e/` | Tests mirror `src/`; e2e runs the real wiring. |
+| `src/newsimpact/app/` | Settings, wiring, HTTP API + website serving, the hourly monitor, demo loader. The only place that picks technologies. |
+| `src/newsimpact/app/views/` | What the website and API show, composed from the modules: companies and events, priority and "what to check now" (rules), three-line briefs (AI from our facts, rules fallback), system status. |
+| `web/` | The website (React + TypeScript). `src/routes.tsx` lists every page. `src/features/<page>/` holds one folder per page (watchlist, event, method). `src/shared/` holds UI parts (badges, charts, visuals), `labels.ts` (the only place that turns codes into plain English, including every hover definition) and data hooks. `src/api/` holds the client, generated from the server's OpenAPI document, so API changes that break the site fail CI. |
+| `tests/<module>/`, `tests/app/`, `tests/e2e/` | Tests mirror `src/`; `app/` covers the API, views and monitor; e2e runs the whole demo pipeline. |
 | `schemas/events/` | Generated JSON Schemas of every event, for non-Python consumers. CI fails on drift. |
 | `data/reference/` | Real, curated knowledge edited without code, each value with its reason: **outlets** (`sources.json`), what to look for in text (`taxonomy.json`), storyline playbooks, entity master, **measurement and validation thresholds** (`methodology.json`), LLM prices. See [07-coverage-and-settings](07-coverage-and-settings.md). |
 | `data/eval/` | Hand-labelled sentences: the quality gate for any analysis chain (word lists, LLM). |
@@ -120,14 +122,18 @@ Reading order for a newcomer: `__init__.py` → `models.py` → `service.py`.
 | Add a storyline type | Add a playbook to `data/reference/playbooks.json` (its event types must exist in the taxonomy – checked at start-up) | None |
 | **Validate with a new kind of evidence** (credit spreads, analyst revisions, peers) | Data port + adapter in `market/`, one branch in `MarketService.observe()`; validation picks it up through the decision's `market_channel` | 1 adapter + 1 branch |
 | Change how conclusions are drawn | Thresholds: `methodology.json` (with reason). Rules: `validation/logic.py` (pure, unit-tested); bump `MODEL_VERSION` | data / rules only |
-| **Use an LLM** for analysis | `NI_LLM_PRESET=quality` (Claude Opus 5.5), `economy` (Claude Haiku 5.5) or `local` (Ollama, $0); presets and reasons in `llm_models.json`; set `NI_LLM_MONTHLY_BUDGET_USD`; compare on the website's Quality page first | settings only |
+| **Use an LLM** for analysis | `NI_LLM_PRESET=quality` (Claude Opus 5.5), `economy` (Claude Haiku 5.5) or `local` (Ollama, $0); presets and reasons in `llm_models.json`; set `NI_LLM_MONTHLY_BUDGET_USD`; compare with the accuracy check on How it works first | settings only |
 | Add an LLM provider | One adapter implementing `LlmProvider` in `llm/adapters/`, one branch in `_llm` | 1 file + 1 branch |
 | Connect market data | `NI_MARKET_DATA=eodhd` + `NI_EODHD_API_KEY` (US + ASX), or `csv` (vendor exports); a new vendor = one `MarketData` adapter | settings / 1 file |
 | **Watch another market** | Add an exchange (time zone, close, benchmark, vendor code) and its ticker suffix to `methodology.json` → market; add companies to `entities.json` | data only |
-| Change a window or threshold | Edit `methodology.json` / `playbooks.json` with its reason, bump version; check on the website's Calibration page | data only |
+| Change a window or threshold | Edit `methodology.json` / `playbooks.json` with its reason, bump version; check it on How it works | data only |
 | Monitor on a schedule in the cloud | EventBridge Scheduler → Lambda calling `app.monitor.run_round()` | deployment only |
 | Replace storage (Postgres) | `adapters/postgres.py` in each storing module, one branch in `_stores` (`app/wiring.py`) | 1 file per module + 1 branch |
-| Add a module (e.g. `alerts`) | New folder with the files above; add it to the import-linter lists and `scripts/export_schemas.py`; wire it in `app/wiring.py` | new module |
+| Add a module | New folder with the files above (copy `alerts/` as the smallest example); add it to the two import-linter lists in `pyproject.toml`; wire it in `app/wiring.py`. Its events are exported automatically. | new module |
+| **Add an alert channel** (email, Slack) | One `Notifier` adapter in `alerts/adapters/`, one line in `_notifier` (`app/wiring.py`) | 1 file + 1 line |
+| Change what counts as urgent, or the checklist | `app/views/guidance.py` (small, documented rules; tests in `tests/app/test_views.py`) | rules only |
+| Change the brief | the prompt and checks in `app/views/briefs.py`; the facts it may use in `brief_facts` (`app/views/companies.py`) | 1 file |
+| **Add a website page** | A folder in `web/src/features/`, one entry in `web/src/routes.tsx`, its styles as one group in `web/src/styles.css`; new words get a definition in `TERMS` (`shared/labels.ts`) | new folder + 1 line |
 
 Every change: tests in `tests/<module>/`, `make check`, ADR if a decision was made.
 
@@ -140,7 +146,7 @@ Every result can be traced to exactly what produced it:
 | Code and dependencies | `uv.lock` pins every package; the same Docker image runs locally and in the cloud |
 | Analysis method | every claim carries `model_version` = the extractor and each step in order, incl. taxonomy version |
 | Reference data | each assessment's `provenance.reference_data` holds content hashes of sources, entities, taxonomy, playbooks, methodology and LLM prices |
-| Analysis quality | the Quality page (`/v1/evaluation`) scores any chain on `data/eval/`; a test gate stops regressions |
+| Analysis quality | the accuracy check on How it works (`/v1/evaluation`) scores any chain on `data/eval/`; a test gate stops regressions |
 | Market data | CSV snapshots or cached vendor bars; provider version in provenance |
 | Models and rules | reliability, storylines, market and validation each stamp a `MODEL_VERSION`, collected in `provenance.components` |
 | Time | point-in-time fields (`published_at`, `ingested_at`, `as_of`); articles processed in publication order |
@@ -156,15 +162,15 @@ integration and vice versa.
 |---|---|---|
 | Web app | React + TypeScript + Vite in `web/`, served by the API at `/` (or any static host) | Talks only to the OpenAPI contract |
 | Typed API client | Generated from `/openapi.json` (openapi-typescript) | Contract drift fails the frontend build in CI |
-| Data fetching / charts | TanStack Query; ECharts | Isolated in feature folders |
+| Data fetching / charts | A small `useApi` hook; charts are plain SVG and HTML (no chart library), colours from validated tokens | Isolated in feature folders and `shared/` |
 | Auth | OIDC (Amazon Cognito first) | Standard OIDC library – switch IdP by config |
 | Hosting | S3 + CloudFront (≈ $1/month at pilot scale) | Static files run anywhere |
-| Integrations | REST `/v1`, webhooks (storyline escalated, high-impact news), CSV/Parquet export; later SSE streaming, Slack/Teams | Each is an adapter of a future `notifications` module |
+| Integrations | REST `/v1`; alerts through the `alerts` module (Discord now; email, Slack, webhooks as more `Notifier` adapters); later CSV/Parquet export | One adapter per channel |
 | Multi-tenancy | `tenant_id` from the token → events → row-level security | Already on every event envelope |
 
-First screens: storyline timeline (core demo), ticker impact with event
-study chart, outlet-reliability leaderboard, news feed with filters, alert
-settings.
+Screens today: Watchlist (needs-attention strip, key numbers, impact map,
+companies table), Event (brief, checklist, chart, timeline, expected vs
+actual) and How it works (sources, event types, does it move the stock).
 
 ## Scaling path
 

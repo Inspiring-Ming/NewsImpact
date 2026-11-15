@@ -1,13 +1,15 @@
-"""APP - settings, wiring and the entry point (HTTP API + website).
+"""APP - settings, wiring and the entry points (HTTP API + website, monitor).
 
-config.py   deployment settings from NI_* environment variables
+config.py   deployment settings from NI_* environment variables (.env)
 wiring.py   picks the technology behind every port (the only place that does)
 api.py      versioned JSON API (/v1) and the website (web/dist) at /
-queries.py  read-only views for the website, composed from several modules
-monitor.py  automatic monitoring (collect, follow-ups, evidence checks, repeat)
+monitor.py  the hourly round: collect, follow up, check evidence, briefs, alerts
 demo.py     loads the fictional demo data through the real pipeline
 logs.py     JSON logging
+views/      what the website and API show, composed from the modules
+            (companies and events, priority and checks, briefs, system status)
 
-The only package allowed to import adapters. Contains no business logic: if
-you are writing an `if` about news or markets here, it belongs in a module.
+The only package allowed to import adapters. Rules about news and markets
+belong in a module; views/ only holds rules about what to show a reader first
+(priority, checklist), kept small and documented in ADR 0030.
 """

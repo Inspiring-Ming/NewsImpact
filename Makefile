@@ -38,8 +38,10 @@ api:            ## API + built website on :8000
 web-build:      ## type-check and build the website into web/dist
 	cd web && npm run build
 
-docker:         ## build and run the production image (API + website) on :8000
-	docker build -t newsimpact:local . && docker run --rm -p 8000:8000 newsimpact:local
+docker:         ## build and run the production image on :8000, with .env and var/ state
+	docker build -t newsimpact:local . && docker run --rm -p 8000:8000 \
+	  $$([ -f .env ] && echo --env-file .env) -e NI_DB_PATH=/app/var/newsimpact.db \
+	  -v "$$PWD/var":/app/var newsimpact:local
 
 tf-check:
 	cd infra/terraform/bootstrap && terraform fmt -check && terraform init -backend=false -input=false >/dev/null && terraform validate

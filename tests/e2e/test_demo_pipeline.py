@@ -47,8 +47,8 @@ def test_reliability_and_rumour_discount(demo: tuple[Services, DemoRun]) -> None
     svc, _ = demo
     assert svc.reliability.score_source("wire-alpha").score > 0.85
     assert svc.reliability.score_source("rumor-blog").score < 0.5
-    rumour = [a for a in svc.impacts.by_ticker("HLXC") if a.relation == "direct"]
-    assert rumour and max(a.confidence for a in rumour) < 0.4
+    rumour = [e for s in svc.storyline_store.all() if s.ticker == "HLXC" for e in s.events]
+    assert rumour and max(e.claim_reliability for e in rumour) < 0.4  # blog + rumour wording
 
 
 def test_departure_shows_negative_abnormal_return(demo: tuple[Services, DemoRun]) -> None:

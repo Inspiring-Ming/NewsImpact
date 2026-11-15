@@ -3,11 +3,9 @@
 // On phones every row becomes a card (see styles.css "watchlist cards").
 import type { S } from "../../api/client";
 import { COUNTRY, date, NO_MOVE, pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
-import { Signals } from "../../shared/Signals";
-import { PriorityBadge } from "../../shared/PriorityBadge";
-import { SourceBadge } from "../../shared/SourceBadge";
 import { Term } from "../../shared/Term";
 import { Dots, MoveBar } from "../../shared/viz";
+import { PriorityBadge, Signals, SourceBadge } from "../../shared/badges";
 
 export function WatchlistTable({ rows, starred, onStar }: {
   rows: S["CompanyCard"][]; starred: Set<string>; onStar: (ticker: string) => void;

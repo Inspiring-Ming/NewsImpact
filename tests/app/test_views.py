@@ -2,8 +2,8 @@
 
 from datetime import UTC, date, datetime, timedelta
 
-from newsimpact.app.briefs import FORBIDDEN, _safe, rules_brief
-from newsimpact.app.guidance import checks, close_after, priority
+from newsimpact.app.views.briefs import FORBIDDEN, _safe, rules_brief
+from newsimpact.app.views.guidance import checks, close_after, priority
 
 NOW = datetime(2026, 11, 16, 12, tzinfo=UTC)
 

@@ -194,23 +194,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/impact/{ticker}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Impact For Ticker */
-        get: operations["impact_for_ticker_v1_impact__ticker__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/method": {
         parameters: {
             query?: never;
@@ -712,11 +695,6 @@ export interface components {
              * @default []
              */
             checks: components["schemas"]["Check"][];
-            /**
-             * Confidence
-             * @description chance the news is true, 0-1: the weakest update's combined confidence across its independent sources
-             */
-            confidence: number;
             /** Event Id */
             event_id: string;
             /**
@@ -763,8 +741,6 @@ export interface components {
              * @description status of the checks, e.g. what is still pending
              */
             notes: string[];
-            /** Ongoing */
-            ongoing: boolean;
             /**
              * Priority
              * @default background
@@ -783,11 +759,6 @@ export interface components {
              * @description how markets usually react, cited
              */
             research: components["schemas"]["ResearchFinding"][];
-            /**
-             * Said By
-             * @description who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous
-             */
-            said_by: string;
             /**
              * So Far Through
              * @description the latest close in move_so_far
@@ -887,40 +858,6 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
-        };
-        /** ImpactAssessment */
-        ImpactAssessment: {
-            /**
-             * As Of
-             * Format: date-time
-             */
-            as_of: string;
-            /**
-             * Aspect
-             * @description business aspect from the taxonomy
-             */
-            aspect: string;
-            /** Claim Id */
-            claim_id: string;
-            /**
-             * Confidence
-             * @description reliability-weighted
-             */
-            confidence: number;
-            /**
-             * Direction
-             * @description expected sign and strength
-             */
-            direction: number;
-            /** Model Version */
-            model_version: string;
-            /**
-             * Relation
-             * @description direct | supplier | customer | competitor | sector
-             */
-            relation: string;
-            /** Ticker */
-            ticker: string;
         };
         /** LabelScore */
         LabelScore: {
@@ -1476,6 +1413,11 @@ export interface components {
             expected: string | null;
             /** N */
             n: number;
+            /**
+             * Unusual
+             * @description of those, moves larger than on 19 of 20 normal days
+             */
+            unusual: number;
         };
         /** UpdateItem */
         UpdateItem: {
@@ -1752,37 +1694,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyCard"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    impact_for_ticker_v1_impact__ticker__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ticker: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ImpactAssessment"][];
                 };
             };
             /** @description Validation Error */

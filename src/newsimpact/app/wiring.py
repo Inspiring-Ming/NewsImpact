@@ -27,13 +27,8 @@ from newsimpact.alerts.adapters.memory import InMemoryAlertState
 from newsimpact.alerts.adapters.sqlite import SqliteAlertState
 from newsimpact.alerts.ports import AlertState, Notifier
 from newsimpact.alerts.service import AlertsService
-from newsimpact.app.briefs import BriefStore, InMemoryBriefs, SqliteBriefs
 from newsimpact.app.config import Settings
-from newsimpact.impact.adapters.json_file import JsonRelationshipGraph
-from newsimpact.impact.adapters.memory import InMemoryImpactStore
-from newsimpact.impact.adapters.sqlite import SqliteImpactStore
-from newsimpact.impact.ports import ImpactStore
-from newsimpact.impact.service import ImpactService
+from newsimpact.app.views.briefs import BriefStore, InMemoryBriefs, SqliteBriefs
 from newsimpact.llm.adapters.json_file import load_models
 from newsimpact.llm.adapters.memory import InMemoryResponseCache, InMemorySpendLedger
 from newsimpact.llm.adapters.ollama import OllamaProvider
@@ -125,7 +120,6 @@ class Services:
     semantics: SemanticsService
     reliability: ReliabilityService
     storylines: StorylinesService
-    impact: ImpactService
     market: MarketService | None  # None until a price source is configured (live profile)
     validation: ValidationService
     llm: LlmGateway | None
@@ -135,10 +129,9 @@ class Services:
     market_policy: MeasurementPolicy  # exchanges, windows (for labelling and charts)
     # read models served by the API and reports
     articles: ArticleStore
-    impacts: ImpactStore
     storyline_store: StorylineStore
     alerts: AlertsService
-    briefs: BriefStore  # three-line event briefs (app/briefs.py)
+    briefs: BriefStore  # three-line event briefs (app/views/briefs.py)
 
 
 @dataclass(frozen=True)
@@ -150,7 +143,6 @@ class Stores:
     tracked_sources: TrackedSources
     evidence: EvidenceStore
     storylines: StorylineStore
-    impacts: ImpactStore
     assessments: AssessmentStore
     alerts: AlertState
     briefs: BriefStore
@@ -162,12 +154,12 @@ def _stores(s: Settings) -> Stores:
         db = Database(s.db_path)
         return Stores(db, SqliteArticleStore(db), SqliteSeenSources(db), SqliteWatchStore(db),
                       SqliteTrackedSources(db), SqliteEvidenceStore(db),
-                      SqliteStorylineStore(db), SqliteImpactStore(db),
+                      SqliteStorylineStore(db),
                       SqliteAssessmentStore(db), SqliteAlertState(db),
                       SqliteBriefs(db))  # fmt: skip
     return Stores(None, InMemoryArticleStore(), InMemorySeenSources(), InMemoryWatchStore(),
                   InMemoryTrackedSources(), InMemoryEvidenceStore(),
-                  InMemoryStorylineStore(), InMemoryImpactStore(),
+                  InMemoryStorylineStore(),
                   InMemoryAssessmentStore(), InMemoryAlertState(), InMemoryBriefs())  # fmt: skip
 
 
@@ -308,11 +300,6 @@ def build_services(settings: Settings | None = None) -> Services:
                                  _semantic_steps(s, taxonomy, llm), resolver,
                                  copy_novelty=duplicates.copy_novelty,
                                  commentary_cues=taxonomy.words("commentary"))  # fmt: skip
-    graph = (
-        JsonRelationshipGraph({})  # Phase 1: real supplier/customer data
-        if s.profile == "live"
-        else JsonRelationshipGraph.from_file(s.demo_dir / "relationships.json")
-    )
     market_policy = MeasurementPolicy.model_validate(method["market"])
     market = _market(s, market_policy, stores)
     reference = [s.profile_dir / "sources.json", s.profile_dir / "entities.json"]
@@ -346,7 +333,6 @@ def build_services(settings: Settings | None = None) -> Services:
         semantics=semantics,
         reliability=reliability,
         storylines=StorylinesService(bus, stores.storylines, catalog),
-        impact=ImpactService(bus, graph, stores.impacts),
         market=market,
         validation=validation,
         llm=llm,
@@ -355,7 +341,6 @@ def build_services(settings: Settings | None = None) -> Services:
         companies=tuple(resolver.companies()),
         market_policy=market_policy,
         articles=stores.articles,
-        impacts=stores.impacts,
         storyline_store=stores.storylines,
         alerts=AlertsService(stores.alerts, _notifier(s, client), s.site_url),
         briefs=stores.briefs,

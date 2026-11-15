@@ -1,11 +1,11 @@
 // Updates as a timeline: a date axis with every update placed in time, then one card per
-// update with its tone, sources, confidence and the stock's reaction that day.
+// update with its tone, sources, whether it is confirmed, and the stock's reaction that day.
 import { date, moveVs, tone } from "../../shared/labels";
-import { Confirmation } from "../../shared/SourceBadge";
 import { Term } from "../../shared/Term";
 import { useNames } from "../../shared/names";
 import { Dots, MoveBar } from "../../shared/viz";
 import type { EventData } from "./context";
+import { Confirmation } from "../../shared/badges";
 
 const DAY = 86_400_000;
 // Same rule as the event's "Confirmed": 2+ independent origins, or a company press release or filing.

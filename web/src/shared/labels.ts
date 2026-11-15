@@ -1,7 +1,6 @@
 // The ONE place for wording shown to people. Plain words, as a newspaper or a
 // broker's watchlist would use them. Event and update names come from
 // data/reference/playbooks.json and source names from sources.json (see names.ts).
-import type { S } from "../api/client";
 
 const NAMES: Record<string, string> = {
   // where a reaction shows
@@ -117,14 +116,6 @@ export const NO_MOVE: Record<string, string> = {
 
 export const ARROW: Record<string, string> = { up: "↑", down: "↓", uncertain: "↕" };
 
-
-/** "18.5% worse than the S&P 500", "3.7× normal trading volume" ... */
-export function describe(o: S["ChannelObservation"], benchmark = "market"): string {
-  if (o.channel === "price") return moveVs(o.value, benchmark);
-  if (o.channel === "volume") return `${o.value.toFixed(1)}× normal trading volume`;
-  if (o.channel === "volatility") return `${o.value.toFixed(1)}× normal price swings`;
-  return `${o.metric} = ${o.value}`;
-}
 
 export function date(iso: string, year = false): string {
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", ...(year ? { year: "numeric" } : {}) });

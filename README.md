@@ -2,96 +2,90 @@
 
 *by Inspiring Ming*: <https://github.com/Inspiring-Ming/NewsImpact>
 
-NewsImpact turns financial news into checked storylines:
+NewsImpact reads financial news about 73 large US and Australian companies, spots
+market-moving events (a CEO leaving, a takeover, an earnings miss...), checks how
+well each one is sourced, and measures how the stock reacted against its market.
 
-1. **Monitor** a curated set of US and Australian news outlets.
-2. **Understand** what each article claims, about which company, and where the claim came from.
-3. **Link** related news into a storyline, for example a misconduct report, then a resignation, then a successor.
-4. **Anticipate** the decisions each stage typically triggers.
-5. **Check** those expectations against independent evidence: other outlets, filings, and market data.
-6. **Conclude**, with suggestions and full provenance.
-
-Everything is used through an interactive website.
-
-> Status: **Phase 0 – Foundation.** The demo runs offline at zero cost on fictional data. No AWS
-> resources exist until you apply `infra/` yourself.
-
-## Quick start
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh   # one-time: install uv (Python) - Node 22 is also needed
-make install     # Python + website dependencies
-make dev         # API on :8000 + website on http://localhost:5173  (demo profile: click "Load demo data")
-make check       # format, lint, types, architecture rules, tests, contracts, website build
-make docker      # production image (API + website) on http://localhost:8000
-```
-
-To watch the real outlets, copy `.env.example` to `.env` and set these values:
-- `NI_PROFILE=live`
-- `NI_STORE=sqlite`
-- `NI_MONITOR_EVERY_MINUTES=15`
-- optionally `NI_MARKET_DATA=eodhd` with `NI_EODHD_API_KEY`
-- optionally `NI_LLM_PRESET=quality`
+**For** professional equity investors who follow a list of stocks (and investor
+relations teams). **It answers:** does anything I follow need attention, is it
+real, has the market reacted, and what usually happens next?
+It states facts and what to check, never what to buy or sell.
 
 ## The website
 
-Who it is for: professional equity investors following a list of stocks (analysts, portfolio managers, serious self-directed investors); second, investor relations teams. What it tells them: **does anything I follow need attention, is it real (confirmed by independent sources, the company or a filing), has the market reacted, and what usually happens next?** See [ADR 0028](docs/adr/0028-primary-user-verified-events.md).
-
 | Page | What it shows |
 |---|---|
-| **Watchlist** (home) | Two views: All events, ★ My companies (starred, kept in the browser). Search also finds companies without an event. Four key numbers for the view (click one for its detail), market / sector / sort filters, the impact map, and a four-column table: Company (star, ticker, sector) · Latest event (type, progress, good or bad news, rumour flag, linked headline, next update) · Stock vs market (provisional "so far" while the window is open) · Sources ("Confirmed" or "Single source", names on hover). Opinion and feature pieces open no event. |
-| **Event** (opens from a row) | Key numbers with visuals (stock vs market, trading volume vs normal, news confidence, reactions as expected), then three tabs: **Overview** (price chart with each update marked; "Watch next" and "What research shows", with its published source) · **Updates** (a timeline: date axis, gaps between updates, tone, rumour, sources, confidence and the stock's reaction per update) · **Expected vs actual** (one section per measure, defined on the page; each update's measured bar against the stock's normal range, the expectation and the result in words; the method and exact versions at the bottom). |
-| **How it works** | Three tabs of live data: 1. News sources (reliability, how often each covers our companies and leads to an event), 2. Events we detect (usual updates, time window, measured gaps, reading accuracy), 3. Does it move the stock? (per event type: expected share price direction, average measured move, unusual moves, how often it moved as expected). Definitions on hover. |
+| **Watchlist** (home) | What needs attention now; key numbers (click for detail); an impact map of stock moves by sector; every company with an event: priority, the news, the stock vs its market, and its sources (confirmed or not). Star (★) companies to follow them. |
+| **Event** | A three-line brief, what to check now, the price chart, a timeline of updates, and expected vs actual market reactions. |
+| **How it works** | The news sources and their track records, the event types, and whether each type really moves stocks. |
 
-Event types: Leadership change, Product safety, Takeover, Earnings beat, Earnings miss, Cyber incident, Job cuts, Supply disruption. Each event is a chain of dated **updates** (e.g. Leader under pressure → Leader steps down → New leader named).
+Every underlined word explains itself on hover. Followed companies can get
+**Discord alerts** when something changes.
 
-The plain-English answers are written once by the API (`/v1/companies`, `/v1/events/{id}/summary`), so the website and any integration use the same words. Names come from the data files: company names, countries and GICS sectors from `entities.json`, event and update titles from `playbooks.json`, source names from `sources.json`.
+## Run it
 
-## How it works: seven modules, in the order news flows
+```bash
+make install     # Python (uv) + website (Node 22) dependencies
+make dev         # demo on fictional data: API :8000 + website http://localhost:5173
+make check       # everything CI runs: format, lint, types, architecture rules, tests, contracts, build
+```
+
+For live news, copy `.env.example` to `.env` (git-ignored, keys stay there) and set:
+
+| Setting | What it does |
+|---|---|
+| `NI_PROFILE=live`, `NI_STORE=sqlite`, `NI_MONITOR_EVERY_MINUTES=60` | read the real sources every hour and keep state |
+| `NI_MARKET_DATA=eodhd` + `NI_EODHD_API_KEY` | stock prices (US and ASX) |
+| `NI_LLM_PRESET=economy` + `ANTHROPIC_API_KEY` | AI reading and briefs; capped by `NI_LLM_MONTHLY_BUDGET_USD` (default $5) |
+| `NI_DISCORD_WEBHOOK_URL` | alerts for followed companies |
+
+Then `make docker` serves the site on <http://localhost:8000>.
+
+## How it works
 
 ```
- monitor ▶ ① sources ─▶ ② semantics ─▶ ③ reliability ─┬─▶ ④ storylines (chain of events → decisions)
-           outlets &     claims, event   outlet &      └─▶ ⑤ impact     (who is affected, how much)
-           articles      types, origins  claim trust             │
-              ▲                                                  │
-              └────── search listed outlets for the next stage ◀─┤
-                                                                 ▼
-           ⑥ market (price, volume, volatility; NYSE/Nasdaq or ASX) ─▶ ⑦ validation ─▶ conclusion
+every hour ▶ sources ─▶ semantics ─▶ reliability ─▶ storylines ─┐
+             news         what is       how far to     news joined  │
+             articles     claimed       trust it       into events  ▼
+                                              market (price, volume) ─▶ validation
+                                                                         │ confirmed? as expected?
+                         app/views: priority, what to check, briefs ◀────┘
+                                    │                     │
+                                 website / API         alerts (Discord)
 ```
+
+Each step is a module with the same five files, so every module reads the same
+way. Modules only talk through events and each other's data classes; CI enforces it.
 
 ## Repository map
 
 ```
 src/newsimpact/
-  sources/ semantics/ reliability/ storylines/ impact/ market/ validation/   business modules
-  llm/            budgeted, cached gateway to local or hosted LLMs (optional)
-      __init__.py   module card: purpose, how to extend, publishes / consumes
-      models.py     its data + events (the only file other modules may import)
-      logic.py      pure math and rules, where there are any
-      ports.py      interfaces it needs from the outside world
-      service.py    the workflow: events in → logic + ports → events out
-      adapters/     one file per technology (rss.py, eodhd.py, sqlite.py, ollama.py…)
-  shared/         event base classes, event bus, text ids, SQLite helper (adapters only)
-  app/            settings, wiring (picks technologies), API + website, queries, monitoring
-web/              the website (React + TypeScript): src/features/<page>/, src/shared/, routes.tsx
-data/reference/   REAL curated data, each value with its reason: outlets, companies (US + ASX),
-                  taxonomy, playbooks, methodology (windows, thresholds), LLM presets & prices
-data/demo/        FICTIONAL demo data in the same formats
-data/eval/        hand-labelled sentences: the quality gate for any analysis chain
-tests/            mirrors src/; tests/e2e runs the real wiring
-schemas/events/   generated JSON Schemas of every event
-scripts/          contract exports (event schemas, OpenAPI)
-infra/terraform/  AWS cost guardrails (apply manually)
-docs/             vision, requirements, architecture, research, AWS cost, roadmap, settings, ADRs
+  sources/ semantics/ reliability/ storylines/ market/ validation/   the pipeline
+  alerts/       tell followers what changed (Discord now, email later)
+  llm/          one budgeted, cached gateway to language models
+     every module: __init__.py (what it is) · models.py · logic.py · ports.py · service.py · adapters/
+  shared/       event base classes, event bus, text ids, SQLite helper
+  app/          settings, wiring, API, the hourly monitor; views/ = what the website shows
+web/src/        the website: features/<page>/, shared/ (labels, badges, charts), routes.tsx
+data/reference/ the real curated data, each value with its reason (sources, companies,
+                event types, playbooks, thresholds, model prices)
+data/demo/      fictional data in the same formats   data/eval/  hand-labelled sentences
+tests/          mirrors src/ (tests/app for the API and views, tests/e2e for the full pipeline)
+schemas/        generated event schemas   scripts/  their export   docs/  design and decisions
 ```
 
-**Common changes that need no code:**
-- **Watch another outlet:** add a row to `data/reference/sources.json`.
-- **Watch another company:** add an alias to `data/reference/entities.json`; ASX tickers end in `.AX`.
-- **Detect a new kind of event:** edit `data/reference/taxonomy.json`.
+## Change it
 
-Why each outlet, window and threshold was chosen:
-[docs/07-coverage-and-settings.md](docs/07-coverage-and-settings.md).
-How to extend everything else: [docs/03-architecture.md](docs/03-architecture.md).
+| I want to... | Do this |
+|---|---|
+| read another news source | add a row to `data/reference/sources.json` |
+| follow another company | add it to `data/reference/entities.json` (ASX tickers end in `.AX`) |
+| detect another kind of event | `taxonomy.json` (words) + `playbooks.json` (its updates, expected reactions, research) |
+| add an alert channel | one `Notifier` adapter in `alerts/adapters/` + one line in `app/wiring.py` |
+| add a website page | a folder in `web/src/features/`, one line in `routes.tsx` |
+
+Everything else, with the reasons behind the design: [docs/03-architecture.md](docs/03-architecture.md).
+Why every source, window and threshold was chosen: [docs/07-coverage-and-settings.md](docs/07-coverage-and-settings.md).
 
 © Inspiring Ming. All rights reserved.

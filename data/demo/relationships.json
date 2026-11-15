@@ -1,7 +1,0 @@
-{
-  "_note": "FICTIONAL relationship graph. [related_ticker, relation, propagation_weight]; negative weight = opposite direction.",
-  "relations": {
-    "ACMX": [["GLBX", "customer", 0.4], ["HLXC", "customer", 0.3]],
-    "GLBX": [["ACMX", "supplier", 0.3], ["ORBT", "competitor", -0.25]]
-  }
-}

@@ -26,8 +26,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from newsimpact.alerts.models import EventSnapshot
-from newsimpact.app import queries
-from newsimpact.app.briefs import ai_brief, facts_key
+from newsimpact.app.views.briefs import ai_brief, facts_key
+from newsimpact.app.views.companies import brief_facts, companies
 from newsimpact.app.wiring import Services
 
 log = logging.getLogger(__name__)
@@ -54,14 +54,14 @@ def update_track_records(svc: Services) -> None:
 
 
 def write_briefs(svc: Services) -> int:
-    """AI briefs for events whose facts changed (app/briefs.py); returns how many were written.
+    """AI briefs for events whose facts changed (views/briefs.py); returns how many were written.
     Without a language model, pages use the rules brief and nothing is stored."""
     if svc.llm is None:
         return 0
     written = 0
-    for c in queries.companies(svc):
+    for c in companies(svc):
         for e in c.events:
-            facts = queries.brief_facts(c, e)
+            facts = brief_facts(c, e)
             stored = svc.briefs.get(e.event_id)
             if stored and stored.facts_key == facts_key(facts):
                 continue
@@ -82,7 +82,7 @@ def send_alerts(svc: Services) -> None:
                       stock_move=e.stock_move, unusual=e.stock_move_unusual,
                       index_name=c.index_name, brief=e.brief,
                       next_step=e.checks[1].text if len(e.checks) > 1 else "")
-        for c in queries.companies(svc) for e in c.events
+        for c in companies(svc) for e in c.events
     ]  # fmt: skip
     sent = svc.alerts.check(snapshots)
     if sent:

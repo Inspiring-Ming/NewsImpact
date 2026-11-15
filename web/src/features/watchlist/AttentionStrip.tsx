@@ -1,7 +1,7 @@
 // "Needs your attention": up to three events that matter most right now, each with the
 // single most useful next step. Followed companies when there are any, else everything.
 import type { S } from "../../api/client";
-import { PriorityBadge } from "../../shared/PriorityBadge";
+import { PriorityBadge } from "../../shared/badges";
 
 const RANK: Record<string, number> = { act: 0, check: 1, background: 2 };
 

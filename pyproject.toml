@@ -74,7 +74,7 @@ type = "forbidden"
 source_modules = ["newsimpact.shared"]
 forbidden_modules = [
     "newsimpact.app", "newsimpact.sources", "newsimpact.semantics", "newsimpact.reliability",
-    "newsimpact.storylines", "newsimpact.impact", "newsimpact.market", "newsimpact.validation",
+    "newsimpact.storylines", "newsimpact.market", "newsimpact.validation",
     "newsimpact.llm", "newsimpact.alerts",
 ]
 
@@ -83,7 +83,7 @@ name = "2. Modules are independent: they may only use each other's models.py"
 type = "independence"
 modules = [
     "newsimpact.sources", "newsimpact.semantics", "newsimpact.reliability",
-    "newsimpact.storylines", "newsimpact.impact", "newsimpact.market", "newsimpact.validation",
+    "newsimpact.storylines", "newsimpact.market", "newsimpact.validation",
     "newsimpact.llm", "newsimpact.alerts",
 ]
 ignore_imports = ["newsimpact.** -> newsimpact.*.models"]

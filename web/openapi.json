@@ -603,11 +603,6 @@
             "title": "Checks",
             "type": "array"
           },
-          "confidence": {
-            "description": "chance the news is true, 0-1: the weakest update's combined confidence across its independent sources",
-            "title": "Confidence",
-            "type": "number"
-          },
           "event_id": {
             "title": "Event Id",
             "type": "string"
@@ -692,10 +687,6 @@
             "title": "Notes",
             "type": "array"
           },
-          "ongoing": {
-            "title": "Ongoing",
-            "type": "boolean"
-          },
           "priority": {
             "default": "background",
             "enum": [
@@ -729,11 +720,6 @@
             },
             "title": "Research",
             "type": "array"
-          },
-          "said_by": {
-            "description": "who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous",
-            "title": "Said By",
-            "type": "string"
           },
           "so_far_through": {
             "anyOf": [
@@ -833,7 +819,6 @@
         "required": [
           "event_id",
           "event_type",
-          "ongoing",
           "updates",
           "latest_headline",
           "latest_source",
@@ -847,7 +832,6 @@
           "stock_move_status",
           "sources",
           "source_names",
-          "confidence",
           "notes",
           "research",
           "watch",
@@ -855,7 +839,6 @@
           "volume_ratio",
           "tone",
           "is_rumour",
-          "said_by",
           "next_update",
           "link_window_days",
           "final_measure_on"
@@ -958,64 +941,6 @@
           }
         },
         "title": "HTTPValidationError",
-        "type": "object"
-      },
-      "ImpactAssessment": {
-        "additionalProperties": false,
-        "properties": {
-          "as_of": {
-            "format": "date-time",
-            "title": "As Of",
-            "type": "string"
-          },
-          "aspect": {
-            "description": "business aspect from the taxonomy",
-            "title": "Aspect",
-            "type": "string"
-          },
-          "claim_id": {
-            "title": "Claim Id",
-            "type": "string"
-          },
-          "confidence": {
-            "description": "reliability-weighted",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Confidence",
-            "type": "number"
-          },
-          "direction": {
-            "description": "expected sign and strength",
-            "maximum": 1.0,
-            "minimum": -1.0,
-            "title": "Direction",
-            "type": "number"
-          },
-          "model_version": {
-            "title": "Model Version",
-            "type": "string"
-          },
-          "relation": {
-            "description": "direct | supplier | customer | competitor | sector",
-            "title": "Relation",
-            "type": "string"
-          },
-          "ticker": {
-            "title": "Ticker",
-            "type": "string"
-          }
-        },
-        "required": [
-          "claim_id",
-          "ticker",
-          "aspect",
-          "relation",
-          "direction",
-          "confidence",
-          "as_of",
-          "model_version"
-        ],
-        "title": "ImpactAssessment",
         "type": "object"
       },
       "LabelScore": {
@@ -2119,13 +2044,19 @@
           "n": {
             "title": "N",
             "type": "integer"
+          },
+          "unusual": {
+            "description": "of those, moves larger than on 19 of 20 normal days",
+            "title": "Unusual",
+            "type": "integer"
           }
         },
         "required": [
           "expected",
           "n",
           "average",
-          "as_expected"
+          "as_expected",
+          "unusual"
         ],
         "title": "TypeRecord",
         "type": "object"
@@ -2524,49 +2455,6 @@
           }
         },
         "summary": "Event Summary"
-      }
-    },
-    "/v1/impact/{ticker}": {
-      "get": {
-        "operationId": "impact_for_ticker_v1_impact__ticker__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "ticker",
-            "required": true,
-            "schema": {
-              "title": "Ticker",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ImpactAssessment"
-                  },
-                  "title": "Response Impact For Ticker V1 Impact  Ticker  Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Impact For Ticker"
       }
     },
     "/v1/method": {

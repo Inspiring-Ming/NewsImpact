@@ -37,6 +37,7 @@ class TypeRecord(Model):
     n: int
     average: float | None
     as_expected: int
+    unusual: int = Field(description="of those, moves larger than on 19 of 20 normal days")
 
 
 def priority(*, confirmed: bool, unusual: bool, last_update: datetime, now: datetime
@@ -96,4 +97,5 @@ def type_record(playbook: Playbook | None, moves: Sequence[tuple[float, bool]]) 
         for m, unusual in moves
     ) if expected else 0  # fmt: skip
     avg = sum(m for m, _ in moves) / len(moves) if moves else None
-    return TypeRecord(expected=expected, n=len(moves), average=avg, as_expected=hits)
+    return TypeRecord(expected=expected, n=len(moves), average=avg, as_expected=hits,
+                      unusual=sum(u for _, u in moves))  # fmt: skip

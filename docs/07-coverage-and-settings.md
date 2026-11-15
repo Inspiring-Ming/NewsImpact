@@ -2,19 +2,19 @@
 
 **Rule:** no number is arbitrary. Each setting starts as a **prior**: a value
 with a written reason taken from the literature, industry practice or stated
-judgement. It is then **measured** on our own data with the website's
-Outlets, Calibration and Quality pages, and **revised** through a versioned file change. Each assessment
+judgement. It is then **measured** on our own data on the website's
+How it works tabs, and **revised** through a versioned file change. Each assessment
 records the hash of the files it used (`provenance`), so a result can always
 be traced back to the exact settings that produced it.
 
 | Where | What | Measured by |
 |---|---|---|
-| `data/reference/sources.json` | which outlets | website → Outlets (coverage) |
-| `data/reference/entities.json` | which companies (US + ASX) | website → Outlets (share naming watched companies) |
-| `data/reference/taxonomy.json` | which events, attribution and background wording | website → Quality (labelled set) |
-| `data/reference/playbooks.json` | story stages, expected decisions, link windows | website → Calibration |
-| `data/reference/methodology.json` | measurement windows, significance, thresholds for conclusions and copies, exchanges (sessions, benchmarks) | website → Calibration |
-| `data/reference/llm_models.json` | LLM presets (with reasons) and prices (dated, with source) | the spend ledger (website → Overview) |
+| `data/reference/sources.json` | which outlets | How it works → News sources (reliability, track record, coverage) |
+| `data/reference/entities.json` | which companies (US + ASX) | How it works → News sources ("About our companies") |
+| `data/reference/taxonomy.json` | which events, attribution and background wording | How it works → Events we detect (accuracy check on the labelled set) |
+| `data/reference/playbooks.json` | event updates, expected reactions, time windows, research findings | How it works → Events we detect, Does it move the stock? |
+| `data/reference/methodology.json` | measurement windows, significance, thresholds for conclusions and copies, exchanges (sessions, benchmarks) | How it works → Does it move the stock? |
+| `data/reference/llm_models.json` | LLM presets (with reasons) and prices (dated, with source) | the spend ledger (`/v1/overview`) |
 | environment (`NI_*`) | deployment only: storage, providers, budget | – |
 
 ## 1. What to monitor
@@ -108,7 +108,7 @@ Each playbook has a **link window**:
 - **Formula:** once a playbook has ≥ 20 observed gaps between stages, the suggested window is the **90th percentile of observed gaps × 1.25**.
 - **Why the 90th percentile:** it covers most real cases.
 - **Why the 25% margin:** small samples underestimate the tail, and a slightly long window costs little.
-- **Where to see it:** the Calibration page shows observed vs configured; adopting a suggestion is a one-line change in `playbooks.json`.
+- **Where to see it:** How it works → Events we detect shows the measured gap next to the window; adopting a suggestion is a one-line change in `playbooks.json`.
 
 ### Realistic timelines: when stages follow within days
 Real stories can move much faster than a playbook's window. In the Nvidia case reported by our outlets, a report about the CEO's personal conduct was followed by his resignation within a week, and an interim CEO the same day. The setup handles this in four ways:

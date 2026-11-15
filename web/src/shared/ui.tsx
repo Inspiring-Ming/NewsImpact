@@ -2,10 +2,6 @@
 import type { ReactNode } from "react";
 import type { Tone } from "./labels";
 
-export function Pill({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
-  return <span className={`pill ${tone}`}>{children}</span>;
-}
-
 export function Fact({ label, value, sub, tone }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: Tone }) {
   return (
     <div className="fact">
