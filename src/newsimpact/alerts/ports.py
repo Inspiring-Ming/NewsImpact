@@ -1,0 +1,23 @@
+"""What the alerts module needs: somewhere to send alerts and somewhere to remember."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from typing import Protocol
+
+from newsimpact.alerts.models import Alert, EventSnapshot
+
+
+class Notifier(Protocol):
+    def send(self, alert: Alert, event_link: str) -> None: ...
+
+
+class AlertState(Protocol):
+    """The followed companies, the last snapshot and the alerts already sent."""
+
+    def followed(self) -> set[str]: ...
+    def set_followed(self, ticker: str, follow: bool) -> None: ...
+    def snapshot(self) -> Mapping[str, EventSnapshot] | None: ...
+    def save_snapshot(self, events: Sequence[EventSnapshot]) -> None: ...
+    def was_sent(self, key: str) -> bool: ...
+    def mark_sent(self, key: str) -> None: ...

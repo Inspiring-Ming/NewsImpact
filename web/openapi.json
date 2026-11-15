@@ -2133,6 +2133,52 @@
         "summary": "Health"
       }
     },
+    "/v1/alerts": {
+      "get": {
+        "description": "Is an alert channel configured? ('on' / 'off'; the channel itself stays secret).",
+        "operationId": "alerts_status_v1_alerts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Alerts Status V1 Alerts Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Alerts Status"
+      }
+    },
+    "/v1/alerts/test": {
+      "post": {
+        "description": "Send one test message to the configured channel.",
+        "operationId": "alerts_test_v1_alerts_test_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Alerts Test V1 Alerts Test Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Alerts Test"
+      }
+    },
     "/v1/articles": {
       "get": {
         "operationId": "recent_articles_v1_articles_get",
@@ -2684,6 +2730,113 @@
           }
         },
         "summary": "Storyline Prices"
+      }
+    },
+    "/v1/watchlist": {
+      "get": {
+        "description": "Companies followed for alerts (one list for now: a single user).",
+        "operationId": "watchlist_v1_watchlist_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Watchlist V1 Watchlist Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Watchlist"
+      }
+    },
+    "/v1/watchlist/{ticker}": {
+      "delete": {
+        "operationId": "unfollow_v1_watchlist__ticker__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticker",
+            "required": true,
+            "schema": {
+              "title": "Ticker",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Unfollow V1 Watchlist  Ticker  Delete",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unfollow"
+      },
+      "put": {
+        "operationId": "follow_v1_watchlist__ticker__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticker",
+            "required": true,
+            "schema": {
+              "title": "Ticker",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Follow V1 Watchlist  Ticker  Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Follow"
       }
     }
   }

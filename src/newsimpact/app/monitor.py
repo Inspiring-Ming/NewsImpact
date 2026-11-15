@@ -9,6 +9,7 @@ One round:
                                       (claims re-scored with current reliability);
                                       market checks that were "pending" mature
                                       as trading days pass
+  5. send_alerts()                    tell followers what changed (Discord, ...)
 Where rounds come from is a deployment choice, not business logic:
   * the web server:  NI_MONITOR_EVERY_MINUTES=15 runs BackgroundMonitor; the
                      website's "Run a round now" button triggers one on demand
@@ -23,6 +24,8 @@ import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from newsimpact.alerts.models import EventSnapshot
+from newsimpact.app import queries
 from newsimpact.app.wiring import Services
 
 log = logging.getLogger(__name__)
@@ -48,6 +51,22 @@ def update_track_records(svc: Services) -> None:
         svc.reliability.set_corroboration(r.source_id, r.confirmed, r.unconfirmed * weight)
 
 
+def send_alerts(svc: Services) -> None:
+    """Tell followers what changed for the companies they follow (alerts module)."""
+    snapshots = [
+        EventSnapshot(event_id=e.event_id, ticker=c.ticker, company=c.name, event_type=e.event_type,
+                      confirmed=e.verified, updates=len(e.updates),
+                      latest_update=e.updates[-1].title if e.updates else "",
+                      headline=e.latest_headline, article_url=e.latest_url,
+                      stock_move=e.stock_move, unusual=e.stock_move_unusual,
+                      index_name=c.index_name)
+        for c in queries.companies(svc) for e in c.events
+    ]  # fmt: skip
+    sent = svc.alerts.check(snapshots)
+    if sent:
+        log.info("alerts sent", extra={"count": len(sent)})
+
+
 def run_round(svc: Services, *, follow_up: bool = True) -> RoundResult:
     if svc.llm is not None:
         svc.llm.new_round()
@@ -55,6 +74,7 @@ def run_round(svc: Services, *, follow_up: bool = True) -> RoundResult:
     found = svc.sources.follow_up() if follow_up else 0
     update_track_records(svc)  # from the last assessments, so this round's scores use them
     updated = svc.validation.assess_and_store(svc.storyline_store.all())
+    send_alerts(svc)
     result = RoundResult(datetime.now(UTC), counts, found, len(svc.sources.active_watches),
                          len(updated))  # fmt: skip
     log.info("monitor round", extra={"new": result.new_total, "follow_up": found})

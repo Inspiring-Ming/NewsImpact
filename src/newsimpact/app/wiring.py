@@ -22,6 +22,11 @@ from typing import Any
 
 import httpx
 
+from newsimpact.alerts.adapters.discord import DiscordNotifier
+from newsimpact.alerts.adapters.memory import InMemoryAlertState
+from newsimpact.alerts.adapters.sqlite import SqliteAlertState
+from newsimpact.alerts.ports import AlertState, Notifier
+from newsimpact.alerts.service import AlertsService
 from newsimpact.app.config import Settings
 from newsimpact.impact.adapters.json_file import JsonRelationshipGraph
 from newsimpact.impact.adapters.memory import InMemoryImpactStore
@@ -131,6 +136,7 @@ class Services:
     articles: ArticleStore
     impacts: ImpactStore
     storyline_store: StorylineStore
+    alerts: AlertsService
 
 
 @dataclass(frozen=True)
@@ -144,6 +150,7 @@ class Stores:
     storylines: StorylineStore
     impacts: ImpactStore
     assessments: AssessmentStore
+    alerts: AlertState
 
 
 # ------------------------------------------------------------ choices
@@ -153,11 +160,11 @@ def _stores(s: Settings) -> Stores:
         return Stores(db, SqliteArticleStore(db), SqliteSeenSources(db), SqliteWatchStore(db),
                       SqliteTrackedSources(db), SqliteEvidenceStore(db),
                       SqliteStorylineStore(db), SqliteImpactStore(db),
-                      SqliteAssessmentStore(db))  # fmt: skip
+                      SqliteAssessmentStore(db), SqliteAlertState(db))  # fmt: skip
     return Stores(None, InMemoryArticleStore(), InMemorySeenSources(), InMemoryWatchStore(),
                   InMemoryTrackedSources(), InMemoryEvidenceStore(),
                   InMemoryStorylineStore(), InMemoryImpactStore(),
-                  InMemoryAssessmentStore())  # fmt: skip
+                  InMemoryAssessmentStore(), InMemoryAlertState())  # fmt: skip
 
 
 def http_client(s: Settings) -> httpx.Client:
@@ -175,6 +182,14 @@ def _feed_factory(s: Settings, client: httpx.Client | None, tickers: Sequence[st
         raise ValueError(f"feed kind {config.kind!r} is not available in profile {s.profile!r}")
 
     return build
+
+
+def _notifier(s: Settings, client: httpx.Client | None) -> Notifier | None:
+    if s.discord_webhook_url is None or not s.discord_webhook_url.get_secret_value():
+        return None
+    return DiscordNotifier(
+        client or httpx.Client(timeout=15), s.discord_webhook_url.get_secret_value()
+    )
 
 
 def _llm(s: Settings, stores: Stores) -> LlmGateway | None:
@@ -338,6 +353,7 @@ def build_services(settings: Settings | None = None) -> Services:
         articles=stores.articles,
         impacts=stores.impacts,
         storyline_store=stores.storylines,
+        alerts=AlertsService(stores.alerts, _notifier(s, client), s.site_url),
     )
     services.sources.register_listed()  # every listed outlet is tracked from the start
     return services

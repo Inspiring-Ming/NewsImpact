@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     # Read from .env or the environment under its usual name (not NI_-prefixed).
     anthropic_api_key: SecretStr | None = Field(default=None, validation_alias="ANTHROPIC_API_KEY")
     llm_monthly_budget_usd: float = 5.0
+
+    # Alerts for followed companies. A Discord incoming-webhook URL is a secret (anyone with
+    # it can post to the channel): set it only in the git-ignored .env. Unset = alerts off.
+    discord_webhook_url: SecretStr | None = None
+    site_url: str = "http://localhost:8000"  # where alert links point
     llm_max_calls_per_round: int = 200
 
     @property

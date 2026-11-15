@@ -1,7 +1,7 @@
 // Home: the watchlist. Two views: every company with an event, or "My companies" (starred).
 // Key numbers for the view, filters, the impact map, then one compact paged table. Search
 // also finds companies without an event, so any company can be found and followed.
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, type S } from "../../api/client";
 import { pct, SECTORS, type Tone } from "../../shared/labels";
 import { useStarred } from "../../shared/starred";
@@ -28,7 +28,9 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const { data, error, loading } = useApi(api.companies, [refreshKey]);
   const overview = useApi(api.overview, [refreshKey]);
   const { starred, toggle } = useStarred();
-  const [view, setView] = useState<View>(() => (starred.size ? "mine" : "events"));
+  const [view, setView] = useState<View>("events");
+  const chosen = useRef(false); // once the visitor picks a view, never switch it for them
+  useEffect(() => { if (!chosen.current && starred.size) setView("mine"); }, [starred.size]);
   const [market, setMarket] = useState("all");
   const [sector, setSector] = useState("all");
   const [query, setQuery] = useState("");
@@ -67,7 +69,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
     <>
       <div className="segmented views" role="group" aria-label="View">
         {VIEWS.map(([id, name]) => (
-          <button key={id} className={id === view ? "active" : ""} onClick={() => change(() => setView(id))}>{name}</button>
+          <button key={id} className={id === view ? "active" : ""} onClick={() => change(() => { chosen.current = true; setView(id); })}>{name}</button>
         ))}
       </div>
 

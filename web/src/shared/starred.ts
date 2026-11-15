@@ -1,21 +1,17 @@
-// "My companies": the tickers a visitor follows, kept in this browser only (a per-viewer
-// convenience until accounts exist). Storage can be unavailable (private mode), so every
-// access is guarded and the page works without it.
-import { useState } from "react";
-
-const KEY = "newsimpact.starred";
-
-function read(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(KEY) ?? "[]") as string[]); } catch { return new Set(); }
-}
+// "My companies": the tickers being followed. Kept on the server, because alerts (e.g.
+// Discord) are sent for them after each monitor round. One list for now: a single user.
+import { useEffect, useState } from "react";
+import { api } from "../api/client";
 
 export function useStarred() {
-  const [starred, setStarred] = useState<Set<string>>(read);
+  const [starred, setStarred] = useState<Set<string>>(new Set());
+  useEffect(() => { api.watchlist().then((t) => setStarred(new Set(t))).catch(() => undefined); }, []);
   const toggle = (ticker: string) => {
+    const follow = !starred.has(ticker);
     const next = new Set(starred);
-    if (next.has(ticker)) next.delete(ticker); else next.add(ticker);
-    setStarred(next);
-    try { localStorage.setItem(KEY, JSON.stringify([...next])); } catch { /* not saved: still works this visit */ }
+    if (follow) next.add(ticker); else next.delete(ticker);
+    setStarred(next); // show it at once; the server's answer then confirms the list
+    (follow ? api.follow(ticker) : api.unfollow(ticker)).then((t) => setStarred(new Set(t))).catch(() => setStarred(starred));
   };
   return { starred, toggle };
 }

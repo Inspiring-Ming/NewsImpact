@@ -101,6 +101,37 @@ def create_app(services: Services | None = None) -> FastAPI:
             raise HTTPException(404, "unknown event")
         return card
 
+    @app.get("/v1/watchlist", response_model=list[str])
+    def watchlist() -> list[str]:
+        """Companies followed for alerts (one list for now: a single user)."""
+        return sorted(svc.alerts.followed())
+
+    @app.put("/v1/watchlist/{ticker}", response_model=list[str])
+    def follow(ticker: str) -> list[str]:
+        if ticker not in {c.ticker for c in svc.companies}:
+            raise HTTPException(404, "unknown company")
+        svc.alerts.follow(ticker, True)
+        return sorted(svc.alerts.followed())
+
+    @app.delete("/v1/watchlist/{ticker}", response_model=list[str])
+    def unfollow(ticker: str) -> list[str]:
+        svc.alerts.follow(ticker, False)
+        return sorted(svc.alerts.followed())
+
+    @app.get("/v1/alerts")
+    def alerts_status() -> dict[str, str]:
+        """Is an alert channel configured? ('on' / 'off'; the channel itself stays secret)."""
+        return {"channel": svc.alerts.channel}
+
+    @app.post("/v1/alerts/test")
+    def alerts_test() -> dict[str, str]:
+        """Send one test message to the configured channel."""
+        try:
+            svc.alerts.test()
+        except RuntimeError as exc:
+            raise HTTPException(409, str(exc)) from None
+        return {"sent": "ok"}
+
     @app.get("/v1/monitor", response_model=MonitorStatus)
     def monitor_status() -> MonitorStatus:
         return _status(monitor.last, svc.settings.monitor_every_minutes)

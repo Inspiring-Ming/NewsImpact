@@ -4,7 +4,7 @@ import type { components } from "./schema";
 
 export type S = components["schemas"];
 
-async function request<T>(method: "GET" | "POST", path: string): Promise<T> {
+async function request<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string): Promise<T> {
   const res = await fetch(path, { method, headers: { Accept: "application/json" } });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -19,6 +19,10 @@ export const api = {
   runRound: () => request<S["MonitorStatus"]>("POST", "/v1/monitor/run"),
   loadDemo: () => request<Record<string, number>>("POST", "/v1/demo/load"),
   companies: () => request<S["CompanyCard"][]>("GET", "/v1/companies"),
+  watchlist: () => request<string[]>("GET", "/v1/watchlist"),
+  follow: (ticker: string) => request<string[]>("PUT", `/v1/watchlist/${encodeURIComponent(ticker)}`),
+  unfollow: (ticker: string) => request<string[]>("DELETE", `/v1/watchlist/${encodeURIComponent(ticker)}`),
+  alerts: () => request<Record<string, string>>("GET", "/v1/alerts"),
   eventSummary: (id: string) => request<S["CompanyCard"]>("GET", `/v1/events/${id}/summary`),
   storyline: (id: string) => request<S["Storyline"]>("GET", `/v1/storylines/${id}`),
   assessment: (id: string) => request<S["Assessment"]>("GET", `/v1/storylines/${id}/assessment`),
