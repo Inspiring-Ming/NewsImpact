@@ -1,6 +1,9 @@
-# Weekly update pull requests for every kind of dependency. Minor and patch
-# updates are grouped into one pull request per ecosystem, so the list stays short;
-# major versions come one by one, because they can break things.
+# Weekly update pull requests for every kind of dependency. Packages that only
+# work together (the React family, the Vite family) always come in ONE pull
+# request, even for a major version: upgraded alone they fail CI. Other minor and
+# patch updates are grouped per ecosystem; other majors come one by one.
+# Updates are applied by Inspiring Ming (not merged as dependabot[bot]), so the
+# repository keeps a single contributor.
 version: 2
 updates:
   - package-ecosystem: uv
@@ -12,7 +15,11 @@ updates:
   - package-ecosystem: npm
     directory: /web
     schedule: { interval: weekly }
-    groups:
+    groups:  # the first group a package matches wins
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      vite:
+        patterns: ["vite", "@vitejs/*"]
       web-minor:
         update-types: [minor, patch]
   - package-ecosystem: github-actions
