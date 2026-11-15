@@ -1,11 +1,15 @@
 // Updates as a timeline: a date axis with every update placed in time, then one card per
 // update with its tone, sources, confidence and the stock's reaction that day.
 import { date, moveVs, tone } from "../../shared/labels";
+import { Term } from "../../shared/Term";
 import { useNames } from "../../shared/names";
-import { confidenceTone, Dots, Meter, MoveBar } from "../../shared/viz";
+import { SourceBadge } from "../../shared/SourceBadge";
+import { Dots, MoveBar } from "../../shared/viz";
 import type { EventData } from "./context";
 
 const DAY = 86_400_000;
+// Same rule as the event's "Confirmed": 2+ independent origins, or a company press release or filing.
+const AUTHORITATIVE = ["regulatory_filing", "company_press_release"];
 
 export function Updates({ story, assessment, company, card }: EventData) {
   const { title, source } = useNames();
@@ -38,16 +42,16 @@ export function Updates({ story, assessment, company, card }: EventData) {
                 <div className="stage-head">
                   <b>{title(st.stage_name)}</b>
                   <span className="muted">{date(st.published_at, true)}</span>
-                  <span className={`tone-chip ${t.tone}`}>{t.text}</span>
-                  {ev?.is_rumour && <span className="tone-chip warn">Rumour</span>}
-                  {st.claim.authoritative && <span className="tone-chip good">Company or official filing</span>}
+                  <Term id="tone"><span className={`tone-chip ${t.tone}`}>{t.icon} {t.text}</span></Term>
+                  {ev?.is_rumour && <Term id="rumour"><span className="tone-chip warn">? Rumour</span></Term>}
                 </div>
                 {ev && <blockquote>{ev.summary.replace("?.", "?").replace("!.", "!")}</blockquote>}
                 <div className="stage-facts">
                   <span><Dots n={st.claim.outlets.length} /> {(card.updates[i]?.articles.length
                     ? card.updates[i].articles.map((a) => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="src-link">{a.source} ↗</a>)
                     : st.claim.outlets.map(source).join(", "))}</span>
-                  <span className="conf"><Meter value={st.claim.confidence} tone={confidenceTone(st.claim.confidence)} /> {Math.round(st.claim.confidence * 100)}% confidence</span>
+                  <SourceBadge confirmed={st.claim.origins.length >= 2 || !!ev?.reports.some((r) => AUTHORITATIVE.includes(r.source_type))}
+                               names={card.updates[i]?.articles.map((a) => a.source) ?? st.claim.outlets.map(source)} />
                   {price && <span className="conf"><MoveBar value={price.value} unusual={price.significant} /> stock {moveVs(price.value, company.index_name)}</span>}
                 </div>
                 {st.overlaps_previous && <p className="small muted">Within a few trading days of the update before, so their stock reactions are also measured together.</p>}

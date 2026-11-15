@@ -47,3 +47,24 @@ events earn.
 + The gap is now visible and measurable: more corroborating sources (a news
   wire, ASX announcements) would turn signals into verified events.
 - Followed companies live in one browser; alerts and accounts come later.
+
+## Follow-up (same day): simpler, factual labels
+* A separate "Verified events" view and an "All companies" view repeated the
+  event list. Now there are two views: **All events** and **My companies**;
+  search also finds companies without an event.
+* The confidence percentage is no longer shown. Readers found the
+  calculation hard to accept, and two checkable facts say the same thing:
+  **Confirmed** (2+ independent sources, a company press release or a
+  filing) or **Single source**, with the source names on hover. Reliability
+  stays on How it works, where its track record is shown.
+* "What the news says" (tone, fact or rumour, who said it) shrank to two
+  chips inside the event cell: good or bad news, and a rumour flag only when
+  it applies. "Who said it" repeated the sources column.
+* Every event now shows its stock move and trading volume, measured even
+  when the event type's playbook expects no reaction in that measure; recent
+  news says "too early" instead of "no data".
+* "Developing / Complete" became "x of y usual updates · next to watch: ...".
+* Expected vs actual opens with a reaction scorecard: one coloured tile per
+  update and measure (✓ as expected, ✗ opposite, – no clear move, … too
+  early), above the detailed bars. Bars grow in when a page opens, unless
+  the reader has turned motion off.

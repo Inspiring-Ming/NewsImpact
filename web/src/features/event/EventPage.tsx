@@ -3,7 +3,9 @@
 import { useState, type ComponentType } from "react";
 import { api } from "../../api/client";
 import { COUNTRY, date, NO_MOVE, pct, vsWords } from "../../shared/labels";
-import { confidenceTone, Dots, Meter, MoveBar, RatioBar } from "../../shared/viz";
+import { SourceBadge } from "../../shared/SourceBadge";
+import { Dots, Meter, MoveBar, RatioBar } from "../../shared/viz";
+import { Signals } from "../../shared/Signals";
 import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
@@ -36,18 +38,22 @@ export function EventPage({ id }: { id: string }) {
         {company && card && s && a && (
           <>
             <header className="event-head">
-              <div>
-                <span className="tag">{card.event_type}</span>{" "}
-                <span className="muted small">{card.ongoing ? "Developing" : "Complete"}</span>
+              <div className="event-top">
+                <span className="tag">{card.event_type}</span>
+                <Dots n={card.updates.length} of={Math.max(card.stages_total, card.updates.length)} />
+                <span className="small muted">
+                  {card.updates.length} of {card.stages_total} usual updates
+                  {card.next_update ? <> · next to watch: <b>{card.next_update}</b></> : " · all usual updates reported"}
+                </span>
               </div>
               <h1>{company.name}</h1>
               <div className="muted">{country?.flag} {company.ticker} · {company.sector}</div>
               <p className="lead-small">
                 <a href={card.latest_url} target="_blank" rel="noreferrer">{card.latest_headline} ↗</a>
               </p>
-              <p className="small muted">
-                <span className={`badge-verified ${card.verified ? "yes" : "no"}`}>{card.verified ? "✓ Verified" : "Unverified signal"}</span>{" "}
-                Prices: daily closes{prices.data?.points.length ? ` to ${date(prices.data.points[prices.data.points.length - 1].day)}` : ""} · news checked every hour
+              <p className="small muted head-meta">
+                <Signals e={card} />
+                <span>Prices: daily closes{prices.data?.points.length ? ` to ${date(prices.data.points[prices.data.points.length - 1].day)}` : ""} · news checked every hour</span>
               </p>
             </header>
             <div className="kpis">
@@ -61,16 +67,16 @@ export function EventPage({ id }: { id: string }) {
                           <div>{vsWords(card.stock_move, company.index_name)} · {card.stock_move_period}</div>
                           <Term id="unusual">{card.stock_move_unusual ? "⚠ unusual move" : "normal range"}</Term></>} />
               <Fact label={<Term id="volume" />} value={card.volume_ratio == null ? "–" : `${card.volume_ratio.toFixed(1)}×`}
-                    sub={card.volume_ratio == null ? "not measured yet"
+                    sub={card.volume_ratio == null
+                      // Volume needs the update day and 2 more trading days: recent news is simply too early.
+                      ? NO_MOVE[Date.now() - Date.parse(card.updates[0].published_at) < 10 * 86_400_000 ? "pending" : "no_data"]
                       : <><RatioBar value={card.volume_ratio} /><div>{card.volume_ratio >= 2 ? "far above" : "close to"} a normal day (1×)</div></>} />
-              <Fact label={<Term id="confidence">News confidence</Term>} value={`${Math.round(card.confidence * 100)}%`}
-                    tone={confidenceTone(card.confidence)}
-                    sub={<><Meter value={card.confidence} tone={confidenceTone(card.confidence)} />
-                          <div><Dots n={card.sources} /> {card.sources} {card.sources === 1 ? "source" : "independent sources"}</div></>} />
+              <Fact label={<Term id="sources" />} value={card.sources}
+                    sub={<><Dots n={card.sources} /><SourceBadge confirmed={card.verified} names={card.source_names} /></>} />
               <Fact label={<Term id="expected">Reactions as expected</Term>}
                     value={measured.length ? `${hits} of ${measured.length}` : "–"}
                     sub={measured.length ? <><Meter value={hits / measured.length} tone={hits / measured.length >= 0.6 ? "good" : "warn"} />
-                          <div>measured market reactions that matched</div></> : "none measured yet"} />
+                          <div>measured market reactions that matched</div></> : "waiting for the next trading days to close"} />
             </div>
             <Tabs tabs={TABS} active={tab} onChange={setTab} />
             <Body company={company} card={card} story={s} assessment={a} prices={prices.data ?? null} />

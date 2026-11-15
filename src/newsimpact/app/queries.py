@@ -13,6 +13,7 @@ from datetime import UTC, date, datetime, timedelta
 from pydantic import Field
 
 from newsimpact.app.wiring import Services
+from newsimpact.market.models import ChannelObservation
 from newsimpact.semantics.logic import FieldScore, score_field
 from newsimpact.semantics.models import Claim, Company, EntityMention
 from newsimpact.shared.events import Model
@@ -274,6 +275,24 @@ def _news(article: Article, names: dict[str, str]) -> NewsItem:
                     source=names.get(article.source_id, article.source_id))  # fmt: skip
 
 
+def _observe(
+    svc: Services, story: Storyline, channel: str, at: datetime
+) -> ChannelObservation | None:
+    """A market measure for the first update even when the playbook expects no reaction in
+    that channel, so every event shows its stock move and trading volume. None = not yet."""
+    if svc.market is None:
+        return None
+    try:
+        return svc.market.observe(story.ticker, channel, at)
+    except ValueError:  # too early (WindowNotComplete) or no data from the vendor
+        return None
+
+
+def _measure(svc: Services, story: Storyline, channel: str, at: datetime) -> float | None:
+    o = _observe(svc, story, channel, at)
+    return o.value if o else None
+
+
 def _so_far(svc: Services, story: Storyline) -> tuple[float, date] | None:
     """Stock return minus its index from the close before the first update to the latest
     close: what the market has done so far while the measured window is still open."""
@@ -315,6 +334,9 @@ def _event_card(
     latest_sources = next(
         (st.claim.outlets for st in a.stages if st.published_at == latest.published_at), ()
     )
+    first_at = min(e.published_at for e in story.events)
+    if move is None:  # this event type expects no price reaction: measure it anyway
+        move = _observe(svc, story, "price", first_at)
     pending = any(d.channel == "price" and d.verdict == "pending"
                   for st in a.stages for d in st.decisions)  # fmt: skip
     status = "measured" if move else "pending" if pending else "no_data"
@@ -355,7 +377,7 @@ def _event_card(
         stages_total=len(playbook.stages) if playbook else len(a.stages),
         volume_ratio=max((d.evidence.value for st in a.stages for d in st.decisions
                           if d.evidence is not None and d.evidence.channel == "volume"),
-                         default=None),
+                         default=None) or _measure(svc, story, "volume", first_at),
         tone=latest.tone,
         is_rumour=latest.is_rumour,
         said_by=latest.reports[0].attribution_kind if latest.reports else "own_reporting",

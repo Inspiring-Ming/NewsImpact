@@ -39,16 +39,17 @@ export const SECTORS = [
 export const TERMS = {
   sector: { label: "Sector", tip: "The company's industry under GICS (Global Industry Classification Standard), the 11-sector system used by MSCI, S&P and most fund managers." },
   event: { label: "Latest event", tip: "Company news of a kind known to move share prices, e.g. a CEO leaving, a takeover, an earnings miss. An event is a chain of dated updates." },
-  says: { label: "What the news says", tip: "Read from the wording of the latest update: its tone (good or bad for the company), whether it is stated as fact or only rumoured, and who it comes from. 'Next' is the update this kind of event usually brings next." },
   move: { label: "Stock vs market", tip: "How much better (+) or worse (−) the stock did than its whole market over the event days (S&P 500 for US, ASX 200 for Australia). Taking out the market's own move leaves the company's reaction to its news." },
   unusual: { label: "Unusual move", tip: "A move this large happens on fewer than 1 in 20 normal days for this stock (judged from its previous 120 trading days), so it is unlikely to be chance." },
+  confirmed: { label: "Confirmed", tip: "Reported by 2 or more independent news sources, or published by the company itself (a press release) or in an official filing." },
+  single: { label: "Single source", tip: "Only one news source has reported this so far. Treat it as a lead to check, not a fact. It becomes Confirmed when another independent source, the company or a filing reports it." },
+  tone: { label: "Tone", tip: "Whether the latest update reads as good or bad news for the company, read automatically from its wording." },
+  rumour: { label: "Rumour", tip: "Worded as unconfirmed: 'reportedly', 'is said to', 'sources say', 'considering'. Nobody has confirmed it on the record yet." },
   sources: { label: "Sources", tip: "How many of our news sources reported the event. Copies of the same article count once." },
-  confidence: { label: "Confidence", tip: "Chance the news is true. Each source has a reliability score; the news is wrong only if every independent source is wrong. One 75% source gives 75%; three give about 98%. An event shows its weakest update." },
   reliability: { label: "Reliability", tip: "Chance a report from this source is right. = (starting estimate × 10 + reports confirmed) ÷ (10 + reports judged), where a report nobody else confirmed within 7 days counts as half a miss. So a source starts at its type's estimate and moves with its own record." },
   prior: { label: "Starting estimate", tip: "Set by the kind of source, ordered by how content is checked before publishing: official filing 95% (legal liability), news agency 80% and newspaper 75% (editors, corrections policy), company press release 67% (accurate about itself but selective), news aggregator 67% (mixes reporting and opinion). It counts as much as 10 reports, then the track record takes over." },
   trackRecord: { label: "Track record", tip: "Of this source's reports old enough to judge (7+ days), how many another independent source also reported. Sources whose news others confirm are more trustworthy (truth-discovery research: Yin, Han & Yu 2008)." },
   accuracy: { label: "How accurately we read the news", tip: "Before trusting the automatic reading, we test it: 56 real news sentences were labelled by hand (which event, who said it, rumour or fact, new or old news) and we count how often our reading matches. If a change makes these scores drop, it is not released." },
-  verified: { label: "Verified", tip: "At least one update was reported by 2 or more independent sources, or published directly by the company (a press release) or in an official filing. One news article, even one quoting the company, is still one source: it can misread or exaggerate, so it is shown as an 'unverified signal' until confirmed." },
   provisional: { label: "Provisional", tip: "The measurement window has not closed yet, so this is the stock's move against its index up to the latest close. It can still change; the final number replaces it once the window closes." },
   eventsWeek: { label: "Events this week", tip: "Events with a new update in the last 7 days." },
   biggest: { label: "Biggest move", tip: "The largest stock move against its market among all events." },
@@ -76,17 +77,11 @@ export const SECTOR_SHORT: Record<string, string> = {
   Materials: "Materials", Industrials: "Industrials", Utilities: "Utilities", "Real Estate": "Real Estate",
 };
 
-/** Who the latest update comes from. */
-export const SAID_BY: Record<string, string> = {
-  own_reporting: "news report", cites_outlet: "cites another outlet", company_statement: "company statement",
-  filing: "official filing", anonymous: "unnamed sources",
-};
-
 /** Tone of the wording, for the company: thresholds keep near-zero scores neutral. */
-export function tone(x: number): { text: string; tone: Tone } {
-  if (x <= -0.15) return { text: "Negative", tone: "bad" };
-  if (x >= 0.15) return { text: "Positive", tone: "good" };
-  return { text: "Neutral", tone: "neutral" };
+export function tone(x: number): { text: string; icon: string; tone: Tone } {
+  if (x <= -0.15) return { text: "Bad news", icon: "▼", tone: "bad" };
+  if (x >= 0.15) return { text: "Good news", icon: "▲", tone: "good" };
+  return { text: "Neutral", icon: "●", tone: "neutral" };
 }
 
 /** "−18.5%" with a sign, for stock moves against an index. */

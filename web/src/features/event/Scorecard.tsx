@@ -2,8 +2,9 @@
 // update: what investors usually do (expected direction), what we measured as a bar against
 // this stock's normal range, and whether it matched, in words. The method and the exact
 // versions sit at the bottom, so the result can be checked and repeated.
+import { Fragment } from "react";
 import type { S } from "../../api/client";
-import { ARROW, humanize, moveVs, RESULT } from "../../shared/labels";
+import { ARROW, humanize, moveVs, pct, RESULT } from "../../shared/labels";
 import { useNames } from "../../shared/names";
 import { Meter } from "../../shared/viz";
 import type { EventData } from "./context";
@@ -27,14 +28,15 @@ function Bar({ o, scale }: { o: S["ChannelObservation"]; scale: number }) {
         {band > 0 && <span className="xbar-band" style={{ left: `${x(-band)}%`, width: `${x(band) - x(-band)}%` }} />}
         <span className="xbar-zero" style={{ left: "50%" }} />
         <span className={`xbar-fill ${o.significant ? (o.value < 0 ? "bad" : "good") : "neutral"}`}
-              style={o.value < 0 ? { left: `${x(o.value)}%`, width: `${50 - x(o.value)}%` } : { left: "50%", width: `${x(o.value) - 50}%` }} />
+              style={o.value < 0 ? { left: `${x(o.value)}%`, width: `${50 - x(o.value)}%`, transformOrigin: "right" }
+                                 : { left: "50%", width: `${x(o.value) - 50}%`, transformOrigin: "left" }} />
       </div>
     );
   }
   return (
     <div className="xbar">
       <span className="xbar-zero" style={{ left: `${(1 / scale) * 100}%` }} />
-      <span className={`xbar-fill ${o.significant ? "warn" : "neutral"}`} style={{ left: 0, width: `${Math.min(o.value / scale, 1) * 100}%` }} />
+      <span className={`xbar-fill ${o.significant ? "warn" : "neutral"}`} style={{ left: 0, width: `${Math.min(o.value / scale, 1) * 100}%`, transformOrigin: "left" }} />
     </div>
   );
 }
@@ -55,6 +57,37 @@ export function Scorecard({ assessment: a, company, card }: EventData) {
           measured market reactions matched what investors usually do after this kind of news.
           {a.combined_reaction && <> Updates close together are also measured as one: the stock did <b>{moveVs(a.combined_reaction.value, index)}</b>.</>}
         </p>
+      </div>
+
+      <div className="card tiles-card">
+        <h3>Reaction scorecard</h3>
+        <p className="small muted">Each tile: what investors usually do after that update (arrow), what the market did (number), and whether they match (colour and icon). Details for each measure follow below.</p>
+        <div className="tiles" style={{ gridTemplateColumns: `minmax(120px, 1.2fr) repeat(${MEASURES.length}, 1fr)` }}>
+          <span />
+          {MEASURES.map((m) => <span key={m.channel} className="tiles-head">{m.title(index).split(" vs ")[0]}</span>)}
+          {a.stages.map((st, i) => (
+            <Fragment key={st.stage + st.published_at}>
+              <span className="tiles-row"><b>{i + 1}.</b> {title(st.stage_name)}</span>
+              {MEASURES.map((m) => {
+                const d = st.decisions.find((x) => x.channel === m.channel);
+                if (!d) return <span key={m.channel} className="tile none">not expected</span>;
+                const r = RESULT[d.verdict] ?? { text: humanize(d.verdict), icon: "?", tone: "muted" as const };
+                const o = d.evidence;
+                return (
+                  <span key={m.channel} className={`tile ${r.tone} ${d.verdict === "pending" ? "pending" : ""}`} title={r.text}>
+                    <span className="tile-icon">{r.icon}</span>
+                    <span className="tile-value">{o ? (o.channel === "price" ? pct(o.value) : `${o.value.toFixed(1)}×`) : r.text}</span>
+                    <span className="tile-expect">expected {ARROW[d.expected]}</span>
+                  </span>
+                );
+              })}
+            </Fragment>
+          ))}
+        </div>
+        <div className="tiles-legend small">
+          <span className="tile-key good">✓ as expected</span><span className="tile-key bad">✗ opposite</span>
+          <span className="tile-key neutral">– no clear move</span><span className="tile-key pending">… too early</span>
+        </div>
       </div>
 
       {MEASURES.map((m) => {

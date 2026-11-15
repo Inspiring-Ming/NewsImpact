@@ -1,7 +1,6 @@
-// Home: the watchlist. A view (my companies, verified events, all events, all companies),
-// key numbers for that view, filters, the impact map, then one compact paged table.
-// Verified = backed by 2+ independent sources, the company itself or an official filing;
-// single-source items are "unverified signals", shown only when asked for.
+// Home: the watchlist. Two views: every company with an event, or "My companies" (starred).
+// Key numbers for the view, filters, the impact map, then one compact paged table. Search
+// also finds companies without an event, so any company can be found and followed.
 import { useMemo, useState, type ReactNode } from "react";
 import { api, type S } from "../../api/client";
 import { pct, SECTORS, type Tone } from "../../shared/labels";
@@ -14,8 +13,8 @@ import { KpiDetail, type Kpi } from "./KpiDetail";
 import { WatchlistTable } from "./WatchlistTable";
 
 const PAGE = 12;
-const MARKETS = [["all", "All markets"], ["US", "🇺🇸 US"], ["AU", "🇦🇺 Australia"]] as const;
-type View = "mine" | "verified" | "events" | "all";
+const MARKETS = [["all", "All markets"], ["US", "🇺🇸 United States"], ["AU", "🇦🇺 Australia"]] as const;
+type View = "events" | "mine";
 
 // Sort orders a market user expects: newest news, largest price impact, best-supported news.
 const latestAt = (c: S["CompanyCard"]) => Date.parse(c.events[0]?.updates.at(-1)?.published_at ?? c.latest_news?.published_at ?? "1970");
@@ -29,7 +28,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const { data, error, loading } = useApi(api.companies, [refreshKey]);
   const overview = useApi(api.overview, [refreshKey]);
   const { starred, toggle } = useStarred();
-  const [view, setView] = useState<View>(() => (starred.size ? "mine" : "verified"));
+  const [view, setView] = useState<View>(() => (starred.size ? "mine" : "events"));
   const [market, setMarket] = useState("all");
   const [sector, setSector] = useState("all");
   const [query, setQuery] = useState("");
@@ -39,10 +38,8 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
 
   const all = data ?? [];
   const rows = useMemo(() => all
-    .filter((c) => view !== "mine" || starred.has(c.ticker))
-    .map((c) => (view === "verified" ? { ...c, events: c.events.filter((e) => e.verified) } : c))
+    .filter((c) => (view === "mine" ? starred.has(c.ticker) : c.events.length > 0 || query !== ""))
     .filter((c) =>
-      (view !== "verified" && view !== "events" || c.events.length > 0) &&
       (market === "all" || c.country === market) &&
       (sector === "all" || c.sector === sector) &&
       (!query || `${c.name} ${c.ticker}`.toLowerCase().includes(query.toLowerCase())))
@@ -55,14 +52,10 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const biggest = rows.flatMap((c) => c.events.filter((e) => e.stock_move != null).map((e) => ({ c, e })))
     .sort((a, b) => Math.abs(b.e.stock_move!) - Math.abs(a.e.stock_move!))[0];
   const inNews = all.filter((c) => c.latest_news && Date.parse(c.latest_news.published_at) >= dayAgo).length;
-  const hiddenSignals = all.flatMap((c) => c.events).filter((e) => !e.verified).length;
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const current = Math.min(page, pages - 1);
   const change = (f: () => void) => { f(); setPage(0); };
-  const VIEWS: [View, string][] = [
-    ["mine", `★ My companies${starred.size ? ` (${starred.size})` : ""}`], ["verified", "Verified events"],
-    ["events", "All events"], ["all", "All companies"],
-  ];
+  const VIEWS: [View, string][] = [["events", "All events"], ["mine", `★ My companies${starred.size ? ` (${starred.size})` : ""}`]];
 
   return (
     <>
@@ -74,7 +67,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
 
       <div className="kpis">
         {([
-          ["events", <Term id="eventsWeek" />, thisWeek.length, `${verifiedWeek} verified · ${thisWeek.length - verifiedWeek} unverified`, undefined],
+          ["events", <Term id="eventsWeek" />, thisWeek.length, `${verifiedWeek} confirmed · ${thisWeek.length - verifiedWeek} single source`, undefined],
           ["unusual", <Term id="unusual">Unusual stock moves</Term>, unusual, `of ${events.filter((e) => e.stock_move != null).length} events with price data`, unusual ? "warn" : undefined],
           ["biggest", <Term id="biggest" />, biggest ? pct(biggest.e.stock_move!) : "–",
             biggest ? `${biggest.c.name} vs ${biggest.c.index_name} · ${biggest.e.event_type}` : "no measured move in this view",
@@ -95,11 +88,9 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
       <div className="toolbar">
         <input className="search" type="search" placeholder="Search company or ticker" value={query}
                onChange={(e) => change(() => setQuery(e.target.value))} />
-        <div className="segmented" role="group" aria-label="Market">
-          {MARKETS.map(([id, name]) => (
-            <button key={id} className={id === market ? "active" : ""} onClick={() => change(() => setMarket(id))}>{name}</button>
-          ))}
-        </div>
+        <select value={market} onChange={(e) => change(() => setMarket(e.target.value))} aria-label="Market">
+          {MARKETS.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        </select>
         <select value={sector} onChange={(e) => change(() => setSector(e.target.value))} aria-label="Sector">
           <option value="all">All sectors</option>
           {SECTORS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -108,19 +99,12 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           {Object.entries(SORTS).map(([id, s]) => <option key={id} value={id}>Sort: {s.label}</option>)}
         </select>
       </div>
-      {view === "verified" && hiddenSignals > 0 && (
-        <p className="view-note small muted">
-          Showing <Term id="verified">verified events</Term> only. {hiddenSignals} unverified signals (one source so far) are hidden.{" "}
-          <button className="link" onClick={() => change(() => setView("events"))}>Show them</button>
-        </p>
-      )}
-
       {data && <ImpactMap companies={rows} />}
 
       <State error={error} loading={loading && !data}
              empty={data && rows.length === 0 && (view === "mine"
-               ? <p>No companies followed yet. Click ☆ next to a company to follow it here. <button className="small" onClick={() => change(() => setView("all"))}>Show all companies</button></p>
-               : <p>No companies match. <button className="small" onClick={() => change(() => setView("all"))}>Show all companies</button></p>)}>
+               ? <p>No companies followed yet. Click ☆ next to a company, or search for one, to follow it here.</p>
+               : <p>No companies match these filters.</p>)}>
         <WatchlistTable rows={rows.slice(current * PAGE, current * PAGE + PAGE)} starred={starred} onStar={toggle} />
         <div className="pager">
           <span className="muted small">{current * PAGE + 1}–{Math.min(rows.length, current * PAGE + PAGE)} of {rows.length}</span>

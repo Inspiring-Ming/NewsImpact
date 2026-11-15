@@ -1,24 +1,12 @@
-// The watchlist: one compact row per company, paged. Each cell pairs a number with a small
-// visual; on phones every row becomes a card (see styles.css "watchlist cards").
+// The watchlist: one compact row per company, paged. Four columns, each answering one
+// question: who, what happened, how did the stock react, how well is it sourced.
+// On phones every row becomes a card (see styles.css "watchlist cards").
 import type { S } from "../../api/client";
-import { COUNTRY, date, NO_MOVE, pct, SAID_BY, SECTOR_SHORT, tone, vsWords } from "../../shared/labels";
+import { COUNTRY, date, NO_MOVE, pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
+import { Signals } from "../../shared/Signals";
+import { SourceBadge } from "../../shared/SourceBadge";
 import { Term } from "../../shared/Term";
-import { confidenceTone, Dots, Meter, MoveBar } from "../../shared/viz";
-
-const TONE_ICON = { good: "▲", bad: "▼", neutral: "●" } as Record<string, string>;
-
-function NewsSays({ e }: { e: S["EventCard"] }) {
-  const t = tone(e.tone);
-  return (
-    <div className="says">
-      <span className={`says-line ${t.tone}`}><span className="icon">{TONE_ICON[t.tone]}</span> {t.text} tone</span>
-      <span className={`says-line ${e.is_rumour ? "warn" : ""}`}>
-        <span className="icon">{e.is_rumour ? "?" : "✓"}</span> {e.is_rumour ? "Rumour" : "Stated as fact"}
-      </span>
-      <span className="says-line muted"><span className="icon">❝</span> {SAID_BY[e.said_by] ?? e.said_by}</span>
-    </div>
-  );
-}
+import { Dots, MoveBar } from "../../shared/viz";
 
 export function WatchlistTable({ rows, starred, onStar }: {
   rows: S["CompanyCard"][]; starred: Set<string>; onStar: (ticker: string) => void;
@@ -28,13 +16,12 @@ export function WatchlistTable({ rows, starred, onStar }: {
       <table className="watchlist">
         {/* Fixed widths, so columns line up on every page whatever text a row holds. */}
         <colgroup>
-          <col style={{ width: "16%" }} /><col style={{ width: "34%" }} /><col style={{ width: "16%" }} />
-          <col style={{ width: "17%" }} /><col style={{ width: "17%" }} />
+          <col style={{ width: "19%" }} /><col style={{ width: "45%" }} /><col style={{ width: "19%" }} /><col style={{ width: "17%" }} />
         </colgroup>
         <thead>
           <tr>
-            <th>Company · <Term id="sector" /></th><th><Term id="event" /></th><th><Term id="says" /></th>
-            <th><Term id="move" /></th><th><Term id="sources" /> · <Term id="confidence" /></th>
+            <th>Company · <Term id="sector" /></th><th><Term id="event" /></th>
+            <th><Term id="move" /></th><th><Term id="sources" /></th>
           </tr>
         </thead>
         <tbody>
@@ -60,6 +47,7 @@ export function WatchlistTable({ rows, starred, onStar }: {
                         <span className="progress" title={`${e.updates.length} of ${e.stages_total} usual updates`}>
                           <Dots n={e.updates.length} of={Math.max(e.stages_total, e.updates.length)} />
                         </span>
+                        <Signals e={e} />
                         {c.events.length > 1 && <span className="muted small">+{c.events.length - 1} more</span>}
                       </div>
                       <a className="headline-1" href={e.latest_url} target="_blank" rel="noreferrer"
@@ -69,7 +57,6 @@ export function WatchlistTable({ rows, starred, onStar }: {
                         {e.next_update && <> · next: <b>{e.next_update}</b></>}
                       </div>
                     </td>
-                    <td className="c-says"><NewsSays e={e} /></td>
                     <td className="c-move">
                       {e.stock_move != null ? (
                         <>
@@ -82,27 +69,21 @@ export function WatchlistTable({ rows, starred, onStar }: {
                         </>
                       ) : e.move_so_far != null ? (
                         <>
-                          <div className="move-top">
-                            <b className="muted">{pct(e.move_so_far)}</b>
-                            <MoveBar value={e.move_so_far} unusual={false} />
-                          </div>
+                          <div className="move-top"><b className="muted">{pct(e.move_so_far)}</b><MoveBar value={e.move_so_far} unusual={false} /></div>
                           <div className="muted small">so far, to {date(e.so_far_through!)} close</div>
                           <div className="small muted"><Term id="provisional">Provisional</Term></div>
                         </>
                       ) : <span className="muted small">{NO_MOVE[e.stock_move_status] ?? ""}</span>}
                     </td>
-                    <td className="c-sources">
-                      <div className={`badge-verified ${e.verified ? "yes" : "no"}`}>{e.verified ? "✓ Verified" : "Unverified signal"}</div>
-                      <div className="src-top"><Dots n={e.sources} /> <b>{e.sources}</b> <span className="muted small">{e.sources === 1 ? "source" : "sources"}</span></div>
-                      <div className="conf"><Meter value={e.confidence} tone={confidenceTone(e.confidence)} /> <span className="small">{Math.round(e.confidence * 100)}% confidence</span></div>
-                    </td>
+                    <td className="c-sources"><SourceBadge confirmed={e.verified} names={e.source_names} /></td>
                   </>
                 ) : (
-                  <td className="c-event c-news" colSpan={4}>
+                  <td className="c-event c-news" colSpan={3}>
                     {c.latest_news ? (
                       <>
                         <span className="muted small">No event detected · latest news:</span>
-                        <a className="headline-1" href={c.latest_news.url} target="_blank" rel="noreferrer">{c.latest_news.title} ↗</a>
+                        <a className="headline-1" href={c.latest_news.url} target="_blank" rel="noreferrer"
+                           onClick={(ev) => ev.stopPropagation()}>{c.latest_news.title} ↗</a>
                         <div className="muted small">{c.latest_news.source} · {date(c.latest_news.published_at)}</div>
                       </>
                     ) : <span className="muted small">No recent news</span>}

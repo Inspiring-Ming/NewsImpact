@@ -43,7 +43,5 @@ export function Dots({ n, of, max = 6 }: { n: number; of?: number; max?: number 
   );
 }
 
-export const confidenceTone = (x: number): Tone => (x >= 0.9 ? "good" : x >= 0.6 ? "warn" : "bad");
-
 /** Source reliability: a newspaper's 75% starting estimate is already good evidence. */
 export const reliabilityTone = (x: number): Tone => (x >= 0.75 ? "good" : x >= 0.6 ? "warn" : "bad");
