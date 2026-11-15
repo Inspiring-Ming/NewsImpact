@@ -42,7 +42,7 @@ export const TERMS = {
   move: { label: "Stock vs market", tip: "How much better (+) or worse (−) the stock did than its whole market over the event days (S&P 500 for US, ASX 200 for Australia). Taking out the market's own move leaves the company's reaction to its news." },
   unusual: { label: "Unusual move", tip: "A move this large happens on fewer than 1 in 20 normal days for this stock (judged from its previous 120 trading days), so it is unlikely to be chance." },
   confirmed: { label: "Confirmed", tip: "Reported by 2 or more independent news sources, or published by the company itself (a press release) or in an official filing." },
-  single: { label: "Single source", tip: "Only one news source has reported this so far. Treat it as a lead to check, not a fact. It becomes Confirmed when another independent source, the company or a filing reports it." },
+  single: { label: "Not yet confirmed", tip: "Only one news source has reported this so far. Treat it as a lead to check, not a fact. It becomes Confirmed when another independent source, the company itself or an official filing reports it." },
   tone: { label: "Tone", tip: "Whether the latest update reads as good or bad news for the company, read automatically from its wording." },
   rumour: { label: "Rumour", tip: "Worded as unconfirmed: 'reportedly', 'is said to', 'sources say', 'considering'. Nobody has confirmed it on the record yet." },
   sources: { label: "Sources", tip: "How many of our news sources reported the event. Copies of the same article count once." },

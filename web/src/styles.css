@@ -351,8 +351,9 @@ a.rank-row:hover { background: var(--surface-2); }
 
 @media (max-width: 760px) {
   .kpi-detail.two, .overview-cards { grid-template-columns: 1fr; }
-  .rank-row { grid-template-columns: 1fr 1fr; }
-  .rank-row .rank-value { grid-column: 1 / -1; }
+  .rank.moves .rank-row { grid-template-columns: 1fr 1fr; }
+  .rank.moves .rank-row .rank-value { grid-column: 1 / -1; }
+  .rank-row { grid-template-columns: 1fr 1fr auto; }
   .measure-row { grid-template-columns: 1fr auto; }
   .measure-row .m-bar { grid-column: 1 / -1; grid-row: 2; }
   .watchlist { table-layout: auto; }
@@ -395,7 +396,10 @@ a.headline-1:hover { color: var(--accent); }
 .tile-key.pending { color: var(--muted); background: transparent; border: 1px dashed var(--border); }
 .signals { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 .head-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.source-badge { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.source-badge { display: grid; gap: 2px; justify-items: start; }
+.src-names { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-word { font-size: .82rem; font-weight: 600; }
+.status-word.good { color: var(--good); } .status-word.warn { color: var(--warn); }
 
 /* bars grow in when a page opens (skipped for people who turn motion off) */
 @keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }

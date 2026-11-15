@@ -13,7 +13,7 @@ function MoveRows({ rows }: { rows: Ev[] }) {
   if (!rows.length) return <p className="muted small">None yet.</p>;
   const span = Math.max(0.05, ...rows.map((r) => Math.abs(r.e.stock_move!)));
   return (
-    <div className="rank">
+    <div className="rank moves">
       {rows.map(({ c, e }) => (
         <a key={e.event_id} className="rank-row" href={`#/event/${e.event_id}`}>
           <span className="rank-label"><b>{c.name}</b><span className="muted small"> · {e.event_type}</span></span>
@@ -43,7 +43,10 @@ function CountRows({ rows }: { rows: { label: string; n: number; href?: string }
   );
 }
 
-export function KpiDetail({ kpi, companies, overview }: { kpi: Kpi; companies: S["CompanyCard"][]; overview: S["Overview"] | null }) {
+export function KpiDetail({ kpi, companies, newsCompanies, overview }: {
+  kpi: Kpi; companies: S["CompanyCard"][]; newsCompanies: S["CompanyCard"][];
+  overview: S["Overview"] | null; // null = the view is narrowed, so per-source totals do not apply
+}) {
   const all: Ev[] = companies.flatMap((c) => c.events.map((e) => ({ c, e })));
   const lastUpdate = (e: S["EventCard"]) => e.updates[e.updates.length - 1].published_at;
   if (kpi === "events") {
@@ -94,12 +97,15 @@ export function KpiDetail({ kpi, companies, overview }: { kpi: Kpi; companies: S
     );
   }
   const bySource = Object.entries(overview?.articles_24h_by_source ?? {}).map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
-  const byCompany = companies.filter((c) => c.articles_24h > 0).sort((a, b) => b.articles_24h - a.articles_24h).slice(0, 8)
+  const byCompany = newsCompanies.filter((c) => c.articles_24h > 0).sort((a, b) => b.articles_24h - a.articles_24h).slice(0, 8)
     .map((c) => ({ label: c.name, n: c.articles_24h, href: c.events[0] ? `#/event/${c.events[0].event_id}` : undefined }));
   return (
-    <div className="kpi-detail two">
-      <div><h3>Articles in the last 24 hours, by source</h3><CountRows rows={bySource} /></div>
-      <div><h3>Most-mentioned companies</h3><CountRows rows={byCompany} /></div>
+    <div className={`kpi-detail ${overview ? "two" : ""}`}>
+      {overview && <div><h3>Articles in the last 24 hours, by source</h3><CountRows rows={bySource} /></div>}
+      <div>
+        <h3>Most-mentioned companies, last 24 hours</h3>
+        {byCompany.length ? <CountRows rows={byCompany} /> : <p className="muted small">No news on these companies in the last 24 hours.</p>}
+      </div>
     </div>
   );
 }

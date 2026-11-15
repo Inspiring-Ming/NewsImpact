@@ -1,9 +1,9 @@
 // Updates as a timeline: a date axis with every update placed in time, then one card per
 // update with its tone, sources, confidence and the stock's reaction that day.
 import { date, moveVs, tone } from "../../shared/labels";
+import { Confirmation } from "../../shared/SourceBadge";
 import { Term } from "../../shared/Term";
 import { useNames } from "../../shared/names";
-import { SourceBadge } from "../../shared/SourceBadge";
 import { Dots, MoveBar } from "../../shared/viz";
 import type { EventData } from "./context";
 
@@ -50,8 +50,7 @@ export function Updates({ story, assessment, company, card }: EventData) {
                   <span><Dots n={st.claim.outlets.length} /> {(card.updates[i]?.articles.length
                     ? card.updates[i].articles.map((a) => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="src-link">{a.source} ↗</a>)
                     : st.claim.outlets.map(source).join(", "))}</span>
-                  <SourceBadge confirmed={st.claim.origins.length >= 2 || !!ev?.reports.some((r) => AUTHORITATIVE.includes(r.source_type))}
-                               names={card.updates[i]?.articles.map((a) => a.source) ?? st.claim.outlets.map(source)} />
+                  <Confirmation confirmed={st.claim.origins.length >= 2 || !!ev?.reports.some((r) => AUTHORITATIVE.includes(r.source_type))} />
                   {price && <span className="conf"><MoveBar value={price.value} unusual={price.significant} /> stock {moveVs(price.value, company.index_name)}</span>}
                 </div>
                 {st.overlaps_previous && <p className="small muted">Within a few trading days of the update before, so their stock reactions are also measured together.</p>}

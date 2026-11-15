@@ -72,7 +72,7 @@ export function EventPage({ id }: { id: string }) {
                       ? NO_MOVE[Date.now() - Date.parse(card.updates[0].published_at) < 10 * 86_400_000 ? "pending" : "no_data"]
                       : <><RatioBar value={card.volume_ratio} /><div>{card.volume_ratio >= 2 ? "far above" : "close to"} a normal day (1×)</div></>} />
               <Fact label={<Term id="sources" />} value={card.sources}
-                    sub={<><Dots n={card.sources} /><SourceBadge confirmed={card.verified} names={card.source_names} /></>} />
+                    sub={<SourceBadge confirmed={card.verified} names={card.source_names} />} />
               <Fact label={<Term id="expected">Reactions as expected</Term>}
                     value={measured.length ? `${hits} of ${measured.length}` : "–"}
                     sub={measured.length ? <><Meter value={hits / measured.length} tone={hits / measured.length >= 0.6 ? "good" : "warn"} />
