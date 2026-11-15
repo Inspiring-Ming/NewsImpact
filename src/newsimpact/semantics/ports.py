@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from newsimpact.llm.models import LlmRequest, LlmResult
-from newsimpact.semantics.models import Claim
+from newsimpact.semantics.models import Claim, Company
 from newsimpact.sources.models import Article
 
 
@@ -37,6 +37,7 @@ class EntityResolver(Protocol):
 
     def resolve(self, name: str) -> str | None: ...
     def known_names(self) -> Sequence[str]: ...
+    def companies(self) -> Sequence[Company]: ...
 
 
 class TextModel(Protocol):

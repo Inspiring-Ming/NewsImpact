@@ -6,8 +6,9 @@ import { StepBlock } from "./StepBlock";
 export function AnticipateStep({ method, calibration }: { method: S["Method"]; calibration: S["Calibration"] | null }) {
   const record = new Map((calibration?.reactions ?? []).map((r) => [`${r.theme}|${r.stage_name}|${r.channel}`, r]));
   return (
-    <StepBlock id="anticipate"
-      what="For every kind of event we list who usually reacts and how: large investors, analysts, option traders, boards, customers. These predictions are what we test in step 4."
+    <StepBlock title="Who usually reacts to each event, and how"
+      term="expected investor reactions (behavioural finance)"
+      what="For every kind of event we list who usually reacts and how: large investors, analysts, option traders, boards, customers. These expectations are what the market reaction check tests."
       rules={[
         "Predictions come from the story type's playbook and are written as plain, testable statements (e.g. \"share price should fall\").",
         "Reactions that don't show in market data (e.g. a board review) are listed but marked as not testable in markets.",

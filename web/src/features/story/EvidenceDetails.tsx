@@ -3,7 +3,7 @@ import { describe, humanize } from "../../shared/labels";
 import { useNames } from "../../shared/names";
 import type { StoryData } from "./context";
 
-export function EvidenceDetails({ assessment: a }: StoryData) {
+export function EvidenceDetails({ assessment: a, company }: StoryData) {
   const { title } = useNames();
   const rows = a.stages.flatMap((s) => s.decisions.filter((d) => d.evidence).map((d) => ({ s, d })));
   return (
@@ -11,7 +11,7 @@ export function EvidenceDetails({ assessment: a }: StoryData) {
       <summary>Show statistics and sources</summary>
       <p className="small">{a.conclusion}</p>
       {a.combined_reaction && (
-        <p className="small">Combined reaction for stages in the same week: {a.combined_reaction.metric} = {describe(a.combined_reaction)}, z = {a.combined_reaction.statistic}</p>
+        <p className="small">Combined reaction for events in the same week: {a.combined_reaction.metric} = {describe(a.combined_reaction, company.benchmark_name)}, z = {a.combined_reaction.statistic}</p>
       )}
       <table>
         <thead><tr><th>Stage</th><th>Who</th><th>Measure</th><th>Value</th><th>z</th></tr></thead>

@@ -1,44 +1,601 @@
 {
-  "_note": "Watched companies: company name/alias -> ticker. ASX listings carry '.AX' (measured on the Sydney session against the ASX 200); bare tickers are US. Start set: the largest, most-covered names in each market (reasons: docs/07). Only unambiguous aliases (no 'Apple', 'Meta', 'Shell', 'Woolworths' alone). Phase 1 replaces this with exchange listings + OpenFIGI/GLEIF.",
-  "aliases": {
-    "Nvidia": "NVDA",
-    "Microsoft": "MSFT",
-    "Apple Inc": "AAPL",
-    "Alphabet": "GOOGL",
-    "Google": "GOOGL",
-    "Amazon": "AMZN",
-    "Meta Platforms": "META",
-    "Tesla": "TSLA",
-    "Boeing": "BA",
-    "Intel": "INTC",
-    "AMD": "AMD",
-    "Advanced Micro Devices": "AMD",
-    "TSMC": "TSM",
-    "Taiwan Semiconductor": "TSM",
-    "JPMorgan": "JPM",
-    "Goldman Sachs": "GS",
-    "Walmart": "WMT",
-    "Disney": "DIS",
-    "Netflix": "NFLX",
-    "BHP Group": "BHP.AX",
-    "BHP": "BHP.AX",
-    "Commonwealth Bank": "CBA.AX",
-    "CommBank": "CBA.AX",
-    "CSL Limited": "CSL.AX",
-    "Westpac": "WBC.AX",
-    "National Australia Bank": "NAB.AX",
-    "ANZ Group": "ANZ.AX",
-    "ANZ Bank": "ANZ.AX",
-    "Macquarie Group": "MQG.AX",
-    "Wesfarmers": "WES.AX",
-    "Woolworths Group": "WOW.AX",
-    "Telstra": "TLS.AX",
-    "Rio Tinto": "RIO.AX",
-    "Fortescue": "FMG.AX",
-    "Woodside Energy": "WDS.AX",
-    "Woodside": "WDS.AX",
-    "Qantas": "QAN.AX",
-    "Star Entertainment": "SGR.AX",
-    "Atlassian": "TEAM"
+ "_note": "Companies we follow. ticker: bare = US listing, '.AX' = ASX (measured on its home exchange). name/country are shown to people; aliases are how news writes the name - only unambiguous ones (e.g. 'Ford Motor', not 'Ford'; 'Santos Ltd', not 'Santos'). Selection: the largest, most-covered companies in each market, because media coverage concentrates there (docs/07). Phase 1 replaces this with exchange listings + OpenFIGI/GLEIF.",
+ "companies": [
+  {
+   "ticker": "NVDA",
+   "name": "Nvidia",
+   "country": "US",
+   "aliases": [
+    "Nvidia"
+   ]
+  },
+  {
+   "ticker": "MSFT",
+   "name": "Microsoft",
+   "country": "US",
+   "aliases": [
+    "Microsoft"
+   ]
+  },
+  {
+   "ticker": "AAPL",
+   "name": "Apple",
+   "country": "US",
+   "aliases": [
+    "Apple Inc"
+   ]
+  },
+  {
+   "ticker": "GOOGL",
+   "name": "Alphabet (Google)",
+   "country": "US",
+   "aliases": [
+    "Alphabet",
+    "Google"
+   ]
+  },
+  {
+   "ticker": "AMZN",
+   "name": "Amazon",
+   "country": "US",
+   "aliases": [
+    "Amazon"
+   ]
+  },
+  {
+   "ticker": "META",
+   "name": "Meta Platforms",
+   "country": "US",
+   "aliases": [
+    "Meta Platforms"
+   ]
+  },
+  {
+   "ticker": "TSLA",
+   "name": "Tesla",
+   "country": "US",
+   "aliases": [
+    "Tesla"
+   ]
+  },
+  {
+   "ticker": "AVGO",
+   "name": "Broadcom",
+   "country": "US",
+   "aliases": [
+    "Broadcom"
+   ]
+  },
+  {
+   "ticker": "BA",
+   "name": "Boeing",
+   "country": "US",
+   "aliases": [
+    "Boeing"
+   ]
+  },
+  {
+   "ticker": "INTC",
+   "name": "Intel",
+   "country": "US",
+   "aliases": [
+    "Intel"
+   ]
+  },
+  {
+   "ticker": "AMD",
+   "name": "AMD",
+   "country": "US",
+   "aliases": [
+    "AMD",
+    "Advanced Micro Devices"
+   ]
+  },
+  {
+   "ticker": "TSM",
+   "name": "TSMC",
+   "country": "TW",
+   "aliases": [
+    "TSMC",
+    "Taiwan Semiconductor"
+   ]
+  },
+  {
+   "ticker": "ORCL",
+   "name": "Oracle",
+   "country": "US",
+   "aliases": [
+    "Oracle Corp",
+    "Oracle"
+   ]
+  },
+  {
+   "ticker": "CRM",
+   "name": "Salesforce",
+   "country": "US",
+   "aliases": [
+    "Salesforce"
+   ]
+  },
+  {
+   "ticker": "ADBE",
+   "name": "Adobe",
+   "country": "US",
+   "aliases": [
+    "Adobe"
+   ]
+  },
+  {
+   "ticker": "PLTR",
+   "name": "Palantir",
+   "country": "US",
+   "aliases": [
+    "Palantir"
+   ]
+  },
+  {
+   "ticker": "UBER",
+   "name": "Uber",
+   "country": "US",
+   "aliases": [
+    "Uber"
+   ]
+  },
+  {
+   "ticker": "ABNB",
+   "name": "Airbnb",
+   "country": "US",
+   "aliases": [
+    "Airbnb"
+   ]
+  },
+  {
+   "ticker": "NFLX",
+   "name": "Netflix",
+   "country": "US",
+   "aliases": [
+    "Netflix"
+   ]
+  },
+  {
+   "ticker": "DIS",
+   "name": "Disney",
+   "country": "US",
+   "aliases": [
+    "Disney"
+   ]
+  },
+  {
+   "ticker": "JPM",
+   "name": "JPMorgan Chase",
+   "country": "US",
+   "aliases": [
+    "JPMorgan"
+   ]
+  },
+  {
+   "ticker": "GS",
+   "name": "Goldman Sachs",
+   "country": "US",
+   "aliases": [
+    "Goldman Sachs"
+   ]
+  },
+  {
+   "ticker": "BAC",
+   "name": "Bank of America",
+   "country": "US",
+   "aliases": [
+    "Bank of America"
+   ]
+  },
+  {
+   "ticker": "WFC",
+   "name": "Wells Fargo",
+   "country": "US",
+   "aliases": [
+    "Wells Fargo"
+   ]
+  },
+  {
+   "ticker": "V",
+   "name": "Visa",
+   "country": "US",
+   "aliases": [
+    "Visa Inc"
+   ]
+  },
+  {
+   "ticker": "MA",
+   "name": "Mastercard",
+   "country": "US",
+   "aliases": [
+    "Mastercard"
+   ]
+  },
+  {
+   "ticker": "WMT",
+   "name": "Walmart",
+   "country": "US",
+   "aliases": [
+    "Walmart"
+   ]
+  },
+  {
+   "ticker": "COST",
+   "name": "Costco",
+   "country": "US",
+   "aliases": [
+    "Costco"
+   ]
+  },
+  {
+   "ticker": "KO",
+   "name": "Coca-Cola",
+   "country": "US",
+   "aliases": [
+    "Coca-Cola"
+   ]
+  },
+  {
+   "ticker": "PEP",
+   "name": "PepsiCo",
+   "country": "US",
+   "aliases": [
+    "PepsiCo"
+   ]
+  },
+  {
+   "ticker": "MCD",
+   "name": "McDonald's",
+   "country": "US",
+   "aliases": [
+    "McDonald's"
+   ]
+  },
+  {
+   "ticker": "SBUX",
+   "name": "Starbucks",
+   "country": "US",
+   "aliases": [
+    "Starbucks"
+   ]
+  },
+  {
+   "ticker": "NKE",
+   "name": "Nike",
+   "country": "US",
+   "aliases": [
+    "Nike Inc",
+    "Nike"
+   ]
+  },
+  {
+   "ticker": "JNJ",
+   "name": "Johnson & Johnson",
+   "country": "US",
+   "aliases": [
+    "Johnson & Johnson"
+   ]
+  },
+  {
+   "ticker": "PFE",
+   "name": "Pfizer",
+   "country": "US",
+   "aliases": [
+    "Pfizer"
+   ]
+  },
+  {
+   "ticker": "LLY",
+   "name": "Eli Lilly",
+   "country": "US",
+   "aliases": [
+    "Eli Lilly"
+   ]
+  },
+  {
+   "ticker": "UNH",
+   "name": "UnitedHealth",
+   "country": "US",
+   "aliases": [
+    "UnitedHealth"
+   ]
+  },
+  {
+   "ticker": "XOM",
+   "name": "ExxonMobil",
+   "country": "US",
+   "aliases": [
+    "ExxonMobil",
+    "Exxon Mobil",
+    "Exxon"
+   ]
+  },
+  {
+   "ticker": "CVX",
+   "name": "Chevron",
+   "country": "US",
+   "aliases": [
+    "Chevron"
+   ]
+  },
+  {
+   "ticker": "F",
+   "name": "Ford Motor",
+   "country": "US",
+   "aliases": [
+    "Ford Motor"
+   ]
+  },
+  {
+   "ticker": "GM",
+   "name": "General Motors",
+   "country": "US",
+   "aliases": [
+    "General Motors"
+   ]
+  },
+  {
+   "ticker": "TEAM",
+   "name": "Atlassian",
+   "country": "AU",
+   "aliases": [
+    "Atlassian"
+   ]
+  },
+  {
+   "ticker": "BHP.AX",
+   "name": "BHP Group",
+   "country": "AU",
+   "aliases": [
+    "BHP Group",
+    "BHP"
+   ]
+  },
+  {
+   "ticker": "CBA.AX",
+   "name": "Commonwealth Bank",
+   "country": "AU",
+   "aliases": [
+    "Commonwealth Bank",
+    "CommBank"
+   ]
+  },
+  {
+   "ticker": "CSL.AX",
+   "name": "CSL",
+   "country": "AU",
+   "aliases": [
+    "CSL Limited"
+   ]
+  },
+  {
+   "ticker": "WBC.AX",
+   "name": "Westpac",
+   "country": "AU",
+   "aliases": [
+    "Westpac"
+   ]
+  },
+  {
+   "ticker": "NAB.AX",
+   "name": "National Australia Bank",
+   "country": "AU",
+   "aliases": [
+    "National Australia Bank"
+   ]
+  },
+  {
+   "ticker": "ANZ.AX",
+   "name": "ANZ Group",
+   "country": "AU",
+   "aliases": [
+    "ANZ Group",
+    "ANZ Bank"
+   ]
+  },
+  {
+   "ticker": "MQG.AX",
+   "name": "Macquarie Group",
+   "country": "AU",
+   "aliases": [
+    "Macquarie Group"
+   ]
+  },
+  {
+   "ticker": "WES.AX",
+   "name": "Wesfarmers",
+   "country": "AU",
+   "aliases": [
+    "Wesfarmers"
+   ]
+  },
+  {
+   "ticker": "WOW.AX",
+   "name": "Woolworths Group",
+   "country": "AU",
+   "aliases": [
+    "Woolworths Group"
+   ]
+  },
+  {
+   "ticker": "COL.AX",
+   "name": "Coles Group",
+   "country": "AU",
+   "aliases": [
+    "Coles Group",
+    "Coles"
+   ]
+  },
+  {
+   "ticker": "TLS.AX",
+   "name": "Telstra",
+   "country": "AU",
+   "aliases": [
+    "Telstra"
+   ]
+  },
+  {
+   "ticker": "RIO.AX",
+   "name": "Rio Tinto",
+   "country": "AU",
+   "aliases": [
+    "Rio Tinto"
+   ]
+  },
+  {
+   "ticker": "FMG.AX",
+   "name": "Fortescue",
+   "country": "AU",
+   "aliases": [
+    "Fortescue"
+   ]
+  },
+  {
+   "ticker": "WDS.AX",
+   "name": "Woodside Energy",
+   "country": "AU",
+   "aliases": [
+    "Woodside Energy",
+    "Woodside"
+   ]
+  },
+  {
+   "ticker": "STO.AX",
+   "name": "Santos",
+   "country": "AU",
+   "aliases": [
+    "Santos Ltd"
+   ]
+  },
+  {
+   "ticker": "ORG.AX",
+   "name": "Origin Energy",
+   "country": "AU",
+   "aliases": [
+    "Origin Energy"
+   ]
+  },
+  {
+   "ticker": "AGL.AX",
+   "name": "AGL Energy",
+   "country": "AU",
+   "aliases": [
+    "AGL Energy"
+   ]
+  },
+  {
+   "ticker": "QAN.AX",
+   "name": "Qantas",
+   "country": "AU",
+   "aliases": [
+    "Qantas"
+   ]
+  },
+  {
+   "ticker": "TCL.AX",
+   "name": "Transurban",
+   "country": "AU",
+   "aliases": [
+    "Transurban"
+   ]
+  },
+  {
+   "ticker": "GMG.AX",
+   "name": "Goodman Group",
+   "country": "AU",
+   "aliases": [
+    "Goodman Group"
+   ]
+  },
+  {
+   "ticker": "XRO.AX",
+   "name": "Xero",
+   "country": "AU",
+   "aliases": [
+    "Xero"
+   ]
+  },
+  {
+   "ticker": "WTC.AX",
+   "name": "WiseTech Global",
+   "country": "AU",
+   "aliases": [
+    "WiseTech"
+   ]
+  },
+  {
+   "ticker": "REA.AX",
+   "name": "REA Group",
+   "country": "AU",
+   "aliases": [
+    "REA Group"
+   ]
+  },
+  {
+   "ticker": "QBE.AX",
+   "name": "QBE Insurance",
+   "country": "AU",
+   "aliases": [
+    "QBE"
+   ]
+  },
+  {
+   "ticker": "SUN.AX",
+   "name": "Suncorp",
+   "country": "AU",
+   "aliases": [
+    "Suncorp"
+   ]
+  },
+  {
+   "ticker": "MPL.AX",
+   "name": "Medibank",
+   "country": "AU",
+   "aliases": [
+    "Medibank"
+   ]
+  },
+  {
+   "ticker": "ALL.AX",
+   "name": "Aristocrat Leisure",
+   "country": "AU",
+   "aliases": [
+    "Aristocrat Leisure"
+   ]
+  },
+  {
+   "ticker": "JBH.AX",
+   "name": "JB Hi-Fi",
+   "country": "AU",
+   "aliases": [
+    "JB Hi-Fi"
+   ]
+  },
+  {
+   "ticker": "SGR.AX",
+   "name": "Star Entertainment",
+   "country": "AU",
+   "aliases": [
+    "Star Entertainment"
+   ]
+  },
+  {
+   "ticker": "PLS.AX",
+   "name": "Pilbara Minerals",
+   "country": "AU",
+   "aliases": [
+    "Pilbara Minerals"
+   ]
+  },
+  {
+   "ticker": "NST.AX",
+   "name": "Northern Star Resources",
+   "country": "AU",
+   "aliases": [
+    "Northern Star Resources"
+   ]
   }
+ ]
 }

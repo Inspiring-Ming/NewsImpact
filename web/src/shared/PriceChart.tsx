@@ -3,7 +3,9 @@ import type { S } from "../api/client";
 
 const W = 760, H = 260, PAD = { l: 40, r: 16, t: 24, b: 30 };
 
-export function PriceChart({ path, stages }: { path: S["PricePath"]; stages: { day: string; label: string }[] }) {
+export function PriceChart({ path, stages, benchmarkName }: {
+  path: S["PricePath"]; stages: { day: string; label: string }[]; benchmarkName: string;
+}) {
   const pts = path.points;
   if (pts.length < 2) return <p className="muted">Not enough price history yet.</p>;
   const values = pts.flatMap((p) => [p.stock, p.benchmark]);
@@ -23,7 +25,7 @@ export function PriceChart({ path, stages }: { path: S["PricePath"]; stages: { d
   });
   return (
     <figure className="chart">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${path.ticker} share price compared with ${path.benchmark}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${path.ticker} share price compared with the ${benchmarkName}`}>
         {[lo, (lo + hi) / 2, hi].map((t) => (
           <g key={t}>
             <line className="grid" x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} />
@@ -44,8 +46,8 @@ export function PriceChart({ path, stages }: { path: S["PricePath"]; stages: { d
         <text className="axis" x={W - PAD.r} y={H - 8} textAnchor="end">{last.day}</text>
       </svg>
       <figcaption>
-        <span className="key stock" /> {path.ticker} <span className="key benchmark" /> market ({path.benchmark}) ·
-        both start at 100 · numbered markers = stages below
+        <span className="key stock" /> {path.ticker} share price <span className="key benchmark" /> {benchmarkName} ·
+        both start at 100, so the gap between the lines is how much the stock did better or worse · numbers = events below
       </figcaption>
     </figure>
   );

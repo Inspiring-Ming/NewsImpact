@@ -50,6 +50,7 @@ class ExchangeRule(Model):
     timezone: str
     close: str = Field(description="HH:MM local closing time")
     benchmark: str = Field(description="market factor for stocks listed here")
+    benchmark_name: str = Field(description="how people call that market, e.g. S&P 500")
     vendor_suffix: str = Field(description="exchange code at the price vendor, e.g. .US / .AU")
 
 

@@ -1,6 +1,6 @@
 {
   "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions).",
-  "version": "playbooks-v0.5",
+  "version": "playbooks-v0.6",
   "late_report_days": 3,
   "late_report_why": "Outlets publish the same events in a different order than they happened (e.g. 'interim CEO in charge' before the resignation story). A resolved story therefore still absorbs reports of its earlier stages published within 3 days of its latest stage; later ones start a new story. 3 days covers same-week reporting across time zones (US and Australian outlets) without merging a new crisis weeks later.",
   "playbooks": [
@@ -36,33 +36,33 @@
           "decisions": [
             {
               "actor": "retail_investors",
-              "decision": "reassess trust in management; attention spikes",
+              "decision": "pay closer attention and question their trust in management",
               "market_channel": "volume",
               "expected_direction": "up",
               "horizon": "days"
             },
             {
               "actor": "institutional_investors",
-              "decision": "buy downside protection while facts are unclear",
+              "decision": "buy insurance against a fall while the facts are unclear",
               "market_channel": "volatility",
               "expected_direction": "up",
               "horizon": "days"
             },
             {
               "actor": "sell_side_analysts",
-              "decision": "flag governance risk, usually hold ratings pending facts",
+              "decision": "flag the risk, but mostly keep their ratings until the facts are clear",
               "market_channel": "analyst_revisions",
               "expected_direction": "uncertain",
               "horizon": "weeks"
             },
             {
               "actor": "board",
-              "decision": "commission an internal review",
+              "decision": "order an internal review",
               "horizon": "weeks"
             },
             {
               "actor": "board",
-              "decision": "open an investigation into the leader's conduct",
+              "decision": "investigate the leader's conduct",
               "market_channel": null,
               "expected_direction": "uncertain",
               "horizon": "days"
@@ -84,33 +84,33 @@
           "decisions": [
             {
               "actor": "institutional_investors",
-              "decision": "re-underwrite the investment case; some reduce exposure",
+              "decision": "rethink the investment; some sell shares",
               "market_channel": "price",
               "expected_direction": "down",
               "horizon": "days"
             },
             {
               "actor": "options_market",
-              "decision": "price higher event risk",
+              "decision": "pay more to protect against big price moves",
               "market_channel": "volatility",
               "expected_direction": "up",
               "horizon": "days"
             },
             {
               "actor": "sell_side_analysts",
-              "decision": "revise ratings and targets for key-person risk",
+              "decision": "lower ratings and price targets because the company depends on its leader",
               "market_channel": "analyst_revisions",
               "expected_direction": "down",
               "horizon": "weeks"
             },
             {
               "actor": "customers_partners",
-              "decision": "review strategic commitments and contracts",
+              "decision": "review their contracts and plans with the company",
               "horizon": "weeks"
             },
             {
               "actor": "competitors",
-              "decision": "target talent and customers during the transition",
+              "decision": "try to win its staff and customers during the change",
               "market_channel": "peer_spillover",
               "expected_direction": "uncertain",
               "horizon": "weeks"
@@ -134,14 +134,14 @@
           "decisions": [
             {
               "actor": "all_investors",
-              "decision": "uncertainty resolves; reposition on successor quality",
+              "decision": "feel less uncertain and judge the new leader",
               "market_channel": "volatility",
               "expected_direction": "down",
               "horizon": "days"
             },
             {
               "actor": "credit_investors",
-              "decision": "reassess governance premium",
+              "decision": "reconsider how much extra interest to demand",
               "market_channel": "credit_spreads",
               "expected_direction": "uncertain",
               "horizon": "weeks"
@@ -173,26 +173,26 @@
           "decisions": [
             {
               "actor": "institutional_investors",
-              "decision": "estimate warranty and remediation costs",
+              "decision": "estimate the cost of repairs and refunds",
               "market_channel": "price",
               "expected_direction": "down",
               "horizon": "days"
             },
             {
               "actor": "sell_side_analysts",
-              "decision": "cut earnings estimates",
+              "decision": "cut their profit forecasts",
               "market_channel": "analyst_revisions",
               "expected_direction": "down",
               "horizon": "weeks"
             },
             {
               "actor": "consumers",
-              "decision": "delay or switch purchases",
+              "decision": "delay purchases or switch to rivals",
               "horizon": "months"
             },
             {
               "actor": "competitors",
-              "decision": "capture switching demand",
+              "decision": "win customers who switch",
               "market_channel": "peer_spillover",
               "expected_direction": "up",
               "horizon": "weeks"
@@ -213,21 +213,21 @@
           "decisions": [
             {
               "actor": "institutional_investors",
-              "decision": "price in fines and remediation orders",
+              "decision": "expect fines and orders to fix the problem",
               "market_channel": "price",
               "expected_direction": "down",
               "horizon": "days"
             },
             {
               "actor": "credit_investors",
-              "decision": "demand higher spread for legal tail risk",
+              "decision": "demand more interest because of possible legal costs",
               "market_channel": "credit_spreads",
               "expected_direction": "up",
               "horizon": "weeks"
             },
             {
               "actor": "options_market",
-              "decision": "price outcome uncertainty",
+              "decision": "pay more to protect against big price moves",
               "market_channel": "volatility",
               "expected_direction": "up",
               "horizon": "days"
@@ -248,14 +248,14 @@
           "decisions": [
             {
               "actor": "institutional_investors",
-              "decision": "provision for liabilities",
+              "decision": "set money aside for possible damages",
               "market_channel": "price",
               "expected_direction": "down",
               "horizon": "weeks"
             },
             {
               "actor": "management",
-              "decision": "set legal provisions; may cut buybacks",
+              "decision": "set money aside for legal costs, and may cut share buybacks",
               "horizon": "months"
             }
           ]
@@ -288,14 +288,14 @@
           "decisions": [
             {
               "actor": "event_driven_funds",
-              "decision": "buy the potential target weighted by deal probability",
+              "decision": "buy shares of the possible target, depending on how likely the deal is",
               "market_channel": "price",
               "expected_direction": "up",
               "horizon": "days"
             },
             {
               "actor": "options_market",
-              "decision": "bid up short-dated calls",
+              "decision": "bet on a quick price rise",
               "market_channel": "volatility",
               "expected_direction": "up",
               "horizon": "days"
@@ -317,14 +317,14 @@
           "decisions": [
             {
               "actor": "merger_arbitrageurs",
-              "decision": "long target / short acquirer",
+              "decision": "buy the target and sell the buyer",
               "market_channel": "price",
               "expected_direction": "uncertain",
               "horizon": "weeks"
             },
             {
               "actor": "acquirer_shareholders",
-              "decision": "judge overpayment risk",
+              "decision": "judge whether the buyer is paying too much",
               "market_channel": "price",
               "expected_direction": "down",
               "horizon": "days"

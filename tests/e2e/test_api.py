@@ -25,18 +25,25 @@ def test_api_contract_for_the_website() -> None:
     assert client.get("/v1/sources/nope/reliability").status_code == 404
     assert client.get("/v1/coverage").json()
 
-    steps = {s["step"]: s for s in client.get("/v1/pipeline").json()["steps"]}
-    assert list(steps) == ["monitor", "connect", "anticipate", "verify"]
-    assert steps["monitor"]["headline"] == 10 and steps["connect"]["headline"] == 3
-    assert 0 < steps["verify"]["headline"] <= steps["anticipate"]["headline"]
     coverage = {c["source_id"]: c for c in client.get("/v1/coverage").json()}
     assert coverage["wire-alpha"]["in_stories"] > 0
 
-    cards = client.get("/v1/briefing").json()
-    crisis_card = next(c for c in cards if c["theme"] == "leadership_crisis")
-    assert crisis_card["market"] == "US" and crisis_card["stages"] == 3
-    assert crisis_card["reaction"]["channel"] == "price"
-    assert crisis_card["expectations_met"] <= crisis_card["expectations_measured"]
+    companies = client.get("/v1/companies").json()
+    assert companies[0]["stories"], "companies with stories come first"
+    globex = next(c for c in companies if c["ticker"] == "GLBX")
+    crisis_card = next(s for s in globex["stories"] if s["story_type"] == "Leadership crisis")
+    assert [e["title"] for e in crisis_card["events"]] == [
+        "Leader under pressure",
+        "Leader steps down",
+        "New leader named",
+    ]
+    assert crisis_card["status_text"] == "Settled - new leader named"
+    assert "below the market index" in crisis_card["reaction_text"]
+    assert crisis_card["confirmed"] in {"yes", "partly", "no"} and crisis_card["evidence_text"]
+    orbit = next(c for c in companies if c["ticker"] == "ORBT")
+    assert orbit["stories"] == [] and orbit["name"] == "Orbit Auto"
+    summary = client.get(f"/v1/stories/{crisis_card['storyline_id']}/summary").json()
+    assert summary["name"] == "Globex Motors" and summary["stories"][0]["events"]
 
     stories = client.get("/v1/storylines?ticker=GLBX").json()
     assert {s["theme"] for s in stories} == {"leadership_crisis", "product_safety"}

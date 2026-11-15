@@ -34,13 +34,15 @@
         "timezone": "America/New_York",
         "close": "16:00",
         "benchmark": "SPY",
-        "vendor_suffix": ".US"
+        "vendor_suffix": ".US",
+        "benchmark_name": "S&P 500"
       },
       "ASX": {
         "timezone": "Australia/Sydney",
         "close": "16:00",
         "benchmark": "STW.AX",
-        "vendor_suffix": ".AU"
+        "vendor_suffix": ".AU",
+        "benchmark_name": "ASX 200"
       }
     },
     "ticker_suffixes": {

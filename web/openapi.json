@@ -200,113 +200,6 @@
         "title": "Assessment",
         "type": "object"
       },
-      "BriefingItem": {
-        "additionalProperties": false,
-        "description": "One storyline, summarised for a card: what happened, how sure, what the market did.",
-        "properties": {
-          "company": {
-            "title": "Company",
-            "type": "string"
-          },
-          "confidence": {
-            "title": "Confidence",
-            "type": "string"
-          },
-          "expectations_measured": {
-            "title": "Expectations Measured",
-            "type": "integer"
-          },
-          "expectations_met": {
-            "title": "Expectations Met",
-            "type": "integer"
-          },
-          "latest_at": {
-            "title": "Latest At",
-            "type": "string"
-          },
-          "latest_stage": {
-            "title": "Latest Stage",
-            "type": "string"
-          },
-          "latest_summary": {
-            "title": "Latest Summary",
-            "type": "string"
-          },
-          "market": {
-            "description": "home exchange, e.g. US or ASX",
-            "title": "Market",
-            "type": "string"
-          },
-          "outlets": {
-            "description": "different outlets that reported the story (step 1)",
-            "title": "Outlets",
-            "type": "integer"
-          },
-          "predictions": {
-            "description": "predicted reactions (step 3)",
-            "title": "Predictions",
-            "type": "integer"
-          },
-          "reaction": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ChannelObservation"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "the headline market move: combined reaction, else the strongest price move"
-          },
-          "stages": {
-            "description": "linked events (step 2)",
-            "title": "Stages",
-            "type": "integer"
-          },
-          "stages_confirmed": {
-            "description": "stages backed by independent origins or the company",
-            "title": "Stages Confirmed",
-            "type": "integer"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "storyline_id": {
-            "title": "Storyline Id",
-            "type": "string"
-          },
-          "theme": {
-            "title": "Theme",
-            "type": "string"
-          },
-          "ticker": {
-            "title": "Ticker",
-            "type": "string"
-          }
-        },
-        "required": [
-          "storyline_id",
-          "ticker",
-          "company",
-          "market",
-          "theme",
-          "status",
-          "confidence",
-          "outlets",
-          "stages",
-          "predictions",
-          "stages_confirmed",
-          "latest_stage",
-          "latest_at",
-          "latest_summary",
-          "reaction",
-          "expectations_measured",
-          "expectations_met"
-        ],
-        "title": "BriefingItem",
-        "type": "object"
-      },
       "Calibration": {
         "additionalProperties": false,
         "properties": {
@@ -449,6 +342,65 @@
         "title": "ClaimCheck",
         "type": "object"
       },
+      "CompanyCard": {
+        "additionalProperties": false,
+        "properties": {
+          "articles": {
+            "description": "stored articles that name the company",
+            "title": "Articles",
+            "type": "integer"
+          },
+          "benchmark_name": {
+            "title": "Benchmark Name",
+            "type": "string"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "exchange": {
+            "title": "Exchange",
+            "type": "string"
+          },
+          "latest_news": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewsItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "stories": {
+            "items": {
+              "$ref": "#/components/schemas/StoryCard"
+            },
+            "title": "Stories",
+            "type": "array"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "name",
+          "country",
+          "exchange",
+          "benchmark_name",
+          "articles",
+          "latest_news",
+          "stories"
+        ],
+        "title": "CompanyCard",
+        "type": "object"
+      },
       "DecisionCheck": {
         "additionalProperties": false,
         "description": "Did an expected decision show up where the playbook says it would?",
@@ -566,6 +518,26 @@
           "predicted"
         ],
         "title": "EvaluationMiss",
+        "type": "object"
+      },
+      "EventItem": {
+        "additionalProperties": false,
+        "properties": {
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "published_at"
+        ],
+        "title": "EventItem",
         "type": "object"
       },
       "ExpectedDecision": {
@@ -901,6 +873,36 @@
         "title": "MonitorStatus",
         "type": "object"
       },
+      "NewsItem": {
+        "additionalProperties": false,
+        "properties": {
+          "outlet": {
+            "title": "Outlet",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "outlet",
+          "published_at"
+        ],
+        "title": "NewsItem",
+        "type": "object"
+      },
       "OutletCoverage": {
         "additionalProperties": false,
         "description": "Evidence for keeping, adding or dropping an outlet (see docs/07).",
@@ -1016,49 +1018,6 @@
           "monitor_every_minutes"
         ],
         "title": "Overview",
-        "type": "object"
-      },
-      "Pipeline": {
-        "additionalProperties": false,
-        "description": "The workflow with live numbers: what the product has done so far.",
-        "properties": {
-          "steps": {
-            "items": {
-              "$ref": "#/components/schemas/PipelineStep"
-            },
-            "title": "Steps",
-            "type": "array"
-          }
-        },
-        "required": [
-          "steps"
-        ],
-        "title": "Pipeline",
-        "type": "object"
-      },
-      "PipelineStep": {
-        "additionalProperties": false,
-        "properties": {
-          "detail": {
-            "title": "Detail",
-            "type": "string"
-          },
-          "headline": {
-            "title": "Headline",
-            "type": "integer"
-          },
-          "step": {
-            "description": "monitor | connect | anticipate | verify",
-            "title": "Step",
-            "type": "string"
-          }
-        },
-        "required": [
-          "step",
-          "headline",
-          "detail"
-        ],
-        "title": "PipelineStep",
         "type": "object"
       },
       "Playbook": {
@@ -1572,6 +1531,90 @@
         "title": "StageCheck",
         "type": "object"
       },
+      "StoryCard": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmed": {
+            "description": "yes | partly | no",
+            "title": "Confirmed",
+            "type": "string"
+          },
+          "confirmed_text": {
+            "title": "Confirmed Text",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventItem"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "evidence": {
+            "description": "strong | partial | weak",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "evidence_text": {
+            "title": "Evidence Text",
+            "type": "string"
+          },
+          "latest_headline": {
+            "title": "Latest Headline",
+            "type": "string"
+          },
+          "reaction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChannelObservation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reaction_text": {
+            "description": "e.g. '18.5% below the S&P 500 - an unusually large move'",
+            "title": "Reaction Text",
+            "type": "string"
+          },
+          "status": {
+            "description": "unfolding | escalating | settled",
+            "title": "Status",
+            "type": "string"
+          },
+          "status_text": {
+            "description": "e.g. 'Settled - new leader named'",
+            "title": "Status Text",
+            "type": "string"
+          },
+          "story_type": {
+            "description": "e.g. Leadership crisis",
+            "title": "Story Type",
+            "type": "string"
+          },
+          "storyline_id": {
+            "title": "Storyline Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "storyline_id",
+          "story_type",
+          "status",
+          "status_text",
+          "events",
+          "latest_headline",
+          "reaction",
+          "reaction_text",
+          "confirmed",
+          "confirmed_text",
+          "evidence",
+          "evidence_text"
+        ],
+        "title": "StoryCard",
+        "type": "object"
+      },
       "Storyline": {
         "additionalProperties": false,
         "properties": {
@@ -1889,29 +1932,6 @@
         "summary": "Recent Articles"
       }
     },
-    "/v1/briefing": {
-      "get": {
-        "description": "Every storyline as a ready-to-show card (the website's home page).",
-        "operationId": "briefing_v1_briefing_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/BriefingItem"
-                  },
-                  "title": "Response Briefing V1 Briefing Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Briefing"
-      }
-    },
     "/v1/calibration": {
       "get": {
         "description": "Across storylines: does each stage move each channel as expected? Do windows fit?",
@@ -1929,6 +1949,29 @@
           }
         },
         "summary": "Calibration"
+      }
+    },
+    "/v1/companies": {
+      "get": {
+        "description": "Every company we follow: its stories, latest news and plain-English answers.",
+        "operationId": "companies_v1_companies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyCard"
+                  },
+                  "title": "Response Companies V1 Companies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Companies"
       }
     },
     "/v1/coverage": {
@@ -2111,25 +2154,6 @@
         "summary": "Overview"
       }
     },
-    "/v1/pipeline": {
-      "get": {
-        "description": "The four-step workflow with live numbers (top of the website).",
-        "operationId": "pipeline_v1_pipeline_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Pipeline"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Pipeline"
-      }
-    },
     "/v1/sources": {
       "get": {
         "operationId": "list_sources_v1_sources_get",
@@ -2199,6 +2223,45 @@
           }
         },
         "summary": "Source Reliability"
+      }
+    },
+    "/v1/stories/{storyline_id}/summary": {
+      "get": {
+        "operationId": "story_summary_v1_stories__storyline_id__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "storyline_id",
+            "required": true,
+            "schema": {
+              "title": "Storyline Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Story Summary"
       }
     },
     "/v1/storylines": {

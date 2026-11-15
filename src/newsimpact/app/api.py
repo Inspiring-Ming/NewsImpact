@@ -88,15 +88,17 @@ def create_app(services: Services | None = None) -> FastAPI:
     def overview() -> queries.Overview:
         return queries.overview(svc)
 
-    @app.get("/v1/briefing", response_model=list[queries.BriefingItem])
-    def briefing() -> list[queries.BriefingItem]:
-        """Every storyline as a ready-to-show card (the website's home page)."""
-        return queries.briefing(svc)
+    @app.get("/v1/companies", response_model=list[queries.CompanyCard])
+    def companies() -> list[queries.CompanyCard]:
+        """Every company we follow: its stories, latest news and plain-English answers."""
+        return queries.companies(svc)
 
-    @app.get("/v1/pipeline", response_model=queries.Pipeline)
-    def pipeline() -> queries.Pipeline:
-        """The four-step workflow with live numbers (top of the website)."""
-        return queries.pipeline(svc)
+    @app.get("/v1/stories/{storyline_id}/summary", response_model=queries.CompanyCard)
+    def story_summary(storyline_id: str) -> queries.CompanyCard:
+        card = queries.story_summary(svc, storyline_id)
+        if card is None:
+            raise HTTPException(404, "unknown story")
+        return card
 
     @app.get("/v1/monitor", response_model=MonitorStatus)
     def monitor_status() -> MonitorStatus:

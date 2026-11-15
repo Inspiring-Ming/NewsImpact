@@ -40,10 +40,11 @@ class SemanticsService:
             claim = step.apply(claim)
         return self._link(claim).model_copy(update={"model_version": self.model_version})
 
-    def names_watched_company(self, article: Article) -> bool:
-        """Free check (name matching only, no analysis steps or LLM calls)."""
-        return any(e.ticker or self._resolver.resolve(e.name)
-                   for c in self._extractor.extract(article) for e in c.entities)  # fmt: skip
+    def mentioned_tickers(self, article: Article) -> set[str]:
+        """Companies the article names. Free: name matching only, no analysis or LLM calls."""
+        found = {e.ticker or self._resolver.resolve(e.name)
+                 for c in self._extractor.extract(article) for e in c.entities}  # fmt: skip
+        return {t for t in found if t}
 
     def claims_for(self, article: Article) -> tuple[Claim, ...]:
         """Analyse one article without publishing (also used by reports and evaluation)."""

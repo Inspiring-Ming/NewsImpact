@@ -188,8 +188,9 @@ def conclude(
                         "the market may have expected it.")  # fmt: skip
     close = [name(s.stage_name) for s in stages if s.overlaps_previous]
     if close:
-        tips.append(f"{', '.join(close)} came within days of the event before, so read the "
-                    "share price reaction for these events together.")  # fmt: skip
+        named = " and ".join(f"'{c}'" for c in close)
+        tips.append(f"{named} came within days of the event before, so read the share price "
+                    "reaction for these events together.")  # fmt: skip
     if pending:
         tips.append(f"{len(pending)} reaction(s) need a few more trading days to check; they "
                     "update automatically.")  # fmt: skip

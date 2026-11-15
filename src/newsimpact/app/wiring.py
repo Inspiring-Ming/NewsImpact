@@ -56,7 +56,7 @@ from newsimpact.semantics.adapters.lexicon import (
     WordListSignal,
 )
 from newsimpact.semantics.adapters.llm_classifier import LlmClassifierStep
-from newsimpact.semantics.models import Taxonomy
+from newsimpact.semantics.models import Company, Taxonomy
 from newsimpact.semantics.ports import ClaimStep
 from newsimpact.semantics.service import SemanticsService
 from newsimpact.shared.bus import InMemoryEventBus
@@ -124,6 +124,7 @@ class Services:
     llm: LlmGateway | None
     llm_presets: dict[str, LlmPreset]
     playbooks: PlaybookCatalog
+    companies: tuple[Company, ...]  # the companies we follow (display names, countries)
     market_policy: MeasurementPolicy  # exchanges, windows (for labelling and charts)
     # read models served by the API and reports
     articles: ArticleStore
@@ -319,6 +320,7 @@ def build_services(settings: Settings | None = None) -> Services:
         llm=llm,
         llm_presets=load_models(s.reference_dir / "llm_models.json")[0],
         playbooks=catalog,
+        companies=tuple(resolver.companies()),
         market_policy=market_policy,
         articles=stores.articles,
         impacts=stores.impacts,

@@ -18,6 +18,9 @@ def test_live_profile_tracks_the_curated_outlets() -> None:
     assert svc.market is None  # no fake prices in the live profile
 
 
-def test_every_entity_alias_maps_to_a_ticker() -> None:
-    aliases = json.loads((REFERENCE / "entities.json").read_text())["aliases"]
-    assert all(isinstance(t, str) and t.isupper() for t in aliases.values())
+def test_every_company_has_a_name_country_and_unique_aliases() -> None:
+    companies = json.loads((REFERENCE / "entities.json").read_text())["companies"]
+    aliases = [a.lower() for c in companies for a in c["aliases"]]
+    assert len(aliases) == len(set(aliases)), "an alias points to two companies"
+    assert all(c["name"] and len(c["country"]) == 2 and c["aliases"] for c in companies)
+    assert {c["country"] for c in companies} >= {"US", "AU"}

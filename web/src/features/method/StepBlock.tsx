@@ -1,17 +1,13 @@
-// One workflow step explained the same way every time: what we do, the rule, the evidence.
+// One part of the method, explained the same way every time: what we do, the rule, the evidence.
 import type { ReactNode } from "react";
-import { STEPS, StepBadge, type StepId } from "../../shared/steps";
 
-export function StepBlock({ id, what, rules, children }: {
-  id: StepId; what: string; rules: ReactNode[]; children: ReactNode;
+export function StepBlock({ title, term, what, rules, children }: {
+  title: string; term: string; what: string; rules: ReactNode[]; children: ReactNode;
 }) {
-  const step = STEPS.find((s) => s.id === id)!;
   return (
-    <section className={`step-block step-${id}`}>
-      <div className="step-block-head">
-        <StepBadge id={id} />
-        <h2>{step.verb}</h2>
-      </div>
+    <section className="step-block">
+      <h2>{title}</h2>
+      <p className="muted small">Also known as: {term}</p>
       <div className="step-block-body">
         <div>
           <h3>What we do</h3>

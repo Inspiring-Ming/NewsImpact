@@ -1,6 +1,6 @@
 // The ONE route table. To add a page: add a feature folder and one entry here.
 import type { ReactNode } from "react";
-import { BriefingPage } from "./features/briefing/BriefingPage";
+import { WatchlistPage } from "./features/watchlist/WatchlistPage";
 import { MethodPage } from "./features/method/MethodPage";
 import { StoryPage } from "./features/story/StoryPage";
 
@@ -12,7 +12,7 @@ export interface Route {
 }
 
 export const ROUTES: Route[] = [
-  { pattern: /^#\/?$/, nav: "Briefing", href: "#/", render: (_, k) => <BriefingPage refreshKey={k} /> },
+  { pattern: /^#\/?$/, nav: "Companies", href: "#/", render: (_, k) => <WatchlistPage refreshKey={k} /> },
   { pattern: /^#\/story\/(.+)$/, render: ([id]) => <StoryPage key={id} id={id} /> },
   { pattern: /^#\/method$/, nav: "How it works", href: "#/method", render: () => <MethodPage /> },
 ];

@@ -24,14 +24,14 @@ export function StatusBar({ onChanged }: { onChanged: () => void }) {
     <div className="status">
       <span className={`dot ${demo ? "demo" : "live"}`} />
       <span className="status-text">
-        {demo ? "Demo data (fictional companies)" : `Live · ${o?.outlets_enabled ?? "…"} outlets`}
-        {last && ` · updated ${new Date(last).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+        {demo ? "Demo data (fictional companies)" : `Reading ${o?.outlets_enabled ?? "…"} news sources`}
+        {last && ` · last checked ${new Date(last).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
       </span>
       {empty ? (
         <button className="small primary" disabled={busy} onClick={() => act(api.loadDemo)}>{busy ? "Loading…" : "Load demo"}</button>
       ) : (
-        <button className="small" disabled={busy || !o} onClick={() => act(api.runRound)} title="Collect news, link stories, re-check market evidence">
-          {busy ? "Updating…" : "Update now"}
+        <button className="small" disabled={busy || !o} onClick={() => act(api.runRound)} title="Read the latest news, update stories and re-check stock reactions">
+          {busy ? "Checking…" : "Check for news"}
         </button>
       )}
       {note && <span className="status-note">{note}</span>}

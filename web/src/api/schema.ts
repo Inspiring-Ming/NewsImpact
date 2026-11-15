@@ -38,26 +38,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/briefing": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Briefing
-         * @description Every storyline as a ready-to-show card (the website's home page).
-         */
-        get: operations["briefing_v1_briefing_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/calibration": {
         parameters: {
             query?: never;
@@ -70,6 +50,26 @@ export interface paths {
          * @description Across storylines: does each stage move each channel as expected? Do windows fit?
          */
         get: operations["calibration_v1_calibration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Companies
+         * @description Every company we follow: its stories, latest news and plain-English answers.
+         */
+        get: operations["companies_v1_companies_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -223,26 +223,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/pipeline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Pipeline
-         * @description The four-step workflow with live numbers (top of the website).
-         */
-        get: operations["pipeline_v1_pipeline_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v1/sources": {
         parameters: {
             query?: never;
@@ -269,6 +249,23 @@ export interface paths {
         };
         /** Source Reliability */
         get: operations["source_reliability_v1_sources__source_id__reliability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stories/{storyline_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Story Summary */
+        get: operations["story_summary_v1_stories__storyline_id__summary_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -451,61 +448,6 @@ export interface components {
             /** Ticker */
             ticker: string;
         };
-        /**
-         * BriefingItem
-         * @description One storyline, summarised for a card: what happened, how sure, what the market did.
-         */
-        BriefingItem: {
-            /** Company */
-            company: string;
-            /** Confidence */
-            confidence: string;
-            /** Expectations Measured */
-            expectations_measured: number;
-            /** Expectations Met */
-            expectations_met: number;
-            /** Latest At */
-            latest_at: string;
-            /** Latest Stage */
-            latest_stage: string;
-            /** Latest Summary */
-            latest_summary: string;
-            /**
-             * Market
-             * @description home exchange, e.g. US or ASX
-             */
-            market: string;
-            /**
-             * Outlets
-             * @description different outlets that reported the story (step 1)
-             */
-            outlets: number;
-            /**
-             * Predictions
-             * @description predicted reactions (step 3)
-             */
-            predictions: number;
-            /** @description the headline market move: combined reaction, else the strongest price move */
-            reaction: components["schemas"]["ChannelObservation"] | null;
-            /**
-             * Stages
-             * @description linked events (step 2)
-             */
-            stages: number;
-            /**
-             * Stages Confirmed
-             * @description stages backed by independent origins or the company
-             */
-            stages_confirmed: number;
-            /** Status */
-            status: string;
-            /** Storyline Id */
-            storyline_id: string;
-            /** Theme */
-            theme: string;
-            /** Ticker */
-            ticker: string;
-        };
         /** Calibration */
         Calibration: {
             /** Reactions */
@@ -578,6 +520,27 @@ export interface components {
              */
             status: "confirmed" | "corroborated" | "single_source";
         };
+        /** CompanyCard */
+        CompanyCard: {
+            /**
+             * Articles
+             * @description stored articles that name the company
+             */
+            articles: number;
+            /** Benchmark Name */
+            benchmark_name: string;
+            /** Country */
+            country: string;
+            /** Exchange */
+            exchange: string;
+            latest_news: components["schemas"]["NewsItem"] | null;
+            /** Name */
+            name: string;
+            /** Stories */
+            stories: components["schemas"]["StoryCard"][];
+            /** Ticker */
+            ticker: string;
+        };
         /**
          * DecisionCheck
          * @description Did an expected decision show up where the playbook says it would?
@@ -617,6 +580,16 @@ export interface components {
             predicted: string;
             /** Text */
             text: string;
+        };
+        /** EventItem */
+        EventItem: {
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Title */
+            title: string;
         };
         /** ExpectedDecision */
         ExpectedDecision: {
@@ -762,6 +735,20 @@ export interface components {
             /** Last Round At */
             last_round_at: string | null;
         };
+        /** NewsItem */
+        NewsItem: {
+            /** Outlet */
+            outlet: string;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+        };
         /**
          * OutletCoverage
          * @description Evidence for keeping, adding or dropping an outlet (see docs/07).
@@ -822,26 +809,6 @@ export interface components {
             storylines_open: number;
             /** Storylines Resolved */
             storylines_resolved: number;
-        };
-        /**
-         * Pipeline
-         * @description The workflow with live numbers: what the product has done so far.
-         */
-        Pipeline: {
-            /** Steps */
-            steps: components["schemas"]["PipelineStep"][];
-        };
-        /** PipelineStep */
-        PipelineStep: {
-            /** Detail */
-            detail: string;
-            /** Headline */
-            headline: number;
-            /**
-             * Step
-             * @description monitor | connect | anticipate | verify
-             */
-            step: string;
         };
         /**
          * Playbook
@@ -1098,6 +1065,50 @@ export interface components {
             /** Stage Name */
             stage_name: string;
         };
+        /** StoryCard */
+        StoryCard: {
+            /**
+             * Confirmed
+             * @description yes | partly | no
+             */
+            confirmed: string;
+            /** Confirmed Text */
+            confirmed_text: string;
+            /** Events */
+            events: components["schemas"]["EventItem"][];
+            /**
+             * Evidence
+             * @description strong | partial | weak
+             */
+            evidence: string;
+            /** Evidence Text */
+            evidence_text: string;
+            /** Latest Headline */
+            latest_headline: string;
+            reaction: components["schemas"]["ChannelObservation"] | null;
+            /**
+             * Reaction Text
+             * @description e.g. '18.5% below the S&P 500 - an unusually large move'
+             */
+            reaction_text: string;
+            /**
+             * Status
+             * @description unfolding | escalating | settled
+             */
+            status: string;
+            /**
+             * Status Text
+             * @description e.g. 'Settled - new leader named'
+             */
+            status_text: string;
+            /**
+             * Story Type
+             * @description e.g. Leadership crisis
+             */
+            story_type: string;
+            /** Storyline Id */
+            storyline_id: string;
+        };
         /** Storyline */
         Storyline: {
             /** Current Stage */
@@ -1266,26 +1277,6 @@ export interface operations {
             };
         };
     };
-    briefing_v1_briefing_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BriefingItem"][];
-                };
-            };
-        };
-    };
     calibration_v1_calibration_get: {
         parameters: {
             query?: never;
@@ -1302,6 +1293,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Calibration"];
+                };
+            };
+        };
+    };
+    companies_v1_companies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyCard"][];
                 };
             };
         };
@@ -1479,26 +1490,6 @@ export interface operations {
             };
         };
     };
-    pipeline_v1_pipeline_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Pipeline"];
-                };
-            };
-        };
-    };
     list_sources_v1_sources_get: {
         parameters: {
             query?: never;
@@ -1539,6 +1530,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReliabilityScore"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    story_summary_v1_stories__storyline_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storyline_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyCard"];
                 };
             };
             /** @description Validation Error */

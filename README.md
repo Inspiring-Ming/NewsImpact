@@ -35,15 +35,15 @@ To watch the real outlets, copy `.env.example` to `.env` and set these values:
 
 ## The website
 
-The site is organised around the product's four steps: **Monitor → Connect → Anticipate → Verify**. Each step has its own number and colour, and they appear the same way on every page.
+What it tells a visitor: **when news about a company turns into a developing story, is it confirmed, and how did the stock react?**
 
 | Page | What it shows |
 |---|---|
-| **Briefing** (home) | The four steps with live numbers (articles read, stories built, reactions predicted, reactions confirmed by the market). Below that, every story as a card with the same four-step rail for that story. Filter by US or Australia. |
-| **Story** (opens from a card) | The conclusion, as one fact per step plus what to watch. How the story unfolded: each event, who reported it, what we predicted, and what happened. The share price against its market. Statistics are folded away. |
-| **How it works** | The same four steps, each with what we do, the rule (with real numbers) and the live evidence. All settings and their reasons are folded at the end. |
+| **Companies** (home) | Every company we follow (US and Australia). **Developing stories** first: each card shows the latest headline, the story so far as dated events, and four plain answers — status, stock reaction against its index (S&P 500 or ASX 200), whether the news is confirmed, and the strength of the evidence. **Waiting for confirmation** lists possible stories from a single outlet. **Also in the news** gives the latest headline per company, and **No recent news** lists the rest. |
+| **Story** (opens from a card) | In short · What happened · How the stock reacted · Who was expected to react, and did they? · For analysts (statistics). |
+| **How it works** | Four tabs named after the industry or research method each follows: News sources (source credibility), Story tracking (event detection), Expected reactions (behavioural finance), Market reaction check (event study). Each tab gives what we do, the rule with its real numbers, and the live evidence. |
 
-The header shows whether monitoring is live and has an **Update now** button. Names shown to people come from the data files (`playbooks.json` titles, `sources.json` names), so new story types and outlets need no website change.
+The plain-English answers are written once by the API (`/v1/companies`), so the website and any integration use the same words. Names come from the data files: company names and countries from `entities.json`, story and event titles from `playbooks.json`, outlet names from `sources.json`.
 
 ## How it works: seven modules, in the order news flows
 

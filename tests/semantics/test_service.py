@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 
 from newsimpact.semantics.adapters.json_file import JsonEntityResolver
-from newsimpact.semantics.models import Claim, ClaimsExtracted, EntityMention
+from newsimpact.semantics.models import Claim, ClaimsExtracted, Company, EntityMention
 from newsimpact.semantics.service import SemanticsService
 from newsimpact.shared.bus import InMemoryEventBus
 from newsimpact.sources.models import Article, ArticleIngested
@@ -33,7 +33,8 @@ class Tag:
 def test_steps_run_in_order_tickers_are_linked_and_versions_recorded() -> None:
     bus = InMemoryEventBus()
     SemanticsService(bus, OneClaim(), [Tag("first"), Tag("second")],
-                     JsonEntityResolver({"Acme": "ACMX"}))  # fmt: skip
+                     JsonEntityResolver([Company(ticker="ACMX", name="Acme", country="US",
+                                                 aliases=("Acme",))]))  # fmt: skip
     article = Article(article_id="a", source_id="s", url="u", title="t", body="Acme grew.",
                       published_at=NOW, ingested_at=NOW, content_hash="h")  # fmt: skip
     bus.publish(ArticleIngested(article=article).to_envelope("/test"))

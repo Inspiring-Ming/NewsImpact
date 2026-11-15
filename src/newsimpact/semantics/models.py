@@ -86,6 +86,15 @@ class Attribution(Model):
         return reporting_source_id
 
 
+class Company(Model):
+    """A company we follow: how to show it, and how the news names it."""
+
+    ticker: str = Field(description="bare = US listing, '.AX' = ASX")
+    name: str
+    country: str = Field(description="ISO country code, e.g. US, AU")
+    aliases: tuple[str, ...]
+
+
 class EntityMention(Model):
     name: str
     entity_type: str = Field(description="company | person | country | product | ...")
