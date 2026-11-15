@@ -306,6 +306,14 @@
             "title": "Best Reliability",
             "type": "number"
           },
+          "confidence": {
+            "default": 0.0,
+            "description": "chance at least one independent origin is right: 1 - product of (1 - best reliability per origin); copies of one origin count once",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
           "origins": {
             "description": "independent origins behind those reports",
             "items": {
@@ -537,6 +545,11 @@
             "title": "Actions",
             "type": "array"
           },
+          "confidence": {
+            "description": "chance the news is true, 0-1: the weakest update's combined confidence across its independent sources",
+            "title": "Confidence",
+            "type": "number"
+          },
           "event_id": {
             "title": "Event Id",
             "type": "string"
@@ -546,6 +559,11 @@
             "title": "Event Type",
             "type": "string"
           },
+          "is_rumour": {
+            "description": "the latest update is hedged or rumoured",
+            "title": "Is Rumour",
+            "type": "boolean"
+          },
           "latest_headline": {
             "title": "Latest Headline",
             "type": "string"
@@ -554,9 +572,26 @@
             "title": "Latest Source",
             "type": "string"
           },
+          "next_update": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the update this kind of event usually brings next",
+            "title": "Next Update"
+          },
           "ongoing": {
             "title": "Ongoing",
             "type": "boolean"
+          },
+          "said_by": {
+            "description": "who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous",
+            "title": "Said By",
+            "type": "string"
           },
           "source_names": {
             "items": {
@@ -564,11 +599,6 @@
             },
             "title": "Source Names",
             "type": "array"
-          },
-          "source_reliability": {
-            "description": "average reliability of those sources, 0-1",
-            "title": "Source Reliability",
-            "type": "number"
           },
           "sources": {
             "description": "independent news sources that reported the event",
@@ -592,10 +622,20 @@
             "title": "Stock Move Period",
             "type": "string"
           },
+          "stock_move_status": {
+            "description": "measured | pending (the reaction window has not closed yet) | no_data",
+            "title": "Stock Move Status",
+            "type": "string"
+          },
           "stock_move_unusual": {
             "description": "larger than on 19 of 20 normal trading days",
             "title": "Stock Move Unusual",
             "type": "boolean"
+          },
+          "tone": {
+            "description": "sentiment of the latest update, -1 (negative) to 1",
+            "title": "Tone",
+            "type": "number"
           },
           "updates": {
             "items": {
@@ -615,10 +655,15 @@
           "stock_move",
           "stock_move_unusual",
           "stock_move_period",
+          "stock_move_status",
           "sources",
           "source_names",
-          "source_reliability",
-          "actions"
+          "confidence",
+          "actions",
+          "tone",
+          "is_rumour",
+          "said_by",
+          "next_update"
         ],
         "title": "EventCard",
         "type": "object"
@@ -1047,6 +1092,11 @@
             "title": "Articles",
             "type": "integer"
           },
+          "articles_24h": {
+            "description": "articles published in the last 24 hours",
+            "title": "Articles 24H",
+            "type": "integer"
+          },
           "llm": {
             "description": "LLM preset and model, or 'off'",
             "title": "Llm",
@@ -1093,6 +1143,7 @@
           "profile",
           "outlets_enabled",
           "articles",
+          "articles_24h",
           "storylines_open",
           "storylines_resolved",
           "market_data",
@@ -1455,6 +1506,7 @@
         "enum": [
           "wire",
           "major_outlet",
+          "aggregator",
           "regulatory_filing",
           "company_press_release",
           "blog",
@@ -1706,6 +1758,12 @@
             "title": "Event Type",
             "type": "string"
           },
+          "is_rumour": {
+            "default": false,
+            "description": "hedged or 'sources say' wording",
+            "title": "Is Rumour",
+            "type": "boolean"
+          },
           "published_at": {
             "description": "first report",
             "format": "date-time",
@@ -1731,6 +1789,14 @@
           "summary": {
             "title": "Summary",
             "type": "string"
+          },
+          "tone": {
+            "default": 0.0,
+            "description": "sentiment of the first report",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Tone",
+            "type": "number"
           }
         },
         "required": [

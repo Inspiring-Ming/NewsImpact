@@ -39,7 +39,11 @@ def test_api_contract_for_the_website() -> None:
         "New leader named",
     ]
     assert change["stock_move"] < 0 and change["stock_move_unusual"] is True
-    assert change["sources"] >= 3 and 0 < change["source_reliability"] <= 1 and change["actions"]
+    assert change["stock_move_status"] == "measured"
+    assert change["said_by"] and -1 <= change["tone"] <= 1 and change["next_update"] is None
+    assert change["sources"] >= 3 and change["actions"]
+    # more independent sources -> more confidence than any one of them alone
+    assert 0.9 < change["confidence"] <= 1
     orbit = next(c for c in companies if c["ticker"] == "ORBT")
     assert orbit["events"] == [] and orbit["name"] == "Orbit Auto"
     summary = client.get(f"/v1/events/{change['event_id']}/summary").json()

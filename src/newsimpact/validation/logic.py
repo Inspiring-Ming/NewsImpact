@@ -48,7 +48,7 @@ from newsimpact.validation.models import (
     WindowCalibration,
 )
 
-MODEL_VERSION = "validation-rules-v0.4"
+MODEL_VERSION = "validation-rules-v0.5"
 AUTHORITATIVE_TYPES = frozenset({SourceType.REGULATORY_FILING, SourceType.COMPANY_PRESS_RELEASE})
 AUTHORITATIVE_ATTRIBUTION = frozenset({"company_statement", "filing"})
 MEASURED = frozenset({"consistent", "inconsistent", "not_significant"})
@@ -69,12 +69,21 @@ def check_claim(reports: Sequence[Report], policy: ValidationPolicy) -> ClaimChe
         status = "corroborated"
     else:
         status = "single_source"
+    # Noisy-OR over independent origins: the claim is wrong only if every origin is wrong.
+    # Several reports from one origin are copies, so only its most reliable report counts.
+    best: dict[str, float] = {}
+    for r in reports:
+        best[r.origin] = max(best.get(r.origin, 0.0), r.claim_reliability)
+    all_wrong = 1.0
+    for reliability in best.values():
+        all_wrong *= 1.0 - reliability
     return ClaimCheck(
         status=status,
         outlets=outlets,
         origins=origins,
         authoritative=authoritative,
         best_reliability=max((r.claim_reliability for r in reports), default=0.0),
+        confidence=round(1.0 - all_wrong, 6) if best else 0.0,
     )
 
 

@@ -24,6 +24,8 @@ PRIORS: dict[SourceType, tuple[float, float]] = {
     SourceType.WIRE: (8.0, 2.0),
     SourceType.MAJOR_OUTLET: (6.0, 2.0),
     SourceType.COMPANY_PRESS_RELEASE: (6.0, 3.0),
+    # Mixes original reporting with syndicated analysis and opinion pieces.
+    SourceType.AGGREGATOR: (4.0, 2.0),
     SourceType.BLOG: (2.0, 2.0),
     SourceType.SOCIAL: (1.0, 2.0),
     SourceType.UNKNOWN: (1.0, 1.0),

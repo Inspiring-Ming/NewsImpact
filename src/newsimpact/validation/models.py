@@ -42,6 +42,11 @@ class ClaimCheck(Model):
     origins: tuple[str, ...] = Field(description="independent origins behind those reports")
     authoritative: bool = Field(description="a filing or the company itself confirmed it")
     best_reliability: float = Field(ge=0.0, le=1.0)
+    confidence: float = Field(
+        default=0.0, ge=0.0, le=1.0,
+        description="chance at least one independent origin is right: 1 - product of (1 - "
+                    "best reliability per origin); copies of one origin count once",
+    )  # fmt: skip
 
 
 class DecisionCheck(Model):

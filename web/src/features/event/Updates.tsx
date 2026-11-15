@@ -17,9 +17,10 @@ export function Updates({ story, assessment }: EventData) {
             <div className="stage-head">
               <b>{title(st.stage_name)}</b>
               <span className="muted">{date(st.published_at, true)}</span>
-              {st.claim.authoritative
-                ? <Pill tone="good">Company or filing</Pill>
-                : <Pill tone={st.claim.outlets.length > 1 ? "ok" : "warn"}>{st.claim.outlets.length} {st.claim.outlets.length === 1 ? "source" : "sources"}</Pill>}
+              <Pill tone={st.claim.confidence >= 0.9 ? "good" : "warn"}>
+                {st.claim.outlets.length} {st.claim.outlets.length === 1 ? "source" : "sources"} · {Math.round(st.claim.confidence * 100)}% confidence
+              </Pill>
+              {st.claim.authoritative && <Pill tone="good">Company or official filing</Pill>}
             </div>
             {quote.get(st.stage) && <blockquote>{quote.get(st.stage)}</blockquote>}
             <p className="small muted">

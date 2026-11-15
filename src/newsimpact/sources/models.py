@@ -21,6 +21,7 @@ class SourceType(StrEnum):
 
     WIRE = "wire"
     MAJOR_OUTLET = "major_outlet"
+    AGGREGATOR = "aggregator"
     REGULATORY_FILING = "regulatory_filing"
     COMPANY_PRESS_RELEASE = "company_press_release"
     BLOG = "blog"
@@ -46,7 +47,7 @@ class Source(Model):
 class FeedConfig(Model):
     """How to read one feed of an outlet. `kind` picks the adapter (see app/wiring.py)."""
 
-    kind: str = Field(description="rss | fixture | ...")
+    kind: str = Field(description="rss | rss_per_company | fixture | ...")
     url: str = ""
 
 

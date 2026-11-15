@@ -1,13 +1,23 @@
 // Home: the watchlist. Key numbers on top, filters, then one compact paged table.
 import { useMemo, useState } from "react";
-import { api } from "../../api/client";
-import { SECTORS } from "../../shared/labels";
+import { api, type S } from "../../api/client";
+import { pct, SECTORS } from "../../shared/labels";
+import { Term } from "../../shared/Term";
 import { Fact, State } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
+import { ImpactMap } from "./ImpactMap";
 import { WatchlistTable } from "./WatchlistTable";
 
 const PAGE = 12;
 const MARKETS = [["all", "All markets"], ["US", "🇺🇸 US"], ["AU", "🇦🇺 Australia"]] as const;
+
+// Sort orders a market user expects: newest news, largest price impact, best-supported news.
+const latestAt = (c: S["CompanyCard"]) => Date.parse(c.events[0]?.updates.at(-1)?.published_at ?? c.latest_news?.published_at ?? "1970");
+const SORTS: Record<string, { label: string; key: (c: S["CompanyCard"]) => number }> = {
+  latest: { label: "Latest", key: latestAt },
+  move: { label: "Biggest move", key: (c) => Math.max(-1, ...c.events.map((e) => (e.stock_move == null ? -1 : Math.abs(e.stock_move)))) },
+  sources: { label: "Most sources", key: (c) => (c.events[0]?.sources ?? 0) + (c.events[0]?.confidence ?? 0) },
+};
 
 export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const { data, error, loading } = useApi(api.companies, [refreshKey]);
@@ -16,16 +26,23 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const [sector, setSector] = useState("all");
   const [eventsOnly, setEventsOnly] = useState(true);
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("latest");
   const [page, setPage] = useState(0);
 
   const all = data ?? [];
   const events = all.flatMap((c) => c.events);
+  const weekAgo = Date.now() - 7 * 86_400_000, dayAgo = Date.now() - 86_400_000;
+  const thisWeek = events.filter((e) => Date.parse(e.updates[e.updates.length - 1].published_at) >= weekAgo);
+  const unusual = events.filter((e) => e.stock_move_unusual).length;
+  const biggest = all.flatMap((c) => c.events.filter((e) => e.stock_move != null).map((e) => ({ c, e })))
+    .sort((a, b) => Math.abs(b.e.stock_move!) - Math.abs(a.e.stock_move!))[0];
+  const inNews = all.filter((c) => c.latest_news && Date.parse(c.latest_news.published_at) >= dayAgo).length;
   const rows = useMemo(() => all.filter((c) =>
     (market === "all" || c.country === market) &&
     (sector === "all" || c.sector === sector) &&
     (!eventsOnly || c.events.length > 0) &&
     (!query || `${c.name} ${c.ticker}`.toLowerCase().includes(query.toLowerCase())),
-  ), [all, market, sector, eventsOnly, query]);
+  ).sort((a, b) => SORTS[sort].key(b) - SORTS[sort].key(a)), [all, market, sector, eventsOnly, query, sort]);
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const current = Math.min(page, pages - 1);
   const change = (f: () => void) => { f(); setPage(0); };
@@ -33,10 +50,15 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   return (
     <>
       <div className="kpis">
-        <Fact label="Companies tracked" value={all.length || "–"} sub="large caps, US and Australia" />
-        <Fact label="Events" value={events.length} sub={`${events.filter((e) => e.ongoing).length} still developing`} />
-        <Fact label="Unusual stock moves" value={events.filter((e) => e.stock_move_unusual).length} sub="beyond normal daily swings" tone="warn" />
-        <Fact label="News sources" value={overview.data?.outlets_enabled ?? "–"} sub="read automatically" />
+        <Fact label={<Term id="eventsWeek" />} value={thisWeek.length}
+              sub={`${thisWeek.filter((e) => e.ongoing).length} still developing · ${events.length} in total`} />
+        <Fact label={<Term id="unusual">Unusual stock moves</Term>} value={unusual}
+              sub={`of ${events.filter((e) => e.stock_move != null).length} events with price data`} tone={unusual ? "warn" : undefined} />
+        <Fact label={<Term id="biggest" />}
+              value={biggest ? <a href={`#/event/${biggest.e.event_id}`} className={biggest.e.stock_move! < 0 ? "bad" : "good"}>{pct(biggest.e.stock_move!)}</a> : "–"}
+              sub={biggest ? `${biggest.c.name} vs ${biggest.c.index_name} · ${biggest.e.event_type}` : "no price data yet"} />
+        <Fact label={<Term id="news24h" />} value={overview.data?.articles_24h ?? "–"}
+              sub={`about ${inNews} companies · from ${overview.data?.outlets_enabled ?? "–"} sources`} />
       </div>
 
       <div className="toolbar">
@@ -51,11 +73,16 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           <option value="all">All sectors</option>
           {SECTORS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
+        <select value={sort} onChange={(e) => change(() => setSort(e.target.value))} aria-label="Sort">
+          {Object.entries(SORTS).map(([id, s]) => <option key={id} value={id}>Sort: {s.label}</option>)}
+        </select>
         <div className="segmented" role="group" aria-label="Show">
           <button className={eventsOnly ? "active" : ""} onClick={() => change(() => setEventsOnly(true))}>With events</button>
           <button className={!eventsOnly ? "active" : ""} onClick={() => change(() => setEventsOnly(false))}>All companies</button>
         </div>
       </div>
+
+      {data && <ImpactMap companies={rows} />}
 
       <State error={error} loading={loading && !data}
              empty={data && rows.length === 0 && (

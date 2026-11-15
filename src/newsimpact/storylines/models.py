@@ -68,6 +68,8 @@ class StorylineEvent(Model):
     published_at: datetime = Field(description="first report")
     claim_reliability: float = Field(ge=0.0, le=1.0, description="best single report")
     summary: str
+    tone: float = Field(default=0.0, ge=-1.0, le=1.0, description="sentiment of the first report")
+    is_rumour: bool = Field(default=False, description="hedged or 'sources say' wording")
     reports: tuple[Report, ...] = ()
 
 

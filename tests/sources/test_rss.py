@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import httpx
 
-from newsimpact.sources.adapters.rss import RssFeed, parse_feed
+from newsimpact.sources.adapters.rss import PerCompanyRssFeed, RssFeed, parse_feed
 from newsimpact.sources.models import Source
 
 NOW = datetime(2026, 3, 21, tzinfo=UTC)
@@ -50,3 +50,18 @@ def test_feed_filters_by_since() -> None:
     feed = RssFeed(source, "https://news.example/rss", client)
     assert len(list(feed.fetch())) == 1
     assert list(feed.fetch(since=NOW)) == []
+
+
+def test_per_company_feed_reads_each_ticker_and_skips_failures() -> None:
+    asked: list[str] = []
+
+    def reply(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.params["s"])
+        return httpx.Response(404 if request.url.params["s"] == "BAD" else 200, content=RSS)
+
+    client = httpx.Client(transport=httpx.MockTransport(reply))
+    source = Source(source_id="agg", name="Aggregator", domains=("x.test",))
+    feed = PerCompanyRssFeed(source, "https://x.test/rss?s={ticker}", ["NVDA", "BAD", "BHP.AX"],
+                             client)  # fmt: skip
+    assert len(list(feed.fetch())) == 2  # one dated item from each working ticker feed
+    assert asked == ["NVDA", "BAD", "BHP.AX"]

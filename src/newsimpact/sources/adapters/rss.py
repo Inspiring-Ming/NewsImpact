@@ -9,8 +9,9 @@ content to paying clients needs each publisher's terms (docs/01).
 from __future__ import annotations
 
 import html
+import logging
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from xml.etree.ElementTree import Element
@@ -21,6 +22,7 @@ from defusedxml import ElementTree
 from newsimpact.shared.text import content_hash, stable_id
 from newsimpact.sources.models import Article, Source
 
+log = logging.getLogger(__name__)
 _ATOM = "{http://www.w3.org/2005/Atom}"
 _TAGS = re.compile(r"<[^>]+>")
 
@@ -86,11 +88,34 @@ def parse_feed(xml: bytes, source_id: str, now: datetime) -> list[Article]:
 class RssFeed:
     def __init__(self, source: Source, url: str, client: httpx.Client) -> None:
         self._source = source
-        self._url = url
+        self.url = url
         self._client = client
 
     def fetch(self, since: datetime | None = None) -> Iterable[Article]:
-        resp = self._client.get(self._url, follow_redirects=True)
+        resp = self._client.get(self.url, follow_redirects=True)
         resp.raise_for_status()
         articles = parse_feed(resp.content, self._source.source_id, datetime.now(UTC))
         return [a for a in articles if since is None or a.published_at > since]
+
+
+class PerCompanyRssFeed:
+    """One RSS URL per company ("{ticker}" in the URL), read as one feed.
+
+    A provider's per-company feeds cover every tracked company, not only those a
+    general business section happens to mention. A failing company feed is
+    skipped so one bad symbol does not drop the rest.
+    """
+
+    def __init__(
+        self, source: Source, url_template: str, tickers: Sequence[str], client: httpx.Client
+    ) -> None:
+        self._feeds = [RssFeed(source, url_template.format(ticker=t), client) for t in tickers]
+
+    def fetch(self, since: datetime | None = None) -> Iterable[Article]:
+        out: list[Article] = []
+        for feed in self._feeds:
+            try:
+                out += feed.fetch(since)
+            except (httpx.HTTPError, ElementTree.ParseError, ValueError):  # ValueError: defusedxml
+                log.warning("company feed failed", extra={"url": feed.url})
+        return out

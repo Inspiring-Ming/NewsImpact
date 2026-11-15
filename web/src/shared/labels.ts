@@ -35,6 +35,58 @@ export const SECTORS = [
   "Financials", "Health Care", "Energy", "Materials", "Industrials", "Utilities", "Real Estate",
 ];
 
+/** Every term a reader may not know, defined once in plain words. Shown on hover by <Term>. */
+export const TERMS = {
+  sector: { label: "Sector", tip: "The company's industry under GICS (Global Industry Classification Standard), the 11-sector system used by MSCI, S&P and most fund managers." },
+  event: { label: "Latest event", tip: "Company news of a kind known to move share prices, e.g. a CEO leaving, a takeover, an earnings miss. An event is a chain of dated updates." },
+  says: { label: "What the news says", tip: "Read from the wording of the latest update: its tone (good or bad for the company), whether it is stated as fact or only rumoured, and who it comes from. 'Next' is the update this kind of event usually brings next." },
+  move: { label: "Stock vs market", tip: "How much better (+) or worse (−) the stock did than its whole market over the event days (S&P 500 for US, ASX 200 for Australia). Taking out the market's own move leaves the company's reaction to its news." },
+  unusual: { label: "Unusual move", tip: "A move this large happens on fewer than 1 in 20 normal days for this stock (judged from its previous 120 trading days), so it is unlikely to be chance." },
+  sources: { label: "Sources", tip: "How many of our news sources reported the event. Copies of the same article count once." },
+  confidence: { label: "Confidence", tip: "Chance the news is true. Each source has a reliability score; the news is wrong only if every independent source is wrong. One 75% source gives 75%; three give about 98%. An event shows its weakest update." },
+  reliability: { label: "Reliability", tip: "Chance a report from this source turns out to be right. Starts from the kind of source (official filing 95%, news agency 80%, newspaper 75%, press release or news aggregator 67%) and moves as its reports are later confirmed or corrected." },
+  eventsWeek: { label: "Events this week", tip: "Events with a new update in the last 7 days." },
+  biggest: { label: "Biggest move", tip: "The largest stock move against its market among all events." },
+  news24h: { label: "News in 24 hours", tip: "Articles our sources published in the last 24 hours." },
+  map: { label: "Impact map", tip: "Every event with a measured stock move. Left = the stock did worse than its market, right = better. Rows are sectors. Bigger dot = more sources. Click a dot to open the event." },
+  price: { label: "Share price", tip: "Stock return minus its market's return, from the update day to the next trading day." },
+  volume: { label: "Trading volume", tip: "Shares traded compared with this stock's normal day, over the update day and the 2 days after." },
+  volatility: { label: "Price swings", tip: "How big the daily price moves were compared with normal, over the update day and the 4 days after." },
+  expected: { label: "Expected vs actual", tip: "For each update: the reaction investors usually show (↑ rise, ↓ fall, ↕ big move either way) and what really happened (✓ as expected, ✗ the opposite, – no clear move)." },
+  articles: { label: "Articles read", tip: "Articles we have read from this source so far." },
+  relevance: { label: "About our companies", tip: "Share of this source's articles that name a company we follow. Low = the source mostly covers other things, so it adds little." },
+  usedInEvent: { label: "Led to an event", tip: "Share of this source's articles that became an update of an event. Shows whether the source reports the news that matters." },
+  window: { label: "Time window", tip: "A new report within this many days of the last update joins the same event; after that it starts a new event. Set from typical timelines, then checked against the gaps we measure." },
+  seen: { label: "Measured gap", tip: "Typical number of days between updates of this event type, measured from our own data." },
+  expectShare: { label: "Expected share price", tip: "What research on investor behaviour says this kind of news usually does to the share price." },
+  measured: { label: "Events measured", tip: "Events of this type with a completed stock measurement." },
+  avgMove: { label: "Average move", tip: "Average stock move against its market across those events." },
+  asExpected: { label: "Moved as expected", tip: "Events where the share price went the expected way (for 'big move either way': an unusual move). This is how we check that the expectation holds in real data." },
+  sourcesTab: { label: "Which news sources we read", tip: "We read a short list of trusted sources automatically. Each keeps its place only if it covers our companies and leads to events." },
+  eventsTab: { label: "Which events we detect", tip: "Each sentence naming a company is checked for an event type. Related news about the same company within the time window is joined into one event, update by update." },
+  marketTab: { label: "Does this news move the stock?", tip: "For each event type: what we expect the share price to do, and what really happened in the events measured so far." },
+} as const;
+
+/** GICS sector short names, as on trading screens. */
+export const SECTOR_SHORT: Record<string, string> = {
+  "Information Technology": "IT", "Communication Services": "Comm Svcs", "Consumer Discretionary": "Cons Disc",
+  "Consumer Staples": "Cons Staples", Financials: "Financials", "Health Care": "Health Care", Energy: "Energy",
+  Materials: "Materials", Industrials: "Industrials", Utilities: "Utilities", "Real Estate": "Real Estate",
+};
+
+/** Who the latest update comes from. */
+export const SAID_BY: Record<string, string> = {
+  own_reporting: "news report", cites_outlet: "cites another outlet", company_statement: "company statement",
+  filing: "official filing", anonymous: "unnamed sources",
+};
+
+/** Tone of the wording, for the company: thresholds keep near-zero scores neutral. */
+export function tone(x: number): { text: string; tone: Tone } {
+  if (x <= -0.15) return { text: "Negative", tone: "bad" };
+  if (x >= 0.15) return { text: "Positive", tone: "good" };
+  return { text: "Neutral", tone: "neutral" };
+}
+
 /** "−18.5%" with a sign, for stock moves against an index. */
 export function pct(x: number, digits = 1): string {
   return `${x >= 0 ? "+" : "−"}${Math.abs(x * 100).toFixed(digits)}%`;
@@ -50,13 +102,28 @@ export const RESULT: Record<string, { text: string; icon: string; tone: Tone }> 
   not_measurable: { text: "Not visible in prices", icon: "·", tone: "muted" },
 };
 
+/** "worse than the S&P 500" - the sign of a move against its index, in words. */
+export function vsWords(x: number, index: string): string {
+  return `${x < 0 ? "worse" : "better"} than the ${index}`;
+}
+
+/** "18.5% worse than the S&P 500" */
+export function moveVs(x: number, index: string): string {
+  return `${Math.abs(x * 100).toFixed(1)}% ${vsWords(x, index)}`;
+}
+
+/** Why a stock move is not shown yet. */
+export const NO_MOVE: Record<string, string> = {
+  pending: "Too early: check after the next trading day",
+  no_data: "No price data yet",
+};
+
 export const ARROW: Record<string, string> = { up: "↑", down: "↓", uncertain: "↕" };
 
-export const DIRECTION: Record<string, string> = { up: "rise", down: "fall", uncertain: "move sharply" };
 
-/** "18.5% below the S&P 500", "3.7× normal trading volume" ... */
+/** "18.5% worse than the S&P 500", "3.7× normal trading volume" ... */
 export function describe(o: S["ChannelObservation"], benchmark = "market"): string {
-  if (o.channel === "price") return `${Math.abs(o.value * 100).toFixed(1)}% ${o.value < 0 ? "below" : "above"} the ${benchmark}`;
+  if (o.channel === "price") return moveVs(o.value, benchmark);
   if (o.channel === "volume") return `${o.value.toFixed(1)}× normal trading volume`;
   if (o.channel === "volatility") return `${o.value.toFixed(1)}× normal price swings`;
   return `${o.metric} = ${o.value}`;

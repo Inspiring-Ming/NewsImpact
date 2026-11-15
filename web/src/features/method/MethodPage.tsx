@@ -11,9 +11,9 @@ import { VerifyStep } from "./VerifyStep";
 type Data = { method: S["Method"]; calibration: S["Calibration"] | null };
 
 const TABS: { id: string; label: string; render: (d: Data) => ReactNode }[] = [
-  { id: "sources", label: "1. News sources", render: (d) => <MonitorStep method={d.method} /> },
-  { id: "events", label: "2. Event detection", render: (d) => <ConnectStep {...d} /> },
-  { id: "market", label: "3. Market reaction", render: (d) => <VerifyStep {...d} /> },
+  { id: "sources", label: "1. News sources", render: () => <MonitorStep /> },
+  { id: "events", label: "2. Events we detect", render: (d) => <ConnectStep {...d} /> },
+  { id: "market", label: "3. Does it move the stock?", render: (d) => <VerifyStep method={d.method} /> },
 ];
 
 export function MethodPage() {
@@ -24,7 +24,7 @@ export function MethodPage() {
     <>
       <section className="hero compact">
         <h1>How it works</h1>
-        <p className="lead">Three parts. Each shows the rule we follow and the data behind it.</p>
+        <p className="lead">From news to measured stock moves, in three steps, with live data. Point at any underlined word for its meaning.</p>
       </section>
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       <State error={method.error} loading={method.loading}>

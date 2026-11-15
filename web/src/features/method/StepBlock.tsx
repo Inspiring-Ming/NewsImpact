@@ -1,23 +1,13 @@
-// One part of the method, laid out the same way every time: the rule, then the data behind it.
+// One part of the method: a title that explains itself on hover, then the data.
 import type { ReactNode } from "react";
+import type { TERMS } from "../../shared/labels";
+import { Term } from "../../shared/Term";
 
-export function StepBlock({ title, term, rules, children }: {
-  title: string; term: string; rules: ReactNode[]; children: ReactNode;
-}) {
+export function StepBlock({ term, children }: { term: keyof typeof TERMS; children: ReactNode }) {
   return (
     <section className="step-block">
-      <h2>{title}</h2>
-      <p className="muted small">Research term: {term}</p>
-      <div className="step-block-body">
-        <div>
-          <h3>How we decide</h3>
-          <ul className="rules">{rules.map((r, i) => <li key={i}>{r}</li>)}</ul>
-        </div>
-        <div>
-          <h3>The data</h3>
-          {children}
-        </div>
-      </div>
+      <h2><Term id={term} /></h2>
+      {children}
     </section>
   );
 }

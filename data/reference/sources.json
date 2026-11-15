@@ -1,5 +1,5 @@
 {
-  "_note": "The curated outlets we read. Start small; to add an outlet, add a row (no code change). source_type sets the starting reliability; the track record then moves it. 'domains' lets follow-up search recognise the outlet. Feed URLs checked 2026-11-14 (US/UK) and 2026-11-15 (Australia). Check each publisher's terms before showing content to clients.",
+  "_note": "The curated news sources we read. Start small; to add an outlet, add a row (no code change). source_type sets the starting reliability; the track record then moves it. 'domains' lets follow-up search recognise the outlet. Feed URLs checked 2026-11-14 (US/UK) and 2026-11-15 (Australia). Check each publisher's terms before showing content to clients.",
   "sources": [
     {
       "source_id": "bbc",
@@ -78,6 +78,22 @@
       ],
       "enabled": false,
       "note": "Disabled 2026-11-15 by the coverage rule (docs/07): 0% of articles named a watched company, and the feed now returns HTTP 400."
+    },
+    {
+      "source_id": "yahoo-finance",
+      "name": "Yahoo Finance - company news",
+      "source_type": "aggregator",
+      "country": "US",
+      "domains": [
+        "finance.yahoo.com"
+      ],
+      "feeds": [
+        {
+          "kind": "rss_per_company",
+          "url": "https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}"
+        }
+      ],
+      "note": "One feed per tracked company (US and ASX symbols, e.g. NVDA, BHP.AX), so every company has its own news stream rather than only those a business section mentions. Aggregator: items mix Yahoo's own reporting with syndicated pieces (Motley Fool, Investing.com, Stocktwits), so it starts below a newspaper's reliability. Checked 2026-11-15: 19-20 recent items per symbol. Free for personal and research use; check Yahoo's terms before showing content to paying clients."
     },
     {
       "source_id": "prnewswire",

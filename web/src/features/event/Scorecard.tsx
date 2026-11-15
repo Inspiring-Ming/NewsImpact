@@ -2,6 +2,7 @@
 // Each cell shows the expected direction, what was measured, and whether it matched.
 import type { S } from "../../api/client";
 import { ARROW, describe, humanize, label, RESULT } from "../../shared/labels";
+import { Term } from "../../shared/Term";
 import { useNames } from "../../shared/names";
 import type { EventData } from "./context";
 
@@ -25,7 +26,7 @@ export function Scorecard({ assessment, company }: EventData) {
     <>
       <div className="table-wrap card flush">
         <table className="scorecard">
-          <thead><tr><th>Update</th>{CHANNELS.map((c) => <th key={c}>{humanize(label(c))}</th>)}</tr></thead>
+          <thead><tr><th>Update</th>{CHANNELS.map((c) => <th key={c}><Term id={c} /></th>)}</tr></thead>
           <tbody>
             {assessment.stages.map((st, i) => (
               <tr key={`${st.stage}-${st.published_at}`}>

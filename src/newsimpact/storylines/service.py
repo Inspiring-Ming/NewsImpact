@@ -133,6 +133,8 @@ class StorylinesService:
             published_at=report.published_at,
             claim_reliability=report.claim_reliability,
             summary=claim.text,
+            tone=claim.sentiment,
+            is_rumour=claim.is_speculative,
             reports=(report,),
         )
         is_new = storyline is None

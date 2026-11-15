@@ -1,59 +1,52 @@
-// Tab 3 - the expected reaction for each update and how the market reaction is measured,
-// in one place: every expectation sits beside its track record.
-import { useState } from "react";
-import type { S } from "../../api/client";
-import { ARROW, humanize, label } from "../../shared/labels";
+// Tab 3 - does each kind of news really move the stock? The expectation from research
+// next to what happened in the events we measured.
+import { api, type S } from "../../api/client";
+import { label, pct } from "../../shared/labels";
+import { State } from "../../shared/ui";
+import { Term } from "../../shared/Term";
+import { useApi } from "../../shared/useApi";
 import { StepBlock } from "./StepBlock";
 
-type Rec = Record<string, unknown>;
-const CHANNELS = ["price", "volume", "volatility"] as const;
+const EXPECT: Record<string, string> = { down: "↓ falls", up: "↑ rises", uncertain: "↕ big move either way" };
 
-export function VerifyStep({ method, calibration }: { method: S["Method"]; calibration: S["Calibration"] | null }) {
-  const market = ((method.methodology as Rec).market ?? {}) as Rec;
-  const validation = ((method.methodology as Rec).validation ?? {}) as Rec;
-  const windows = (market.windows ?? {}) as Record<string, [number, number]>;
-  const est = Number(market.estimation_days ?? 120);
-  const [theme, setTheme] = useState(method.playbooks[0]?.theme ?? "");
-  const shown = method.playbooks.filter((p) => p.theme === theme);
-  const record = new Map((calibration?.reactions ?? []).map((r) => [`${r.theme}|${r.stage_name}|${r.channel}`, r]));
+export function VerifyStep({ method }: { method: S["Method"] }) {
+  const companies = useApi(api.companies);
+  const events = (companies.data ?? []).flatMap((c) => c.events);
   return (
-    <StepBlock title="What reaction we expect, and how we check it"
-      term="event study: abnormal return against a market index (MacKinlay 1997)"
-      rules={[
-        "Each update type has expected reactions from research on investor behaviour, e.g. a leader stepping down: share price ↓, trading volume ↑.",
-        <>Each stock is compared with its own index: <b>S&amp;P 500</b> for US, <b>ASX 200</b> for Australia.</>,
-        <>Normal behaviour is learned from the previous <b>{est} trading days</b> (about six months).</>,
-        <>Measured from the update day to <b>{(windows.price ?? [0, 1])[1]} trading day(s) after</b> for share price, up to {(windows.volatility ?? [0, 4])[1]} for price swings. News after the 4 pm close counts from the next day.</>,
-        "A move is unusual only if it happens on fewer than 1 normal trading day in 20.",
-        <>Evidence is <b>strong</b> when the update is confirmed and at least {Math.round(Number(validation.high_support ?? 0.6) * 100)}% of expected reactions happened.</>,
-      ]}>
-      <select value={theme} onChange={(e) => setTheme(e.target.value)} aria-label="Event type">
-        {method.playbooks.map((p) => <option key={p.theme} value={p.theme}>{p.title || label(p.theme)}</option>)}
-      </select>
-      <div className="table-wrap">
-        <table className="scorecard">
-          <thead><tr><th>Update</th>{CHANNELS.map((c) => <th key={c}>{humanize(label(c))}</th>)}</tr></thead>
-          <tbody>
-            {shown.flatMap((p) => p.stages.map((s) => (
-              <tr key={p.theme + s.name}>
-                <td><b>{s.title || label(s.name)}</b></td>
-                {CHANNELS.map((c) => {
-                  const d = s.decisions.find((x) => x.market_channel === c);
-                  const r = record.get(`${p.theme}|${s.name}|${c}`);
-                  return (
-                    <td key={c} className="cell">
-                      {d ? <><span className="arrow">{ARROW[d.expected_direction] ?? "?"}</span>
-                        <div className="muted small">{r && r.n_events ? `${Math.round((r.share_consistent ?? 0) * r.n_events)} of ${r.n_events} as expected` : "not tested yet"}</div></>
-                        : <span className="muted small">–</span>}
-                    </td>
-                  );
-                })}
+    <StepBlock term="marketTab">
+      <State error={companies.error} loading={companies.loading}>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Event type</th><th><Term id="expectShare" /></th><th className="num"><Term id="measured" /></th>
+                <th className="num"><Term id="avgMove" /></th><th className="num"><Term id="unusual">Unusual moves</Term></th>
+                <th className="num"><Term id="asExpected" /></th>
               </tr>
-            )))}
-          </tbody>
-        </table>
-      </div>
-      <p className="small muted">↑ rise · ↓ fall · ↕ large move either way. With 20+ events per update type, expectations become measured facts.</p>
+            </thead>
+            <tbody>
+              {method.playbooks.map((p) => {
+                const name = p.title || label(p.theme);
+                const expected = p.stages.flatMap((s) => s.decisions).find((d) => d.market_channel === "price")?.expected_direction;
+                const done = events.filter((e) => e.event_type === name && e.stock_move != null);
+                const avg = done.length ? done.reduce((n, e) => n + e.stock_move!, 0) / done.length : null;
+                const hit = done.filter((e) => expected === "uncertain" ? e.stock_move_unusual
+                  : expected === "down" ? e.stock_move! < 0 : expected === "up" ? e.stock_move! > 0 : false).length;
+                return (
+                  <tr key={p.theme}>
+                    <td><b>{name}</b></td>
+                    <td>{expected ? EXPECT[expected] : <span className="muted">not set</span>}</td>
+                    <td className="num">{done.length}</td>
+                    <td className="num">{avg == null ? "–" : pct(avg)}</td>
+                    <td className="num">{done.length ? `${done.filter((e) => e.stock_move_unusual).length} of ${done.length}` : "–"}</td>
+                    <td className="num">{done.length && expected ? <b>{hit} of {done.length}</b> : "–"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </State>
     </StepBlock>
   );
 }

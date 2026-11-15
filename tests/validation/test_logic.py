@@ -35,6 +35,17 @@ def _obs(direction: str, significant: bool = True) -> ChannelObservation:
     )  # fmt: skip
 
 
+def test_confidence_grows_with_independent_origins_not_copies(
+    validation_policy: ValidationPolicy,
+) -> None:
+    one = check_claim([_report("a")], validation_policy).confidence
+    copies = check_claim([_report(x, origin="outlet:bloomberg") for x in "abc"],
+                         validation_policy).confidence  # fmt: skip
+    three = check_claim([_report(x) for x in "abc"], validation_policy).confidence
+    assert one == pytest.approx(0.8) and copies == pytest.approx(0.8)
+    assert three == pytest.approx(1 - 0.2**3)
+
+
 @pytest.mark.parametrize(
     ("reports", "status"),
     [

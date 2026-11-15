@@ -2,7 +2,8 @@
 // To show something new, add one entry to TABS.
 import { useState, type ComponentType } from "react";
 import { api } from "../../api/client";
-import { COUNTRY, pct } from "../../shared/labels";
+import { COUNTRY, NO_MOVE, pct, vsWords } from "../../shared/labels";
+import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
 import { AnalystData } from "./AnalystData";
@@ -43,13 +44,17 @@ export function EventPage({ id }: { id: string }) {
               <p className="lead-small">{card.latest_headline}</p>
             </header>
             <div className="kpis">
-              <Fact label={`Stock vs ${company.index_name}`}
+              <Fact label={<Term id="move">Stock vs {company.index_name}</Term>}
                     value={card.stock_move == null ? "–" : pct(card.stock_move)}
                     tone={card.stock_move_unusual ? (card.stock_move! < 0 ? "bad" : "good") : undefined}
-                    sub={card.stock_move == null ? "no price data yet" : `${card.stock_move_period} · ${card.stock_move_unusual ? "unusual move" : "normal range"}`} />
+                    sub={card.stock_move == null ? NO_MOVE[card.stock_move_status]
+                      : <>{vsWords(card.stock_move, company.index_name)} · {card.stock_move_period} · <Term id="unusual">{card.stock_move_unusual ? "unusual move" : "normal range"}</Term></>} />
               <Fact label="Updates" value={card.updates.length} sub={card.ongoing ? "more may follow" : "event complete"} />
-              <Fact label="Sources" value={card.sources} sub={`${Math.round(card.source_reliability * 100)}% avg. reliability`} />
-              <Fact label="Reactions as expected" value={a.market_support == null ? "–" : `${Math.round(a.market_support * 100)}%`}
+              <Fact label={<Term id="confidence">News confidence</Term>} value={`${Math.round(card.confidence * 100)}%`}
+                    tone={card.confidence >= 0.9 ? "good" : "warn"}
+                    sub={`${card.sources} ${card.sources === 1 ? "source" : "independent sources"}`} />
+              <Fact label={<Term id="expected">Reactions as expected</Term>}
+                    value={a.market_support == null ? "–" : `${Math.round(a.market_support * 100)}%`}
                     sub="of those measurable in prices" />
             </div>
             <Tabs tabs={TABS} active={tab} onChange={setTab} />

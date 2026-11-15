@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -69,7 +69,7 @@ from newsimpact.sources.adapters.memory import (
     InMemorySeenSources,
     InMemoryWatchStore,
 )
-from newsimpact.sources.adapters.rss import RssFeed
+from newsimpact.sources.adapters.rss import PerCompanyRssFeed, RssFeed
 from newsimpact.sources.adapters.sqlite import (
     SqliteArticleStore,
     SqliteSeenSources,
@@ -99,7 +99,7 @@ from newsimpact.validation.models import Provenance, ValidationPolicy
 from newsimpact.validation.ports import AssessmentStore
 from newsimpact.validation.service import ValidationService
 
-FEED_KINDS = ("rss", "fixture")
+FEED_KINDS = ("rss", "rss_per_company", "fixture")
 SEMANTIC_STEPS: dict[str, Callable[[Taxonomy], ClaimStep]] = {
     "taxonomy": TaxonomyClassifier,
     "attribution": AttributionStep,
@@ -163,10 +163,12 @@ def http_client(s: Settings) -> httpx.Client:
     return httpx.Client(timeout=30, headers={"User-Agent": s.http_user_agent})
 
 
-def _feed_factory(s: Settings, client: httpx.Client | None) -> FeedFactory:
+def _feed_factory(s: Settings, client: httpx.Client | None, tickers: Sequence[str]) -> FeedFactory:
     def build(source: Source, config: FeedConfig) -> Feed:
         if config.kind == "rss" and client is not None:
             return RssFeed(source, config.url, client)
+        if config.kind == "rss_per_company" and client is not None:
+            return PerCompanyRssFeed(source, config.url, tickers, client)
         if config.kind == "fixture":
             return FixtureFeed(source, s.demo_dir / "articles.json")
         raise ValueError(f"feed kind {config.kind!r} is not available in profile {s.profile!r}")
@@ -273,13 +275,15 @@ def build_services(settings: Settings | None = None) -> Services:
     search: NewsSearch = (
         GdeltSearch(client) if client else FixtureSearch(s.demo_dir / "articles.json")
     )
-    sources = SourcesService(bus, registry, _feed_factory(s, client), search, stores.articles,
+    resolver = JsonEntityResolver.from_file(s.profile_dir / "entities.json")
+    tickers = [c.ticker for c in resolver.companies()]
+    sources = SourcesService(bus, registry, _feed_factory(s, client, tickers), search,
+                             stores.articles,
                              stores.seen_sources, stores.watches,
                              accept_unlisted=s.accept_unlisted_sources,
                              duplicates=duplicates)  # fmt: skip
 
     llm = _llm(s, stores)
-    resolver = JsonEntityResolver.from_file(s.profile_dir / "entities.json")
     semantics = SemanticsService(bus, SentenceExtractor(resolver.known_names()),
                                  _semantic_steps(s, taxonomy, llm), resolver,
                                  copy_novelty=duplicates.copy_novelty)  # fmt: skip

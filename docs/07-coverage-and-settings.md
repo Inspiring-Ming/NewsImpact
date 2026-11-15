@@ -41,7 +41,7 @@ The prior list uses four criteria, in order:
 1. **Origins first.** Wires, regulatory filings and company press releases are where news starts; most outlets re-report them. An origin adds independent evidence, and a copy does not.
 2. **Reach among investors.** Major business desks (BBC, Guardian, NYT, CNBC, MarketWatch) shape attention, which drives reactions (Da, Engelberg & Gao 2011 show attention moves prices).
 3. **Machine-readable and allowed.** A public feed whose terms permit our use. Showing content to clients needs each publisher's licence.
-4. **Earns its place.** Judged on our own data (website → Outlets):
+4. **Earns its place.** Judged on our own data (website → How it works → News sources):
 
 | Column | Meaning | Keep if… |
 |---|---|---|
@@ -54,6 +54,9 @@ The prior list uses four criteria, in order:
 - **Disable** outlets with ~0% company share and 0 stages.
 - **Look for better feeds** for outlets that copy heavily: a company-specific feed, or the original wire.
 - **Add** an outlet when follow-up search keeps finding stages first reported by an unlisted one. Trial it with `NI_ACCEPT_UNLISTED_SOURCES=true`, then list it.
+
+Company news feeds (added 2026-11-15):
+- **Yahoo Finance per-company feeds:** one feed per tracked company (US symbols and ASX symbols such as `BHP.AX`), about 20 recent items each. General business sections only mention a few of our companies; per-company feeds give every one of the 73 its own news stream. Items mix Yahoo's own reporting with syndicated pieces (Motley Fool, Investing.com), so the source type is **aggregator**, starting at 67% reliability, below a newspaper's 75%. Cost measured on the first round: about 1,000 new articles analysed for about $0.012 with the economy model. Free for personal and research use; check Yahoo's terms before showing content to paying clients.
 
 Australian outlets on the list:
 - **ABC News Business** and **The Sydney Morning Herald Business:** free feeds, checked 2026-11-15.

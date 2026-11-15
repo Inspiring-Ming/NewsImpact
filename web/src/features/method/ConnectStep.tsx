@@ -2,22 +2,16 @@
 import type { S } from "../../api/client";
 import { label } from "../../shared/labels";
 import { AccuracyCheck } from "./AccuracyCheck";
+import { Term } from "../../shared/Term";
 import { StepBlock } from "./StepBlock";
 
 export function ConnectStep({ method, calibration }: { method: S["Method"]; calibration: S["Calibration"] | null }) {
   const gaps = new Map((calibration?.windows ?? []).map((w) => [w.theme, w]));
   return (
-    <StepBlock title="How we detect events and follow their updates"
-      term="event detection and tracking (news analytics)"
-      rules={[
-        "Each sentence naming a tracked company is classified: which event type, who said it, rumour or fact.",
-        "Same company + same event type + within the event's time window = an update to the same event.",
-        `Sources publish out of order, so a complete event still accepts earlier updates for ${method.late_report_days} days.`,
-        "Background mentions (\"has had several recalls in the past\") are not new updates.",
-      ]}>
+    <StepBlock term="eventsTab">
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Event type</th><th>Typical updates</th><th className="num">Followed for</th><th>Seen so far</th></tr></thead>
+          <thead><tr><th>Event type</th><th>Usual updates, in order</th><th className="num"><Term id="window" /></th><th><Term id="seen" /></th></tr></thead>
           <tbody>
             {method.playbooks.map((p) => {
               const g = gaps.get(p.theme);
@@ -33,7 +27,6 @@ export function ConnectStep({ method, calibration }: { method: S["Method"]; cali
           </tbody>
         </table>
       </div>
-      <p className="small muted">Time windows start as stated assumptions and are replaced by measured gaps once 20+ are seen.</p>
       <AccuracyCheck llmPreset={method.llm_preset_in_use} />
     </StepBlock>
   );

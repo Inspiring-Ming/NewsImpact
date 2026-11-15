@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 from pydantic import Field
 
@@ -26,6 +26,7 @@ class Overview(Model):
     profile: str
     outlets_enabled: int
     articles: int
+    articles_24h: int = Field(description="articles published in the last 24 hours")
     storylines_open: int
     storylines_resolved: int
     market_data: str = Field(description="price source, or 'off'")
@@ -51,13 +52,16 @@ def overview(svc: Services) -> Overview:
     stories = svc.storyline_store.all()
     resolved = sum(s.status.value == "resolved" for s in stories)
     s = svc.settings
+    articles = list(svc.articles.recent(10**6))
+    day_ago = datetime.now(UTC) - timedelta(days=1)
     llm = "off"
     if svc.llm is not None:
         llm = f"{s.llm_preset} ({svc.llm.name})"
     return Overview(
         profile=s.profile,
         outlets_enabled=sum(x.enabled for x in svc.sources.listed()),
-        articles=len(svc.articles.recent(10**6)),
+        articles=len(articles),
+        articles_24h=sum(a.published_at >= day_ago for a in articles),
         storylines_open=len(stories) - resolved,
         storylines_resolved=resolved,
         market_data=(
@@ -143,10 +147,23 @@ class EventCard(Model):
     stock_move: float | None = Field(description="stock return minus its index, e.g. -0.185")
     stock_move_unusual: bool = Field(description="larger than on 19 of 20 normal trading days")
     stock_move_period: str = Field(description="e.g. '9-13 Nov'")
+    stock_move_status: str = Field(
+        description="measured | pending (the reaction window has not closed yet) | no_data"
+    )
     sources: int = Field(description="independent news sources that reported the event")
     source_names: tuple[str, ...]
-    source_reliability: float = Field(description="average reliability of those sources, 0-1")
+    confidence: float = Field(
+        description="chance the news is true, 0-1: the weakest update's combined confidence "
+        "across its independent sources"
+    )
     actions: tuple[str, ...] = Field(description="what to watch or do next, most important first")
+    tone: float = Field(description="sentiment of the latest update, -1 (negative) to 1")
+    is_rumour: bool = Field(description="the latest update is hedged or rumoured")
+    said_by: str = Field(
+        description="who the latest update comes from: own_reporting | cites_outlet | "
+        "company_statement | filing | anonymous"
+    )
+    next_update: str | None = Field(description="the update this kind of event usually brings next")
 
 
 class CompanyCard(Model):
@@ -238,7 +255,6 @@ def _event_card(svc: Services, story: Storyline, names: dict[str, str]) -> Event
     period = (f"{first:%-d %b}" if first.date() == last.date()
               else f"{first:%-d %b}-{last:%-d %b}")  # fmt: skip
     source_ids = sorted({o for st in a.stages for o in st.claim.outlets})
-    scores = [svc.reliability.score_source(s).score for s in source_ids]
     latest_sources = next(
         (st.claim.outlets for st in a.stages if st.published_at == latest.published_at), ()
     )
@@ -254,8 +270,17 @@ def _event_card(svc: Services, story: Storyline, names: dict[str, str]) -> Event
         stock_move=move.value if move else None,
         stock_move_unusual=bool(move and move.significant),
         stock_move_period=period,
+        stock_move_status="measured" if move else "pending" if any(
+            d.channel == "price" and d.verdict == "pending" for st in a.stages for d in st.decisions
+        ) else "no_data",
         sources=len(source_ids),
         source_names=tuple(names.get(s, s) for s in source_ids),
-        source_reliability=round(sum(scores) / len(scores), 3) if scores else 0.0,
+        confidence=min((st.claim.confidence for st in a.stages), default=0.0),
         actions=a.suggestions,
+        tone=latest.tone,
+        is_rumour=latest.is_rumour,
+        said_by=latest.reports[0].attribution_kind if latest.reports else "own_reporting",
+        next_update=(title(playbook.stages[story.max_stage + 1].name)
+                     if playbook and story.status.value != "resolved"
+                     and story.max_stage + 1 < len(playbook.stages) else None),
     )  # fmt: skip

@@ -39,9 +39,9 @@ What it tells a visitor: **which companies have a market-moving event right now,
 
 | Page | What it shows |
 |---|---|
-| **Watchlist** (home) | Four key numbers (companies tracked, events, unusual stock moves, news sources), filters (market, GICS sector, with events / all, search) and one compact table, 12 rows per page: Company · Sector · Latest event · Stock vs index (e.g. "−18.5% vs S&P 500 · Unusual move") · Sources (count and average reliability). |
+| **Watchlist** (home) | Four key numbers (events this week, unusual stock moves, biggest move, news in 24 hours); filters and sort; an **impact map** (every measured event as a dot: left = worse than its market, right = better, one row per GICS sector, bigger dot = more sources, blue = unusual move); and one compact table, 12 rows per page: Company (with ticker and sector short name) · Latest event · **What the news says** (tone, fact or rumour, who it comes from, the usual next update) · Stock vs market · Sources · Confidence. Every header explains itself on hover. "Update now" fetches news immediately. |
 | **Event** (opens from a row) | Key numbers, then tabs: **Overview** (share price vs index chart + suggested actions) · **Updates** (each dated update and its sources) · **Expected vs actual** (one grid: updates × share price / trading volume / price swings, each cell with the expected direction, the measured value and ✓ / ✗) · **Analyst data** (statistics and how to reproduce them). |
-| **How it works** | Three tabs: News sources, Event detection, Market reaction. Each gives *How we decide* (the rule with its real numbers) and *The data* (live evidence). |
+| **How it works** | Three tabs of live data: 1. News sources (reliability, how often each covers our companies and leads to an event), 2. Events we detect (usual updates, time window, measured gaps, reading accuracy), 3. Does it move the stock? (per event type: expected share price direction, average measured move, unusual moves, how often it moved as expected). Definitions on hover. |
 
 Event types: Leadership change, Product safety, Takeover, Earnings beat, Earnings miss, Cyber incident, Job cuts, Supply disruption. Each event is a chain of dated **updates** (e.g. Leader under pressure → Leader steps down → New leader named).
 

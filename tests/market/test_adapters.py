@@ -62,3 +62,22 @@ def test_cache_serves_repeat_requests_without_calling_the_vendor(tmp_path: Path)
     md.daily_bars("X", date(2026, 3, 1), date(2026, 3, 20))
     again = md.daily_bars("X", date(2026, 3, 5), date(2026, 3, 10))
     assert inner.calls == 1 and len(again) == 6
+
+
+def test_an_older_request_never_shrinks_the_cached_range(tmp_path: Path) -> None:
+    inner = CountingData()
+    now = datetime(2026, 3, 30, tzinfo=UTC)
+    md = CachedMarketData(inner, Database(tmp_path / "c.db"), now=lambda: now)
+    md.daily_bars("SPY", date(2026, 3, 1), date(2026, 3, 20))  # a recent event
+    older = md.daily_bars("SPY", date(2026, 1, 1), date(2026, 2, 1))  # then an old one
+    recent = md.daily_bars("SPY", date(2026, 3, 1), date(2026, 3, 20))
+    assert len(older) == 32 and len(recent) == 20 and inner.calls == 2
+
+
+def test_a_cached_range_ending_before_its_fetch_day_is_refreshed(tmp_path: Path) -> None:
+    inner = CountingData()
+    now = datetime(2026, 3, 30, tzinfo=UTC)
+    md = CachedMarketData(inner, Database(tmp_path / "c.db"), now=lambda: now)
+    md.daily_bars("SPY", date(2026, 1, 1), date(2026, 2, 1))
+    later = md.daily_bars("SPY", date(2026, 3, 1), date(2026, 3, 20))  # past the cached end
+    assert inner.calls == 2 and len(later) == 20

@@ -505,6 +505,12 @@ export interface components {
             /** Best Reliability */
             best_reliability: number;
             /**
+             * Confidence
+             * @description chance at least one independent origin is right: 1 - product of (1 - best reliability per origin); copies of one origin count once
+             * @default 0
+             */
+            confidence: number;
+            /**
              * Origins
              * @description independent origins behind those reports
              */
@@ -593,6 +599,11 @@ export interface components {
              * @description what to watch or do next, most important first
              */
             actions: string[];
+            /**
+             * Confidence
+             * @description chance the news is true, 0-1: the weakest update's combined confidence across its independent sources
+             */
+            confidence: number;
             /** Event Id */
             event_id: string;
             /**
@@ -600,19 +611,29 @@ export interface components {
              * @description e.g. Leadership change, Earnings miss
              */
             event_type: string;
+            /**
+             * Is Rumour
+             * @description the latest update is hedged or rumoured
+             */
+            is_rumour: boolean;
             /** Latest Headline */
             latest_headline: string;
             /** Latest Source */
             latest_source: string;
+            /**
+             * Next Update
+             * @description the update this kind of event usually brings next
+             */
+            next_update: string | null;
             /** Ongoing */
             ongoing: boolean;
+            /**
+             * Said By
+             * @description who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous
+             */
+            said_by: string;
             /** Source Names */
             source_names: string[];
-            /**
-             * Source Reliability
-             * @description average reliability of those sources, 0-1
-             */
-            source_reliability: number;
             /**
              * Sources
              * @description independent news sources that reported the event
@@ -629,10 +650,20 @@ export interface components {
              */
             stock_move_period: string;
             /**
+             * Stock Move Status
+             * @description measured | pending (the reaction window has not closed yet) | no_data
+             */
+            stock_move_status: string;
+            /**
              * Stock Move Unusual
              * @description larger than on 19 of 20 normal trading days
              */
             stock_move_unusual: boolean;
+            /**
+             * Tone
+             * @description sentiment of the latest update, -1 (negative) to 1
+             */
+            tone: number;
             /** Updates */
             updates: components["schemas"]["UpdateItem"][];
         };
@@ -832,6 +863,11 @@ export interface components {
         Overview: {
             /** Articles */
             articles: number;
+            /**
+             * Articles 24H
+             * @description articles published in the last 24 hours
+             */
+            articles_24h: number;
             /**
              * Llm
              * @description LLM preset and model, or 'off'
@@ -1048,7 +1084,7 @@ export interface components {
          * @description Kind of outlet. Sets the starting reliability before any track record exists.
          * @enum {string}
          */
-        SourceType: "wire" | "major_outlet" | "regulatory_filing" | "company_press_release" | "blog" | "social" | "unknown";
+        SourceType: "wire" | "major_outlet" | "aggregator" | "regulatory_filing" | "company_press_release" | "blog" | "social" | "unknown";
         /** SourceWithReliability */
         SourceWithReliability: {
             /** Enabled */
@@ -1160,6 +1196,12 @@ export interface components {
             /** Event Type */
             event_type: string;
             /**
+             * Is Rumour
+             * @description hedged or 'sources say' wording
+             * @default false
+             */
+            is_rumour: boolean;
+            /**
              * Published At
              * Format: date-time
              * @description first report
@@ -1176,6 +1218,12 @@ export interface components {
             stage_name: string;
             /** Summary */
             summary: string;
+            /**
+             * Tone
+             * @description sentiment of the first report
+             * @default 0
+             */
+            tone: number;
         };
         /**
          * StorylineStatus

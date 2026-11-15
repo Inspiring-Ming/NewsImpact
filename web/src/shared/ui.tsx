@@ -6,7 +6,7 @@ export function Pill({ tone = "neutral", children }: { tone?: Tone; children: Re
   return <span className={`pill ${tone}`}>{children}</span>;
 }
 
-export function Fact({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: Tone }) {
+export function Fact({ label, value, sub, tone }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: Tone }) {
   return (
     <div className="fact">
       <div className="fact-label">{label}</div>

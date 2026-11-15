@@ -104,7 +104,9 @@ class ValidationService:
         return changed
 
     def latest(self, storyline_id: str) -> Assessment | None:
-        return self._store.latest(storyline_id)
+        """The stored assessment, unless it was made under older rules (then re-assess)."""
+        found = self._store.latest(storyline_id)
+        return found if found and found.model_version == MODEL_VERSION else None
 
     def calibrate(
         self, storylines: Sequence[Storyline]
