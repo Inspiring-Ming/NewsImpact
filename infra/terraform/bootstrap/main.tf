@@ -7,7 +7,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.73"
     }
   }
   # Bootstrap keeps local state (it is tiny and rarely changes). Application
