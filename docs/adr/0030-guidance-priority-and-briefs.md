@@ -41,3 +41,8 @@ The "Needs attention" strip above the key numbers made the home page long. It
 is now a sub-tab of both views (All events, My companies): **Needs attention**
 (every Act now / Check event in the view, most urgent first) and **All** (the
 impact map and the table). Filters apply to both tabs.
+* Renamed **Priorities** and moved after **All** (the default tab). Shown as a
+  board with one column per level ("Act now", "Check"); each card shows why it
+  is there (reason, stock move bar, sources and confirmation, tone, rumour) and
+  the next step. Levels are defined once in `web/src/shared/priority.ts` (name,
+  order, meaning, whether they get a column), read by the badge and the board.

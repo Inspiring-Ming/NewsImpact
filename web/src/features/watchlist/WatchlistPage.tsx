@@ -8,7 +8,7 @@ import { useStarred } from "../../shared/starred";
 import { Term } from "../../shared/Term";
 import { State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
-import { attentionItems, NeedsAttention } from "./NeedsAttention";
+import { PriorityBoard, priorityCount } from "./PriorityBoard";
 import { ImpactMap } from "./ImpactMap";
 import { KpiDetail, type Kpi } from "./KpiDetail";
 import { WatchlistTable } from "./WatchlistTable";
@@ -37,7 +37,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("latest");
   const [open, setOpen] = useState<Kpi | null>(null);
-  const [sub, setSub] = useState<"attention" | "all">("attention");
+  const [sub, setSub] = useState<"all" | "priorities">("all");
   const [page, setPage] = useState(0);
 
   const all = data ?? [];
@@ -111,11 +111,11 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
         </select>
       </div>
       <Tabs active={sub} onChange={(t) => change(() => setSub(t))} tabs={[
-        { id: "attention", label: `Needs attention (${attentionItems(rows).length})` },
         { id: "all", label: `All (${rows.length})` },
+        { id: "priorities", label: `Priorities (${priorityCount(rows)})` },
       ]} />
 
-      {data && sub === "attention" && <NeedsAttention companies={rows} />}
+      {data && sub === "priorities" && <PriorityBoard companies={rows} />}
       {data && sub === "all" && <ImpactMap companies={rows} />}
 
       {sub === "all" && <State error={error} loading={loading && !data}

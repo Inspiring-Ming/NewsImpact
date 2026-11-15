@@ -2,20 +2,15 @@
 // (good or bad news, rumour), and how well it is sourced (count, names, confirmed).
 import type { S } from "../api/client";
 import { tone } from "./labels";
+import { level, LEVELS } from "./priority";
 import { Term } from "./Term";
 import { Dots } from "./viz";
 
-const LEVEL = {
-  act: { text: "Act now", cls: "act" },
-  check: { text: "Check", cls: "check" },
-  background: { text: "Background", cls: "background" },
-} as const;
-
 export function PriorityBadge({ e }: { e: S["EventCard"] }) {
-  const p = LEVEL[e.priority as keyof typeof LEVEL] ?? LEVEL.background;
+  const p = level(e.priority);
   return (
-    <Term tip={`${p.text}: ${e.priority_reason}. Act now = confirmed news with an unusual move or a new update in 24 hours; Check = confirmed news, or an unusual move not yet confirmed; Background = the rest.`}>
-      <span className={`priority ${p.cls}`}><span className="pdot" />{p.text}</span>
+    <Term tip={`${p.text}: ${e.priority_reason}. ${LEVELS.map((l) => `${l.text} = ${l.meaning}`).join(" ")}`}>
+      <span className={`priority ${p.id}`}><span className="pdot" />{p.text}</span>
     </Term>
   );
 }
