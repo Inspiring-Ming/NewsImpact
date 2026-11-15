@@ -7,7 +7,7 @@ import type { EventData } from "./context";
 
 const DAY = 86_400_000;
 
-export function Updates({ story, assessment, company }: EventData) {
+export function Updates({ story, assessment, company, card }: EventData) {
   const { title, source } = useNames();
   const byStage = new Map(story.events.map((e) => [`${e.stage}|${e.published_at}`, e]));
   const stages = assessment.stages;
@@ -44,7 +44,9 @@ export function Updates({ story, assessment, company }: EventData) {
                 </div>
                 {ev && <blockquote>{ev.summary.replace("?.", "?").replace("!.", "!")}</blockquote>}
                 <div className="stage-facts">
-                  <span><Dots n={st.claim.outlets.length} /> {st.claim.outlets.map(source).join(", ")}</span>
+                  <span><Dots n={st.claim.outlets.length} /> {(card.updates[i]?.articles.length
+                    ? card.updates[i].articles.map((a) => <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="src-link">{a.source} ↗</a>)
+                    : st.claim.outlets.map(source).join(", "))}</span>
                   <span className="conf"><Meter value={st.claim.confidence} tone={confidenceTone(st.claim.confidence)} /> {Math.round(st.claim.confidence * 100)}% confidence</span>
                   {price && <span className="conf"><MoveBar value={price.value} unusual={price.significant} /> stock {moveVs(price.value, company.index_name)}</span>}
                 </div>

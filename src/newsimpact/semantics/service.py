@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from newsimpact.semantics.models import Claim, ClaimsExtracted
+from newsimpact.semantics.models import OTHER, Claim, ClaimsExtracted
 from newsimpact.semantics.ports import ClaimExtractor, ClaimStep, EntityResolver
 from newsimpact.shared.bus import EventBus
 from newsimpact.shared.events import EventEnvelope
@@ -22,8 +22,10 @@ class SemanticsService:
         resolver: EntityResolver,
         *,
         copy_novelty: float = 0.2,
+        commentary_cues: Sequence[str] = (),
     ) -> None:
         self._bus = bus
+        self._commentary = tuple(c.lower() for c in commentary_cues)
         self._copy_novelty = copy_novelty
         self._extractor = extractor
         self._steps = tuple(steps)
@@ -40,6 +42,13 @@ class SemanticsService:
             claim = step.apply(claim)
         return self._link(claim).model_copy(update={"model_version": self.model_version})
 
+    def is_commentary(self, article: Article) -> bool:
+        """Headline or opening sentence reads as opinion, explainer, interview or feature
+        (taxonomy.json "commentary"). The body starts with the headline, so its first
+        300 characters cover both."""
+        lead = f" {article.body[:300].lower()} "
+        return any(cue in lead for cue in self._commentary)
+
     def mentioned_tickers(self, article: Article) -> set[str]:
         """Companies the article names. Free: name matching only, no analysis or LLM calls."""
         found = {e.ticker or self._resolver.resolve(e.name)
@@ -49,6 +58,11 @@ class SemanticsService:
     def claims_for(self, article: Article) -> tuple[Claim, ...]:
         """Analyse one article without publishing (also used by reports and evaluation)."""
         claims = tuple(self.analyse(c) for c in self._extractor.extract(article))
+        if self.is_commentary(article):
+            # Opinion or feature piece: talk about the news, not a new event.
+            claims = tuple(c.model_copy(update={"event_type": OTHER,
+                                                "signals": {**c.signals, "commentary": 1.0}})
+                           for c in claims)  # fmt: skip
         if article.copy_of_source is None:
             return claims
         # A copy of another outlet's article: same origin, and stale news (Tetlock 2011).

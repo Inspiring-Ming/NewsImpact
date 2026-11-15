@@ -623,6 +623,16 @@ export interface components {
             /** Latest Source */
             latest_source: string;
             /**
+             * Latest Url
+             * @description link to the original article
+             */
+            latest_url: string;
+            /**
+             * Move So Far
+             * @description provisional stock move vs its index to the latest close, while pending
+             */
+            move_so_far: number | null;
+            /**
              * Next Update
              * @description the update this kind of event usually brings next
              */
@@ -644,6 +654,11 @@ export interface components {
              * @description who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous
              */
             said_by: string;
+            /**
+             * So Far Through
+             * @description the latest close in move_so_far
+             */
+            so_far_through: string | null;
             /** Source Names */
             source_names: string[];
             /**
@@ -683,6 +698,11 @@ export interface components {
             tone: number;
             /** Updates */
             updates: components["schemas"]["UpdateItem"][];
+            /**
+             * Verified
+             * @description an update has 2+ independent sources, or came from the company or a filing
+             */
+            verified: boolean;
             /**
              * Volume Ratio
              * @description highest trading volume vs normal, e.g. 3.7
@@ -1308,6 +1328,11 @@ export interface components {
         StorylineStatus: "developing" | "escalating" | "resolved";
         /** UpdateItem */
         UpdateItem: {
+            /**
+             * Articles
+             * @description the original articles, one per source
+             */
+            articles: components["schemas"]["NewsItem"][];
             /**
              * Published At
              * Format: date-time

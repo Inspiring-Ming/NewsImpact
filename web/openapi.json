@@ -570,6 +570,23 @@
             "title": "Latest Source",
             "type": "string"
           },
+          "latest_url": {
+            "description": "link to the original article",
+            "title": "Latest Url",
+            "type": "string"
+          },
+          "move_so_far": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "provisional stock move vs its index to the latest close, while pending",
+            "title": "Move So Far"
+          },
           "next_update": {
             "anyOf": [
               {
@@ -606,6 +623,19 @@
             "description": "who the latest update comes from: own_reporting | cites_outlet | company_statement | filing | anonymous",
             "title": "Said By",
             "type": "string"
+          },
+          "so_far_through": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the latest close in move_so_far",
+            "title": "So Far Through"
           },
           "source_names": {
             "items": {
@@ -663,6 +693,11 @@
             "title": "Updates",
             "type": "array"
           },
+          "verified": {
+            "description": "an update has 2+ independent sources, or came from the company or a filing",
+            "title": "Verified",
+            "type": "boolean"
+          },
           "volume_ratio": {
             "anyOf": [
               {
@@ -691,9 +726,13 @@
           "updates",
           "latest_headline",
           "latest_source",
+          "latest_url",
+          "verified",
           "stock_move",
           "stock_move_unusual",
           "stock_move_period",
+          "move_so_far",
+          "so_far_through",
           "stock_move_status",
           "sources",
           "source_names",
@@ -1936,6 +1975,14 @@
       "UpdateItem": {
         "additionalProperties": false,
         "properties": {
+          "articles": {
+            "description": "the original articles, one per source",
+            "items": {
+              "$ref": "#/components/schemas/NewsItem"
+            },
+            "title": "Articles",
+            "type": "array"
+          },
           "published_at": {
             "format": "date-time",
             "title": "Published At",
@@ -1948,7 +1995,8 @@
         },
         "required": [
           "title",
-          "published_at"
+          "published_at",
+          "articles"
         ],
         "title": "UpdateItem",
         "type": "object"

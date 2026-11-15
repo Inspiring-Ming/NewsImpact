@@ -39,7 +39,9 @@ def test_api_contract_for_the_website() -> None:
         "New leader named",
     ]
     assert change["stock_move"] < 0 and change["stock_move_unusual"] is True
-    assert change["stock_move_status"] == "measured"
+    assert change["stock_move_status"] == "measured" and change["move_so_far"] is None
+    assert change["verified"] and change["latest_url"].startswith("http")
+    assert all(u["articles"] for u in change["updates"])
     assert change["said_by"] and -1 <= change["tone"] <= 1 and change["next_update"] is None
     assert change["sources"] >= 3 and change["notes"] and change["watch"]
     assert change["research"][0]["source"] and change["stages_total"] == 3

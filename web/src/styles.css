@@ -368,3 +368,19 @@ a.rank-row:hover { background: var(--surface-2); }
   .watchlist colgroup { display: none; }
   .watchlist .c-news { grid-column: 1 / -1; }
 }
+
+/* views, follow, verified */
+.views { margin-bottom: 16px; flex-wrap: wrap; }
+.view-note { margin: -4px 0 12px; }
+button.link { border: 0; background: none; padding: 0; color: var(--accent); font-size: inherit; text-decoration: underline; }
+.star { border: 0; background: none; padding: 0 6px 0 0; font-size: 1.05rem; color: var(--muted); line-height: 1; vertical-align: -1px; }
+.star.on { color: var(--warn); }
+.badge-verified { display: inline-block; font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; margin-bottom: 4px;
+  background: color-mix(in srgb, currentColor 12%, transparent); }
+.badge-verified.yes { color: var(--good); } .badge-verified.no { color: var(--muted); }
+a.headline-1 { color: var(--text); }
+a.headline-1:hover { color: var(--accent); }
+.src-link { margin-right: 8px; }
+.overview-cards.three { grid-template-columns: repeat(3, 1fr); }
+.big-num { font-size: 1.4rem; }
+@media (max-width: 760px) { .overview-cards.three { grid-template-columns: 1fr; } }

@@ -287,7 +287,8 @@ def build_services(settings: Settings | None = None) -> Services:
     llm = _llm(s, stores)
     semantics = SemanticsService(bus, SentenceExtractor(resolver.known_names()),
                                  _semantic_steps(s, taxonomy, llm), resolver,
-                                 copy_novelty=duplicates.copy_novelty)  # fmt: skip
+                                 copy_novelty=duplicates.copy_novelty,
+                                 commentary_cues=taxonomy.words("commentary"))  # fmt: skip
     graph = (
         JsonRelationshipGraph({})  # Phase 1: real supplier/customer data
         if s.profile == "live"

@@ -4,6 +4,7 @@ import { api, type S } from "../../api/client";
 import { label, pct } from "../../shared/labels";
 import { State } from "../../shared/ui";
 import { Term } from "../../shared/Term";
+import { typeRecord } from "../../shared/history";
 import { useApi } from "../../shared/useApi";
 import { Meter, MoveBar } from "../../shared/viz";
 import { StepBlock } from "./StepBlock";
@@ -30,20 +31,16 @@ export function VerifyStep({ method }: { method: S["Method"] }) {
             <tbody>
               {method.playbooks.map((p) => {
                 const name = p.title || label(p.theme);
-                const expected = p.stages.flatMap((s) => s.decisions).find((d) => d.market_channel === "price")?.expected_direction;
-                const done = events.filter((e) => e.event_type === name && e.stock_move != null);
-                const avg = done.length ? done.reduce((n, e) => n + e.stock_move!, 0) / done.length : null;
-                const hit = done.filter((e) => expected === "uncertain" ? e.stock_move_unusual
-                  : expected === "down" ? e.stock_move! < 0 : expected === "up" ? e.stock_move! > 0 : false).length;
+                const { expected, n, avg, unusual, asExpected: hit } = typeRecord(p, events);
                 return (
                   <tr key={p.theme}>
                     <td><b>{name}</b></td>
                     <td>{expected ? <span className={`expect ${EXPECT[expected].tone}`}>{EXPECT[expected].text}</span> : <span className="muted">not set</span>}</td>
-                    <td className="num">{done.length}</td>
+                    <td className="num">{n}</td>
                     <td>{avg == null ? <span className="muted">–</span> : <div className="move-top"><MoveBar value={avg} unusual={Math.abs(avg) >= 0.02} span={0.1} /><b>{pct(avg)}</b></div>}</td>
-                    <td className="num">{done.length ? `${done.filter((e) => e.stock_move_unusual).length} of ${done.length}` : "–"}</td>
-                    <td>{done.length && expected ? (
-                      <div className="conf"><Meter value={hit / done.length} tone={hit / done.length >= 0.6 ? "good" : hit / done.length >= 0.4 ? "warn" : "bad"} /> <b>{hit} of {done.length}</b></div>
+                    <td className="num">{n ? `${unusual} of ${n}` : "–"}</td>
+                    <td>{n && expected ? (
+                      <div className="conf"><Meter value={hit / n} tone={hit / n >= 0.6 ? "good" : hit / n >= 0.4 ? "warn" : "bad"} /> <b>{hit} of {n}</b></div>
                     ) : <span className="muted">–</span>}</td>
                   </tr>
                 );

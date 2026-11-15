@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter, defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from pydantic import Field
 
@@ -17,7 +17,7 @@ from newsimpact.semantics.logic import FieldScore, score_field
 from newsimpact.semantics.models import Claim, Company, EntityMention
 from newsimpact.shared.events import Model
 from newsimpact.sources.logic import coverage
-from newsimpact.sources.models import Article, OutletCoverage
+from newsimpact.sources.models import Article, OutletCoverage, SourceType
 from newsimpact.storylines.models import ResearchFinding, Storyline
 from newsimpact.validation.models import Assessment
 
@@ -142,6 +142,7 @@ class NewsItem(Model):
 class UpdateItem(Model):
     title: str
     published_at: datetime
+    articles: tuple[NewsItem, ...] = Field(description="the original articles, one per source")
 
 
 class EventCard(Model):
@@ -151,9 +152,17 @@ class EventCard(Model):
     updates: tuple[UpdateItem, ...]
     latest_headline: str
     latest_source: str
+    latest_url: str = Field(description="link to the original article")
+    verified: bool = Field(
+        description="an update has 2+ independent sources, or came from the company or a filing"
+    )
     stock_move: float | None = Field(description="stock return minus its index, e.g. -0.185")
     stock_move_unusual: bool = Field(description="larger than on 19 of 20 normal trading days")
     stock_move_period: str = Field(description="e.g. '9-13 Nov'")
+    move_so_far: float | None = Field(
+        description="provisional stock move vs its index to the latest close, while pending"
+    )
+    so_far_through: date | None = Field(description="the latest close in move_so_far")
     stock_move_status: str = Field(
         description="measured | pending (the reaction window has not closed yet) | no_data"
     )
@@ -194,12 +203,13 @@ def companies(svc: Services) -> list[CompanyCard]:
     """Every company we follow, with its events (most recent first) and latest news."""
     names = _source_names(svc)
     mentions: dict[str, list[Article]] = defaultdict(list)
-    for article in svc.articles.recent(10**6):
+    articles = {a.article_id: a for a in svc.articles.recent(10**6)}
+    for article in articles.values():
         for ticker in svc.semantics.mentioned_tickers(article):
             mentions[ticker].append(article)
     events: dict[str, list[EventCard]] = defaultdict(list)
     for story in svc.storyline_store.all():
-        events[story.ticker].append(_event_card(svc, story, names))
+        events[story.ticker].append(_event_card(svc, story, names, articles))
     cards = [_company_card(svc, c, mentions.get(c.ticker, []), events.get(c.ticker, []), names)
              for c in svc.companies]  # fmt: skip
 
@@ -219,7 +229,8 @@ def event_summary(svc: Services, event_id: str) -> CompanyCard | None:
     fallback = Company(ticker=story.ticker, name=story.entity_name, country="", aliases=())
     company = next((c for c in svc.companies if c.ticker == story.ticker), fallback)
     names = _source_names(svc)
-    return _company_card(svc, company, [], [_event_card(svc, story, names)], names)
+    articles = {a.article_id: a for a in svc.articles.recent(10**6)}
+    return _company_card(svc, company, [], [_event_card(svc, story, names, articles)], names)
 
 
 def _source_names(svc: Services) -> dict[str, str]:
@@ -242,9 +253,9 @@ def _company_card(
         latest_news=NewsItem(title=latest.title, url=latest.url,
                              source=names.get(latest.source_id, latest.source_id),
                              published_at=latest.published_at) if latest else None,
-        # Lead with news backed by 2+ sources, then the most recent: a single-source
-        # misreading must not hide a confirmed event.
-        events=tuple(sorted(events, key=lambda e: (e.sources >= 2, e.updates[-1].published_at),
+        # Lead with verified news, then the most recent: a single-source misreading
+        # must not hide a confirmed event.
+        events=tuple(sorted(events, key=lambda e: (e.verified, e.updates[-1].published_at),
                             reverse=True)),
     )  # fmt: skip
 
@@ -255,7 +266,35 @@ def _index_name(svc: Services, ticker: str) -> str:
     return svc.market_policy.exchanges[svc.market_policy.exchange_of(ticker)].benchmark_name
 
 
-def _event_card(svc: Services, story: Storyline, names: dict[str, str]) -> EventCard:
+AUTHORITATIVE = (SourceType.REGULATORY_FILING, SourceType.COMPANY_PRESS_RELEASE)
+
+
+def _news(article: Article, names: dict[str, str]) -> NewsItem:
+    return NewsItem(title=article.title, url=article.url, published_at=article.published_at,
+                    source=names.get(article.source_id, article.source_id))  # fmt: skip
+
+
+def _so_far(svc: Services, story: Storyline) -> tuple[float, date] | None:
+    """Stock return minus its index from the close before the first update to the latest
+    close: what the market has done so far while the measured window is still open."""
+    if svc.market is None:
+        return None
+    first = min(e.published_at for e in story.events)
+    day = svc.market.event_day(story.ticker, first)
+    try:
+        path = svc.market.price_path(story.ticker, day - timedelta(days=10), date.today())
+    except ValueError:
+        return None
+    before = [p for p in path.points if p.day < day]
+    if not before or path.points[-1].day < day:
+        return None
+    base, last = before[-1], path.points[-1]
+    return (last.stock / base.stock) - (last.benchmark / base.benchmark), last.day
+
+
+def _event_card(
+    svc: Services, story: Storyline, names: dict[str, str], articles: dict[str, Article]
+) -> EventCard:
     a: Assessment = svc.validation.latest(story.storyline_id) or svc.validation.assess(story)
     playbook = next((p for p in svc.playbooks.playbooks() if p.theme == story.theme), None)
     titles = {st.name: st.title for st in playbook.stages} if playbook else {}
@@ -264,6 +303,8 @@ def _event_card(svc: Services, story: Storyline, names: dict[str, str]) -> Event
         return titles.get(name) or name.replace("_", " ").capitalize()
 
     latest = max(story.events, key=lambda e: e.published_at)
+    latest_article = articles.get(latest.article_id)
+    reports = {(e.stage, e.published_at): e.reports for e in story.events}
     prices = [d.evidence for st in a.stages for d in st.decisions
               if d.evidence is not None and d.evidence.channel == "price"]  # fmt: skip
     move = a.combined_reaction or max(prices, key=lambda o: abs(o.statistic or 0), default=None)
@@ -274,21 +315,37 @@ def _event_card(svc: Services, story: Storyline, names: dict[str, str]) -> Event
     latest_sources = next(
         (st.claim.outlets for st in a.stages if st.published_at == latest.published_at), ()
     )
+    pending = any(d.channel == "price" and d.verdict == "pending"
+                  for st in a.stages for d in st.decisions)  # fmt: skip
+    status = "measured" if move else "pending" if pending else "no_data"
+    so_far = _so_far(svc, story) if status == "pending" else None
     return EventCard(
         event_id=story.storyline_id,
         event_type=(playbook.title if playbook and playbook.title else story.theme),
         ongoing=story.status.value != "resolved",
-        updates=tuple(UpdateItem(title=title(st.stage_name), published_at=st.published_at)
-                      for st in a.stages),
+        updates=tuple(
+            UpdateItem(title=title(st.stage_name), published_at=st.published_at,
+                       articles=tuple(_news(articles[r.article_id], names)
+                                      for r in reports.get((st.stage, st.published_at), ())
+                                      if r.article_id in articles))
+            for st in a.stages
+        ),
+        latest_url=latest_article.url if latest_article else "",
+        # Verified = facts that cannot be misread: 2+ independent origins, or published by
+        # the company itself or a regulator. Wording that merely quotes the company does not
+        # count (the attribution reading can be wrong, and one outlet is still one source).
+        verified=any(len(st.claim.origins) >= svc.validation.policy.corroborating_origins
+                     for st in a.stages)
+        or any(r.source_type in AUTHORITATIVE for e in story.events for r in e.reports),
         # Titles are joined to the body with ". " for sentence splitting; drop that extra stop.
         latest_headline=latest.summary.replace("?.", "?").replace("!.", "!"),
         latest_source=names.get(latest_sources[0], latest_sources[0]) if latest_sources else "",
         stock_move=move.value if move else None,
         stock_move_unusual=bool(move and move.significant),
         stock_move_period=period,
-        stock_move_status="measured" if move else "pending" if any(
-            d.channel == "price" and d.verdict == "pending" for st in a.stages for d in st.decisions
-        ) else "no_data",
+        stock_move_status=status,
+        move_so_far=so_far[0] if so_far else None,
+        so_far_through=so_far[1] if so_far else None,
         sources=len(source_ids),
         source_names=tuple(names.get(s, s) for s in source_ids),
         confidence=min((st.claim.confidence for st in a.stages), default=0.0),

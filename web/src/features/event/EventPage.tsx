@@ -2,7 +2,7 @@
 // To show something new, add one entry to TABS.
 import { useState, type ComponentType } from "react";
 import { api } from "../../api/client";
-import { COUNTRY, NO_MOVE, pct, vsWords } from "../../shared/labels";
+import { COUNTRY, date, NO_MOVE, pct, vsWords } from "../../shared/labels";
 import { confidenceTone, Dots, Meter, MoveBar, RatioBar } from "../../shared/viz";
 import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
@@ -42,13 +42,21 @@ export function EventPage({ id }: { id: string }) {
               </div>
               <h1>{company.name}</h1>
               <div className="muted">{country?.flag} {company.ticker} · {company.sector}</div>
-              <p className="lead-small">{card.latest_headline}</p>
+              <p className="lead-small">
+                <a href={card.latest_url} target="_blank" rel="noreferrer">{card.latest_headline} ↗</a>
+              </p>
+              <p className="small muted">
+                <span className={`badge-verified ${card.verified ? "yes" : "no"}`}>{card.verified ? "✓ Verified" : "Unverified signal"}</span>{" "}
+                Prices: daily closes{prices.data?.points.length ? ` to ${date(prices.data.points[prices.data.points.length - 1].day)}` : ""} · news checked every hour
+              </p>
             </header>
             <div className="kpis">
               <Fact label={<Term id="move">Stock vs {company.index_name}</Term>}
-                    value={card.stock_move == null ? "–" : pct(card.stock_move)}
+                    value={card.stock_move != null ? pct(card.stock_move) : card.move_so_far != null ? pct(card.move_so_far) : "–"}
                     tone={card.stock_move_unusual ? (card.stock_move! < 0 ? "bad" : "good") : undefined}
-                    sub={card.stock_move == null ? NO_MOVE[card.stock_move_status]
+                    sub={card.stock_move == null ? (card.move_so_far != null
+                      ? <><MoveBar value={card.move_so_far} unusual={false} /><div>so far, to {date(card.so_far_through!)} close · <Term id="provisional">provisional</Term></div></>
+                      : NO_MOVE[card.stock_move_status])
                       : <><MoveBar value={card.stock_move} unusual={card.stock_move_unusual} />
                           <div>{vsWords(card.stock_move, company.index_name)} · {card.stock_move_period}</div>
                           <Term id="unusual">{card.stock_move_unusual ? "⚠ unusual move" : "normal range"}</Term></>} />

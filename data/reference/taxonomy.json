@@ -1,118 +1,478 @@
 {
-  "_note": "What semantics looks for. Edit this file to add event types, aspects or word lists; no code change. Event types are checked in order, first match wins (put specific ones first). 'speculative': true/false restricts a type to hedged/unhedged sentences. Every playbook trigger must be an event type here (checked at start-up). The same file can drive an LLM analyzer's labels. 'background' words mark a sentence as history, not news (no trigger). 'attribution' says where a claim comes from, so copies and re-reports are not counted as independent confirmation.",
-  "version": "taxonomy-v4",
+  "_note": "What semantics looks for. Edit this file to add event types, aspects or word lists; no code change. Event types are checked in order, first match wins (put specific ones first). 'speculative': true/false restricts a type to hedged/unhedged sentences. Every playbook trigger must be an event type here (checked at start-up). The same file can drive an LLM analyzer's labels. 'background' words mark a sentence as history, not news (no trigger). 'attribution' says where a claim comes from, so copies and re-reports are not counted as independent confirmation. 'commentary' = headline wording of opinion, explainer and feature pieces (\"Should you buy...\", \"Here's why...\", interviews). An article whose headline or opening sentence matches is commentary about news, not a new event, so none of its sentences open or extend an event. Checked against the live feed on 2026-11-16, where such pieces had been read as events.",
+  "version": "taxonomy-v5",
   "event_types": [
     {
       "name": "m_and_a_rumor",
       "description": "Unconfirmed talk of a deal",
-      "patterns": ["acquire", "acquisition", "merger", "takeover", "buyout"],
+      "patterns": [
+        "acquire",
+        "acquisition",
+        "merger",
+        "takeover",
+        "buyout"
+      ],
       "speculative": true
     },
     {
       "name": "m_and_a_announced",
       "description": "A deal is agreed or announced",
-      "patterns": ["acquire", "acquisition", "merger", "takeover", "buyout"],
+      "patterns": [
+        "acquire",
+        "acquisition",
+        "merger",
+        "takeover",
+        "buyout"
+      ],
       "speculative": false
     },
     {
       "name": "product_recall",
       "description": "Products withdrawn for safety or quality",
-      "patterns": ["recall"]
+      "patterns": [
+        "recall"
+      ]
     },
     {
       "name": "data_breach",
       "description": "A cyberattack, data breach or major system outage",
-      "patterns": ["data breach", "cyberattack", "cyber attack", "cyber-attack", "ransomware", "hackers", "was hacked", "security breach", "major outage"]
+      "patterns": [
+        "data breach",
+        "cyberattack",
+        "cyber attack",
+        "cyber-attack",
+        "ransomware",
+        "hackers",
+        "was hacked",
+        "security breach",
+        "major outage"
+      ]
     },
     {
       "name": "job_cuts",
       "description": "Layoffs, job cuts or a restructuring",
-      "patterns": ["job cuts", "cut jobs", "to cut about", "layoffs", "lay off", "redundancies", "restructuring plan", "cut its workforce", "cut workforce"]
+      "patterns": [
+        "job cuts",
+        "cut jobs",
+        "to cut about",
+        "layoffs",
+        "lay off",
+        "redundancies",
+        "restructuring plan",
+        "cut its workforce",
+        "cut workforce"
+      ]
     },
     {
       "name": "leadership_departure",
       "description": "A top executive leaves",
-      "patterns": ["step down", "steps down", "stepped down", "resign"]
+      "patterns": [
+        "step down",
+        "steps down",
+        "stepped down",
+        "resign"
+      ]
     },
     {
       "name": "leadership_appointment",
       "description": "A new top executive is named",
-      "patterns": ["named", "names ", "appoint", "successor"]
+      "patterns": [
+        "named",
+        "names ",
+        "appoint",
+        "successor"
+      ]
     },
     {
       "name": "leadership_misconduct",
       "description": "A leader's personal conduct is questioned (affair, harassment, ethics breach)",
-      "patterns": ["affair", "misconduct", "inappropriate relationship", "relationship with an employee", "harassment", "allegations against", "personal conduct", "code of conduct", "ethics breach"]
+      "patterns": [
+        "affair",
+        "misconduct",
+        "inappropriate relationship",
+        "relationship with an employee",
+        "harassment",
+        "allegations against",
+        "personal conduct",
+        "code of conduct",
+        "ethics breach"
+      ]
     },
     {
       "name": "leadership_apology",
       "description": "Leadership publicly apologises",
-      "patterns": ["apolog", "open letter"]
+      "patterns": [
+        "apolog",
+        "open letter"
+      ]
     },
     {
       "name": "regulatory_action",
       "description": "Regulator probe, fine or order",
-      "patterns": ["regulator", "investigation", "probe", "subpoena"]
+      "patterns": [
+        "regulator",
+        "investigation",
+        "probe",
+        "subpoena"
+      ]
     },
     {
       "name": "litigation",
       "description": "Lawsuits and class actions",
-      "patterns": ["lawsuit", "sued", "class action"]
+      "patterns": [
+        "lawsuit",
+        "sued",
+        "class action"
+      ]
     },
     {
       "name": "supply_disruption",
       "description": "Shortages or halted production",
-      "patterns": ["shortage", "disruption", "halted production"]
+      "patterns": [
+        "shortage",
+        "disruption",
+        "halted production"
+      ]
     },
     {
       "name": "earnings_positive",
       "description": "Results or guidance above expectations",
-      "patterns": ["beat", "raised its full-year", "raised guidance"]
+      "patterns": [
+        "beat",
+        "raised its full-year",
+        "raised guidance"
+      ]
     },
     {
       "name": "earnings_negative",
       "description": "Results or guidance below expectations",
-      "patterns": ["missed", "cut guidance", "profit warning"]
+      "patterns": [
+        "missed",
+        "cut guidance",
+        "profit warning"
+      ]
     }
   ],
   "aspects": {
-    "supply_chain": ["supply", "shortage", "factory", "plant", "supplier"],
-    "regulation_legal": ["regulator", "lawsuit", "probe", "investigation", "fine"],
-    "leadership_governance": ["ceo", "chief executive", "board", "resign", "appoint", "step down", "apolog"],
-    "m_and_a": ["acquire", "acquisition", "merger", "takeover", "buyout"],
-    "revenue_demand": ["revenue", "sales", "demand", "orders", "guidance"],
-    "costs_margins": ["cost", "margin", "layoff"],
-    "product_technology": ["launch", "product", "chip", "patent", "recall"],
-    "financing_capital": ["debt", "bond", "dividend", "buyback", "offering"],
-    "reputation_esg": ["breach", "scandal", "emissions", "boycott"]
+    "supply_chain": [
+      "supply",
+      "shortage",
+      "factory",
+      "plant",
+      "supplier"
+    ],
+    "regulation_legal": [
+      "regulator",
+      "lawsuit",
+      "probe",
+      "investigation",
+      "fine"
+    ],
+    "leadership_governance": [
+      "ceo",
+      "chief executive",
+      "board",
+      "resign",
+      "appoint",
+      "step down",
+      "apolog"
+    ],
+    "m_and_a": [
+      "acquire",
+      "acquisition",
+      "merger",
+      "takeover",
+      "buyout"
+    ],
+    "revenue_demand": [
+      "revenue",
+      "sales",
+      "demand",
+      "orders",
+      "guidance"
+    ],
+    "costs_margins": [
+      "cost",
+      "margin",
+      "layoff"
+    ],
+    "product_technology": [
+      "launch",
+      "product",
+      "chip",
+      "patent",
+      "recall"
+    ],
+    "financing_capital": [
+      "debt",
+      "bond",
+      "dividend",
+      "buyback",
+      "offering"
+    ],
+    "reputation_esg": [
+      "breach",
+      "scandal",
+      "emissions",
+      "boycott"
+    ]
   },
   "word_lists": {
-    "positive": ["beat", "beats", "record", "growth", "surge", "surged", "soar", "soared", "strong", "upgrade", "upgraded", "profit", "profitable", "expand", "expands", "expansion", "win", "wins", "won", "approve", "approved", "approval", "raise", "raised", "boost", "boosted", "exceed", "exceeded", "rebound", "partnership", "breakthrough"],
-    "negative": ["miss", "missed", "decline", "declined", "drop", "dropped", "plunge", "plunged", "weak", "downgrade", "downgraded", "loss", "losses", "lawsuit", "probe", "investigation", "recall", "recalled", "shortage", "halt", "halted", "delay", "delayed", "fraud", "fine", "fined", "bankrupt", "bankruptcy", "layoff", "layoffs", "cut", "cuts", "resign", "resigns", "resigned", "breach", "outage", "warn", "warning", "apology", "apologising", "apologizing", "defect", "fell"],
-    "speculative": ["reportedly", "rumor", "rumour", "sources say", "people familiar", "unconfirmed", "could", "may ", "might", "considering", "speculat", "allegedly"],
-    "uncertainty": ["uncertain", "uncertainty", "unclear", "unknown", "volatile", "turmoil", "shock", "shockwaves", "worries", "fear", "concern", "concerns", "risk"],
-    "background": ["has issued several", "have issued several", "previously", "in the past", "last year", "earlier this year", "years ago", "a history of", "had been", "has faced several", "once again"]
+    "positive": [
+      "beat",
+      "beats",
+      "record",
+      "growth",
+      "surge",
+      "surged",
+      "soar",
+      "soared",
+      "strong",
+      "upgrade",
+      "upgraded",
+      "profit",
+      "profitable",
+      "expand",
+      "expands",
+      "expansion",
+      "win",
+      "wins",
+      "won",
+      "approve",
+      "approved",
+      "approval",
+      "raise",
+      "raised",
+      "boost",
+      "boosted",
+      "exceed",
+      "exceeded",
+      "rebound",
+      "partnership",
+      "breakthrough"
+    ],
+    "negative": [
+      "miss",
+      "missed",
+      "decline",
+      "declined",
+      "drop",
+      "dropped",
+      "plunge",
+      "plunged",
+      "weak",
+      "downgrade",
+      "downgraded",
+      "loss",
+      "losses",
+      "lawsuit",
+      "probe",
+      "investigation",
+      "recall",
+      "recalled",
+      "shortage",
+      "halt",
+      "halted",
+      "delay",
+      "delayed",
+      "fraud",
+      "fine",
+      "fined",
+      "bankrupt",
+      "bankruptcy",
+      "layoff",
+      "layoffs",
+      "cut",
+      "cuts",
+      "resign",
+      "resigns",
+      "resigned",
+      "breach",
+      "outage",
+      "warn",
+      "warning",
+      "apology",
+      "apologising",
+      "apologizing",
+      "defect",
+      "fell"
+    ],
+    "speculative": [
+      "reportedly",
+      "rumor",
+      "rumour",
+      "sources say",
+      "people familiar",
+      "unconfirmed",
+      "could",
+      "may ",
+      "might",
+      "considering",
+      "speculat",
+      "allegedly"
+    ],
+    "uncertainty": [
+      "uncertain",
+      "uncertainty",
+      "unclear",
+      "unknown",
+      "volatile",
+      "turmoil",
+      "shock",
+      "shockwaves",
+      "worries",
+      "fear",
+      "concern",
+      "concerns",
+      "risk"
+    ],
+    "background": [
+      "has issued several",
+      "have issued several",
+      "previously",
+      "in the past",
+      "last year",
+      "earlier this year",
+      "years ago",
+      "a history of",
+      "had been",
+      "has faced several",
+      "once again"
+    ],
+    "commentary": [
+      "should you buy",
+      "should you sell",
+      "is it too late",
+      "too late to buy",
+      "what to expect",
+      "what to watch",
+      "stock to buy",
+      "stocks to buy",
+      "better buy",
+      "best stock",
+      "top stock",
+      "buy right now",
+      "is it time to",
+      "here's why",
+      "here's what",
+      "here is why",
+      "what's next for",
+      "reasons to",
+      "reason to buy",
+      "could make you",
+      "millionaire",
+      "retirement",
+      "my favorite",
+      "i'm buying",
+      "we followed",
+      "joins yahoo finance",
+      "explains why",
+      "is a buy",
+      "worth buying",
+      "prediction:",
+      "overvalued",
+      "undervalued",
+      "should investors",
+      "drag on the",
+      "your 401(k)",
+      "your portfolio",
+      "doubters",
+      "overlooked",
+      "betting against",
+      "if you only",
+      "ceo on company's",
+      "ceo on why",
+      "ceo on the ai"
+    ]
   },
   "attribution": {
-    "cues": ["according to", "first reported", "reported", "reports", "citing", "cited", "told", "report by", "reporting by"],
-    "company_statement": ["said in a statement", "in a press release", "the company said", "spokesperson said", "spokesman said", "spokeswoman said", "the company confirmed", "announced"],
-    "filing": ["in a filing", "regulatory filing", "securities filing", "filed with the", "8-k"],
-    "anonymous": ["people familiar", "person familiar", "sources said", "according to sources", "people with knowledge", "unnamed sources"],
+    "cues": [
+      "according to",
+      "first reported",
+      "reported",
+      "reports",
+      "citing",
+      "cited",
+      "told",
+      "report by",
+      "reporting by"
+    ],
+    "company_statement": [
+      "said in a statement",
+      "in a press release",
+      "the company said",
+      "spokesperson said",
+      "spokesman said",
+      "spokeswoman said",
+      "the company confirmed",
+      "announced"
+    ],
+    "filing": [
+      "in a filing",
+      "regulatory filing",
+      "securities filing",
+      "filed with the",
+      "8-k"
+    ],
+    "anonymous": [
+      "people familiar",
+      "person familiar",
+      "sources said",
+      "according to sources",
+      "people with knowledge",
+      "unnamed sources"
+    ],
     "outlets": {
-      "reuters": ["reuters"],
-      "bloomberg": ["bloomberg news", "bloomberg reported", "according to bloomberg", "told bloomberg"],
-      "wsj": ["the wall street journal", "wall street journal", "wsj"],
-      "ft": ["financial times"],
-      "ap": ["associated press"],
-      "dow_jones": ["dow jones"],
-      "cnbc": ["cnbc"],
-      "bbc": ["the bbc", "bbc news"],
-      "nytimes": ["the new york times", "new york times"],
-      "guardian": ["the guardian"],
-      "marketwatch": ["marketwatch"],
-      "the_information": ["the information reported", "according to the information"],
-      "axios": ["axios"],
-      "semafor": ["semafor"]
+      "reuters": [
+        "reuters"
+      ],
+      "bloomberg": [
+        "bloomberg news",
+        "bloomberg reported",
+        "according to bloomberg",
+        "told bloomberg"
+      ],
+      "wsj": [
+        "the wall street journal",
+        "wall street journal",
+        "wsj"
+      ],
+      "ft": [
+        "financial times"
+      ],
+      "ap": [
+        "associated press"
+      ],
+      "dow_jones": [
+        "dow jones"
+      ],
+      "cnbc": [
+        "cnbc"
+      ],
+      "bbc": [
+        "the bbc",
+        "bbc news"
+      ],
+      "nytimes": [
+        "the new york times",
+        "new york times"
+      ],
+      "guardian": [
+        "the guardian"
+      ],
+      "marketwatch": [
+        "marketwatch"
+      ],
+      "the_information": [
+        "the information reported",
+        "according to the information"
+      ],
+      "axios": [
+        "axios"
+      ],
+      "semafor": [
+        "semafor"
+      ]
     }
   }
 }

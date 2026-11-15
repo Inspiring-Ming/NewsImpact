@@ -20,7 +20,9 @@ function NewsSays({ e }: { e: S["EventCard"] }) {
   );
 }
 
-export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
+export function WatchlistTable({ rows, starred, onStar }: {
+  rows: S["CompanyCard"][]; starred: Set<string>; onStar: (ticker: string) => void;
+}) {
   return (
     <div className="table-wrap card flush">
       <table className="watchlist">
@@ -42,6 +44,9 @@ export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
             return (
               <tr key={c.ticker} className={href ? "clickable" : ""} onClick={() => href && (window.location.hash = href)}>
                 <td className="c-company">
+                  <button className={`star ${starred.has(c.ticker) ? "on" : ""}`} aria-pressed={starred.has(c.ticker)}
+                          title={starred.has(c.ticker) ? "Stop following" : "Follow this company"}
+                          onClick={(ev) => { ev.stopPropagation(); onStar(c.ticker); }}>{starred.has(c.ticker) ? "★" : "☆"}</button>
                   <b>{c.name}</b>
                   <div className="muted small">
                     {COUNTRY[c.country]?.flag} {c.ticker} · <Term tip={`${c.sector} (GICS sector)`}>{SECTOR_SHORT[c.sector] ?? c.sector}</Term>
@@ -57,7 +62,8 @@ export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
                         </span>
                         {c.events.length > 1 && <span className="muted small">+{c.events.length - 1} more</span>}
                       </div>
-                      <div className="headline-1">{e.latest_headline}</div>
+                      <a className="headline-1" href={e.latest_url} target="_blank" rel="noreferrer"
+                         onClick={(ev) => ev.stopPropagation()}>{e.latest_headline} ↗</a>
                       <div className="muted small">
                         {e.latest_source} · {date(e.updates[e.updates.length - 1].published_at)}
                         {e.next_update && <> · next: <b>{e.next_update}</b></>}
@@ -74,9 +80,19 @@ export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
                           <div className="muted small">{vsWords(e.stock_move, c.index_name)} · {e.stock_move_period}</div>
                           <div className={`small ${e.stock_move_unusual ? "warn" : "muted"}`}>{e.stock_move_unusual ? "⚠ Unusual move" : "Normal range"}</div>
                         </>
+                      ) : e.move_so_far != null ? (
+                        <>
+                          <div className="move-top">
+                            <b className="muted">{pct(e.move_so_far)}</b>
+                            <MoveBar value={e.move_so_far} unusual={false} />
+                          </div>
+                          <div className="muted small">so far, to {date(e.so_far_through!)} close</div>
+                          <div className="small muted"><Term id="provisional">Provisional</Term></div>
+                        </>
                       ) : <span className="muted small">{NO_MOVE[e.stock_move_status] ?? ""}</span>}
                     </td>
                     <td className="c-sources">
+                      <div className={`badge-verified ${e.verified ? "yes" : "no"}`}>{e.verified ? "✓ Verified" : "Unverified signal"}</div>
                       <div className="src-top"><Dots n={e.sources} /> <b>{e.sources}</b> <span className="muted small">{e.sources === 1 ? "source" : "sources"}</span></div>
                       <div className="conf"><Meter value={e.confidence} tone={confidenceTone(e.confidence)} /> <span className="small">{Math.round(e.confidence * 100)}% confidence</span></div>
                     </td>
@@ -86,7 +102,7 @@ export function WatchlistTable({ rows }: { rows: S["CompanyCard"][] }) {
                     {c.latest_news ? (
                       <>
                         <span className="muted small">No event detected · latest news:</span>
-                        <div className="headline-1">{c.latest_news.title}</div>
+                        <a className="headline-1" href={c.latest_news.url} target="_blank" rel="noreferrer">{c.latest_news.title} ↗</a>
                         <div className="muted small">{c.latest_news.source} · {date(c.latest_news.published_at)}</div>
                       </>
                     ) : <span className="muted small">No recent news</span>}
