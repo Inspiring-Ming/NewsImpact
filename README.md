@@ -35,14 +35,15 @@ To watch the real outlets, copy `.env.example` to `.env` and set these values:
 
 ## The website
 
-| Page | What it answers |
+Two pages, written for clients rather than engineers:
+
+| Page | What it shows |
 |---|---|
-| Overview | What is monitored, the latest round, and a "run a round now" button |
-| Storylines | Every story by market (US / ASX) and status; each opens to a conclusion, a price chart (stock vs. market, stage markers) and the evidence per stage |
-| Outlets | Reliability per outlet, and whether each one earns its place (coverage) |
-| Calibration | Do the playbooks hold across many stories, and do the time windows fit? |
-| Quality | How accurate the text analysis is on hand-labelled sentences (word lists or an LLM preset) |
-| Method | Every setting and the reason for it |
+| **Briefing** (home) | What NewsImpact does, in four steps. Every story it follows, as a card: what happened, how many stages are confirmed, the market reaction, and confidence. Filter by US or Australia. |
+| **Story** (opens from a card) | *In short* (four facts and what to watch), *What the market did* (price vs. market with numbered stages), and *How the story unfolded* (each stage, its sources, and whether people acted as expected). Statistics are behind *Details*. |
+| **How it works** | Sources and trust, analysis accuracy, track record (calibration), and every setting with its reason. |
+
+The header shows whether monitoring is live and has an **Update now** button.
 
 ## How it works: seven modules, in the order news flows
 
@@ -70,7 +71,7 @@ src/newsimpact/
       adapters/     one file per technology (rss.py, eodhd.py, sqlite.py, ollama.py…)
   shared/         event base classes, event bus, text ids, SQLite helper (adapters only)
   app/            settings, wiring (picks technologies), API + website, queries, monitoring
-web/              the website (React + TypeScript); typed client generated from the API
+web/              the website (React + TypeScript): src/features/<page>/, src/shared/, routes.tsx
 data/reference/   REAL curated data, each value with its reason: outlets, companies (US + ASX),
                   taxonomy, playbooks, methodology (windows, thresholds), LLM presets & prices
 data/demo/        FICTIONAL demo data in the same formats

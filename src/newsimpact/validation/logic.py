@@ -48,7 +48,7 @@ from newsimpact.validation.models import (
     WindowCalibration,
 )
 
-MODEL_VERSION = "validation-rules-v0.2"
+MODEL_VERSION = "validation-rules-v0.3"
 AUTHORITATIVE_TYPES = frozenset({SourceType.REGULATORY_FILING, SourceType.COMPANY_PRESS_RELEASE})
 AUTHORITATIVE_ATTRIBUTION = frozenset({"company_statement", "filing"})
 MEASURED = frozenset({"consistent", "inconsistent", "not_significant"})
@@ -164,51 +164,44 @@ def conclude(
         conclusion += (f" Stages too close to separate, measured together: {combined.metric} = "
                        f"{combined.value:+.1%} (z={combined.statistic}).")  # fmt: skip
 
-    tips: list[str] = []
+    tips: list[str] = []  # most important first; readers see the first few
     for s in stages:
         if s.claim.status == "single_source":
             repeats = len(s.claim.outlets) - 1
             echo = f" ({repeats} other outlet(s) only repeated it)" if repeats > 0 else ""
-            origin = s.claim.origins[0]
-            tips.append(f"'{s.stage_name}' rests on one origin ({origin}){echo}; wait for an "
-                        "independent outlet or a filing before relying on it.")  # fmt: skip
+            tips.append(f"{_h(s.stage_name)} rests on a single source ({_h(s.claim.origins[0])})"
+                        f"{echo}: wait for an independent outlet or a filing.")  # fmt: skip
         for d in s.decisions:
             if d.verdict == "inconsistent" and d.evidence is not None:
                 moved = d.evidence.direction
-                tips.append(f"At '{s.stage_name}', {d.channel} went {moved} although the "
-                            f"playbook expects {d.expected}: check for pre-event drift or an "
-                            "earlier leak, and review this playbook stage.")  # fmt: skip
-        quiet = sorted({d.channel or "" for d in s.decisions if d.verdict == "not_significant"})
+                tips.append(f"{_h(s.stage_name)}: {_h(d.channel or '')} went {moved}, the "
+                            "opposite of what usually happens - check whether the news "
+                            "leaked earlier.")  # fmt: skip
+        quiet = sorted({_h(d.channel or "") for d in s.decisions if d.verdict == "not_significant"})
         if quiet:
-            tips.append(f"At '{s.stage_name}', no clear reaction in {', '.join(quiet)}: the news "
-                        "may already have been priced in.")  # fmt: skip
-    close = [s.stage_name for s in stages if s.overlaps_previous]
+            tips.append(f"{_h(s.stage_name)}: no clear move in {', '.join(quiet).lower()} - "
+                        "the market may have expected it.")  # fmt: skip
+    close = [_h(s.stage_name) for s in stages if s.overlaps_previous]
     if close:
-        tips.append(f"{', '.join(close)} followed the previous stage within days: their "
-                    "reactions overlap, so read the combined reaction rather than each "
-                    "stage alone.")  # fmt: skip
+        tips.append(f"{', '.join(close)} came within days of the previous stage, so read "
+                    "their market reaction together.")  # fmt: skip
     if pending:
-        tips.append(f"{len(pending)} market check(s) are pending: the measurement window has not "
-                    "closed yet; monitoring re-checks automatically.")  # fmt: skip
-    if storyline.status.value == "resolved":
-        tips.append(
-            "Storyline resolved: compare reactions across stages to calibrate the playbook."
-        )
-    else:
-        upcoming = [st.name for st in playbook.stages[storyline.max_stage + 1 :]]
+        tips.append(f"{len(pending)} market check(s) need a few more trading days; they update "
+                    "automatically.")  # fmt: skip
+    if storyline.status.value != "resolved":
+        upcoming = [_h(st.name) for st in playbook.stages[storyline.max_stage + 1 :]]
         if upcoming:
-            tips.append(f"Watch for the next stage: {', '.join(upcoming)} "
-                        "(follow-up search is active).")  # fmt: skip
-    missing = sorted({d.channel or "" for s in stages for d in s.decisions
+            tips.append(f"Next to watch for: {', '.join(upcoming).lower()} (we are searching "
+                        "for it automatically).")  # fmt: skip
+    missing = sorted({_h(d.channel or "") for s in stages for d in s.decisions
                       if d.verdict == "no_evidence"})  # fmt: skip
     if missing:
-        tips.append(f"No data source yet for {', '.join(missing)}: add an evidence provider to "
-                    "check those expectations.")  # fmt: skip
+        tips.append(f"Not checked yet (no data source): {', '.join(missing).lower()}.")
     real_economy = [d for s in stages for d in s.decisions if d.verdict == "not_measurable"]
     if real_economy:
-        tips.append(f"{len(real_economy)} expected decision(s) are real-economy actions (e.g. "
-                    f"{real_economy[0].actor}: {real_economy[0].decision}); verify them later in "
-                    "filings, press releases or earnings calls.")  # fmt: skip
+        tips.append(f"{len(real_economy)} expected decision(s) don't show in market data (e.g. "
+                    f"{_h(real_economy[0].actor).lower()}: {real_economy[0].decision}); check "
+                    "company filings and earnings calls.")  # fmt: skip
     return conclusion, tuple(tips)
 
 
@@ -289,6 +282,12 @@ def _quantile(sorted_values: Sequence[float], q: float) -> float:
     idx = (len(sorted_values) - 1) * q
     lo, hi = math.floor(idx), math.ceil(idx)
     return sorted_values[lo] + (sorted_values[hi] - sorted_values[lo]) * (idx - lo)
+
+
+def _h(code: str) -> str:
+    """'leader_departure' -> 'Leader departure' (readable text for people)."""
+    text = code.replace("_", " ").strip()
+    return text[:1].upper() + text[1:]
 
 
 def _round(x: float | None) -> float | None:

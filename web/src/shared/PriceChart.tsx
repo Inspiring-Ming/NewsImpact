@@ -1,0 +1,52 @@
+// Share price vs. its market (both rebased to 100), with a marker for every stage.
+import type { S } from "../api/client";
+
+const W = 760, H = 260, PAD = { l: 40, r: 16, t: 24, b: 30 };
+
+export function PriceChart({ path, stages }: { path: S["PricePath"]; stages: { day: string; label: string }[] }) {
+  const pts = path.points;
+  if (pts.length < 2) return <p className="muted">Not enough price history yet.</p>;
+  const values = pts.flatMap((p) => [p.stock, p.benchmark]);
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const x = (i: number) => PAD.l + (i / (pts.length - 1)) * (W - PAD.l - PAD.r);
+  const y = (v: number) => PAD.t + (1 - (v - lo) / (hi - lo || 1)) * (H - PAD.t - PAD.b);
+  const line = (key: "stock" | "benchmark") =>
+    pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[key]).toFixed(1)}`).join("");
+  const at = (d: string) => { const i = pts.findIndex((p) => p.day >= d); return i < 0 ? pts.length - 1 : i; };
+  const last = pts[pts.length - 1];
+  // Stages on the same trading day share one marker ("2·3") instead of hiding each other.
+  const markers: { i: number; nums: number[] }[] = [];
+  stages.forEach((s, n) => {
+    const i = at(s.day);
+    const same = markers.find((m) => m.i === i);
+    if (same) same.nums.push(n + 1); else markers.push({ i, nums: [n + 1] });
+  });
+  return (
+    <figure className="chart">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${path.ticker} share price compared with ${path.benchmark}`}>
+        {[lo, (lo + hi) / 2, hi].map((t) => (
+          <g key={t}>
+            <line className="grid" x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} />
+            <text className="axis" x={PAD.l - 6} y={y(t) + 4} textAnchor="end">{t.toFixed(0)}</text>
+          </g>
+        ))}
+        {markers.map(({ i, nums }) => (
+          <g key={i}>
+            <line className="marker" x1={x(i)} x2={x(i)} y1={PAD.t - 8} y2={H - PAD.b} />
+            <rect className="marker-dot" x={x(i) - 6 - nums.length * 4} y={PAD.t - 17} rx={9}
+                  width={12 + nums.length * 8} height={18} />
+            <text className="marker-num" x={x(i)} y={PAD.t - 4} textAnchor="middle">{nums.join("·")}</text>
+          </g>
+        ))}
+        <path className="line benchmark" d={line("benchmark")} />
+        <path className="line stock" d={line("stock")} />
+        <text className="axis" x={PAD.l} y={H - 8}>{pts[0].day}</text>
+        <text className="axis" x={W - PAD.r} y={H - 8} textAnchor="end">{last.day}</text>
+      </svg>
+      <figcaption>
+        <span className="key stock" /> {path.ticker} <span className="key benchmark" /> market ({path.benchmark}) ·
+        both start at 100 · numbered markers = stages below
+      </figcaption>
+    </figure>
+  );
+}

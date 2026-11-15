@@ -73,7 +73,7 @@ used to check it (⑥–⑦). Conclusions never rest on the news alone.
 | `src/newsimpact/<module>/` | One business module from the table above. Every module has the same files (next section). |
 | `src/newsimpact/shared/` | The small toolkit every module uses: event base classes, event bus, text ids, and the SQLite helper that only adapters may use. Imports nothing else. |
 | `src/newsimpact/app/` | Settings, wiring, HTTP API + website serving, read-only queries, monitoring, demo loader. The only place that picks technologies. No business logic. |
-| `web/` | The website (React + TypeScript). Its API client is generated from the server's OpenAPI document, so API changes that break it fail CI. |
+| `web/` | The website (React + TypeScript). `src/routes.tsx` lists every page. `src/features/<page>/` holds one folder per page (briefing, story, method). `src/shared/` holds UI parts, the price chart and `labels.ts` (the only place that turns codes into plain English). `src/api/` holds the client, generated from the server's OpenAPI document, so API changes that break the site fail CI. |
 | `tests/<module>/`, `tests/e2e/` | Tests mirror `src/`; e2e runs the real wiring. |
 | `schemas/events/` | Generated JSON Schemas of every event, for non-Python consumers. CI fails on drift. |
 | `data/reference/` | Real, curated knowledge edited without code, each value with its reason: **outlets** (`sources.json`), what to look for in text (`taxonomy.json`), storyline playbooks, entity master, **measurement and validation thresholds** (`methodology.json`), LLM prices. See [07-coverage-and-settings](07-coverage-and-settings.md). |

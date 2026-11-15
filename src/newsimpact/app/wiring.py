@@ -124,6 +124,7 @@ class Services:
     llm: LlmGateway | None
     llm_presets: dict[str, LlmPreset]
     playbooks: PlaybookCatalog
+    market_policy: MeasurementPolicy  # exchanges, windows (for labelling and charts)
     # read models served by the API and reports
     articles: ArticleStore
     impacts: ImpactStore
@@ -286,7 +287,8 @@ def build_services(settings: Settings | None = None) -> Services:
         if s.profile == "live"
         else JsonRelationshipGraph.from_file(s.demo_dir / "relationships.json")
     )
-    market = _market(s, MeasurementPolicy.model_validate(method["market"]), stores)
+    market_policy = MeasurementPolicy.model_validate(method["market"])
+    market = _market(s, market_policy, stores)
     reference = [s.profile_dir / "sources.json", s.profile_dir / "entities.json"]
     reference += [s.reference_dir / f for f in REFERENCE_FILES]
     provenance = Provenance(
@@ -317,6 +319,7 @@ def build_services(settings: Settings | None = None) -> Services:
         llm=llm,
         llm_presets=load_models(s.reference_dir / "llm_models.json")[0],
         playbooks=catalog,
+        market_policy=market_policy,
         articles=stores.articles,
         impacts=stores.impacts,
         storyline_store=stores.storylines,

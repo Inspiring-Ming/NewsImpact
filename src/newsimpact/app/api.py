@@ -87,6 +87,11 @@ def create_app(services: Services | None = None) -> FastAPI:
     def overview() -> queries.Overview:
         return queries.overview(svc)
 
+    @app.get("/v1/briefing", response_model=list[queries.BriefingItem])
+    def briefing() -> list[queries.BriefingItem]:
+        """Every storyline as a ready-to-show card (the website's home page)."""
+        return queries.briefing(svc)
+
     @app.get("/v1/monitor", response_model=MonitorStatus)
     def monitor_status() -> MonitorStatus:
         return _status(monitor.last, svc.settings.monitor_every_minutes)

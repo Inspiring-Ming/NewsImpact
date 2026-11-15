@@ -38,6 +38,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/briefing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Briefing
+         * @description Every storyline as a ready-to-show card (the website's home page).
+         */
+        get: operations["briefing_v1_briefing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/calibration": {
         parameters: {
             query?: never;
@@ -406,6 +426,48 @@ export interface components {
             storyline_id: string;
             /** Suggestions */
             suggestions: string[];
+            /** Theme */
+            theme: string;
+            /** Ticker */
+            ticker: string;
+        };
+        /**
+         * BriefingItem
+         * @description One storyline, summarised for a card: what happened, how sure, what the market did.
+         */
+        BriefingItem: {
+            /** Company */
+            company: string;
+            /** Confidence */
+            confidence: string;
+            /** Expectations Measured */
+            expectations_measured: number;
+            /** Expectations Met */
+            expectations_met: number;
+            /** Latest At */
+            latest_at: string;
+            /** Latest Stage */
+            latest_stage: string;
+            /** Latest Summary */
+            latest_summary: string;
+            /**
+             * Market
+             * @description home exchange, e.g. US or ASX
+             */
+            market: string;
+            /** @description the headline market move: combined reaction, else the strongest price move */
+            reaction: components["schemas"]["ChannelObservation"] | null;
+            /** Stages */
+            stages: number;
+            /**
+             * Stages Confirmed
+             * @description stages backed by independent origins or the company
+             */
+            stages_confirmed: number;
+            /** Status */
+            status: string;
+            /** Storyline Id */
+            storyline_id: string;
             /** Theme */
             theme: string;
             /** Ticker */
@@ -1133,6 +1195,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    briefing_v1_briefing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BriefingItem"][];
                 };
             };
         };

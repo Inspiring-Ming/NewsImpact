@@ -25,6 +25,12 @@ def test_api_contract_for_the_website() -> None:
     assert client.get("/v1/sources/nope/reliability").status_code == 404
     assert client.get("/v1/coverage").json()
 
+    cards = client.get("/v1/briefing").json()
+    crisis_card = next(c for c in cards if c["theme"] == "leadership_crisis")
+    assert crisis_card["market"] == "US" and crisis_card["stages"] == 3
+    assert crisis_card["reaction"]["channel"] == "price"
+    assert crisis_card["expectations_met"] <= crisis_card["expectations_measured"]
+
     stories = client.get("/v1/storylines?ticker=GLBX").json()
     assert {s["theme"] for s in stories} == {"leadership_crisis", "product_safety"}
     crisis = next(s for s in stories if s["theme"] == "leadership_crisis")

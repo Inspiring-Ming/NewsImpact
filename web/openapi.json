@@ -200,6 +200,100 @@
         "title": "Assessment",
         "type": "object"
       },
+      "BriefingItem": {
+        "additionalProperties": false,
+        "description": "One storyline, summarised for a card: what happened, how sure, what the market did.",
+        "properties": {
+          "company": {
+            "title": "Company",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "expectations_measured": {
+            "title": "Expectations Measured",
+            "type": "integer"
+          },
+          "expectations_met": {
+            "title": "Expectations Met",
+            "type": "integer"
+          },
+          "latest_at": {
+            "title": "Latest At",
+            "type": "string"
+          },
+          "latest_stage": {
+            "title": "Latest Stage",
+            "type": "string"
+          },
+          "latest_summary": {
+            "title": "Latest Summary",
+            "type": "string"
+          },
+          "market": {
+            "description": "home exchange, e.g. US or ASX",
+            "title": "Market",
+            "type": "string"
+          },
+          "reaction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChannelObservation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the headline market move: combined reaction, else the strongest price move"
+          },
+          "stages": {
+            "title": "Stages",
+            "type": "integer"
+          },
+          "stages_confirmed": {
+            "description": "stages backed by independent origins or the company",
+            "title": "Stages Confirmed",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "storyline_id": {
+            "title": "Storyline Id",
+            "type": "string"
+          },
+          "theme": {
+            "title": "Theme",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "storyline_id",
+          "ticker",
+          "company",
+          "market",
+          "theme",
+          "status",
+          "confidence",
+          "stages",
+          "stages_confirmed",
+          "latest_stage",
+          "latest_at",
+          "latest_summary",
+          "reaction",
+          "expectations_measured",
+          "expectations_met"
+        ],
+        "title": "BriefingItem",
+        "type": "object"
+      },
       "Calibration": {
         "additionalProperties": false,
         "properties": {
@@ -1720,6 +1814,29 @@
           }
         },
         "summary": "Recent Articles"
+      }
+    },
+    "/v1/briefing": {
+      "get": {
+        "description": "Every storyline as a ready-to-show card (the website's home page).",
+        "operationId": "briefing_v1_briefing_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BriefingItem"
+                  },
+                  "title": "Response Briefing V1 Briefing Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Briefing"
       }
     },
     "/v1/calibration": {
