@@ -7,17 +7,15 @@ import { confidenceTone, Dots, Meter, MoveBar, RatioBar } from "../../shared/viz
 import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
-import { AnalystData } from "./AnalystData";
 import type { EventData } from "./context";
 import { Overview } from "./Overview";
 import { Scorecard } from "./Scorecard";
 import { Updates } from "./Updates";
 
 const TABS: { id: string; label: string; component: ComponentType<EventData> }[] = [
-  { id: "overview", label: "Overview & what to know", component: Overview },
+  { id: "overview", label: "Overview", component: Overview },
   { id: "updates", label: "Updates", component: Updates },
   { id: "reaction", label: "Expected vs actual", component: Scorecard },
-  { id: "data", label: "How we measured", component: AnalystData },
 ];
 
 export function EventPage({ id }: { id: string }) {

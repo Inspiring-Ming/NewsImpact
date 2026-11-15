@@ -54,3 +54,16 @@
 + Guidance is grounded in published research, with the source shown.
 - Single-source scoops are penalised until others report them; the half
   weight limits this, and calibration can revisit it as data grows.
+
+## Follow-up (same day)
+* The home page's key numbers open a detail panel when clicked: events by
+  day, ranked stock moves (bars from a centre line), and articles in the last
+  24 hours by source and by company.
+* The event page has three tabs. "What to know" was too long beside the
+  chart: Overview now shows the chart, then two short cards (watch next; one
+  research finding with its source, more on request). Updates is a timeline.
+  "How we measured" merged into Expected vs actual, where each measure is
+  defined in a sentence on the page and each bar is drawn against the stock's
+  normal range (±1.96 typical moves), so "unusual" is visible, not just named.
+* Watchlist columns have fixed widths (they shifted with each page's text);
+  rows without an event show their latest news across the empty columns.

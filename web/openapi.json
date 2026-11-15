@@ -358,6 +358,11 @@
             "title": "Articles",
             "type": "integer"
           },
+          "articles_24h": {
+            "description": "of those, published in the last 24 hours",
+            "title": "Articles 24H",
+            "type": "integer"
+          },
           "country": {
             "title": "Country",
             "type": "string"
@@ -409,6 +414,7 @@
           "exchange",
           "index_name",
           "articles",
+          "articles_24h",
           "latest_news",
           "events"
         ],
@@ -1134,6 +1140,14 @@
             "title": "Articles 24H",
             "type": "integer"
           },
+          "articles_24h_by_source": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "source name -> articles, 24 hours",
+            "title": "Articles 24H By Source",
+            "type": "object"
+          },
           "llm": {
             "description": "LLM preset and model, or 'off'",
             "title": "Llm",
@@ -1181,6 +1195,7 @@
           "outlets_enabled",
           "articles",
           "articles_24h",
+          "articles_24h_by_source",
           "storylines_open",
           "storylines_resolved",
           "market_data",

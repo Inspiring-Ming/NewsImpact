@@ -7,7 +7,7 @@ and shapes data for the API.
 from __future__ import annotations
 
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
 
 from pydantic import Field
@@ -27,6 +27,7 @@ class Overview(Model):
     outlets_enabled: int
     articles: int
     articles_24h: int = Field(description="articles published in the last 24 hours")
+    articles_24h_by_source: dict[str, int] = Field(description="source name -> articles, 24 hours")
     storylines_open: int
     storylines_resolved: int
     market_data: str = Field(description="price source, or 'off'")
@@ -54,6 +55,7 @@ def overview(svc: Services) -> Overview:
     s = svc.settings
     articles = list(svc.articles.recent(10**6))
     day_ago = datetime.now(UTC) - timedelta(days=1)
+    names = _source_names(svc)
     llm = "off"
     if svc.llm is not None:
         llm = f"{s.llm_preset} ({svc.llm.name})"
@@ -62,6 +64,11 @@ def overview(svc: Services) -> Overview:
         outlets_enabled=sum(x.enabled for x in svc.sources.listed()),
         articles=len(articles),
         articles_24h=sum(a.published_at >= day_ago for a in articles),
+        articles_24h_by_source=dict(
+            Counter(
+                names.get(a.source_id, a.source_id) for a in articles if a.published_at >= day_ago
+            )
+        ),
         storylines_open=len(stories) - resolved,
         storylines_resolved=resolved,
         market_data=(
@@ -178,6 +185,7 @@ class CompanyCard(Model):
     exchange: str
     index_name: str = Field(description="the index the stock is compared with, e.g. S&P 500")
     articles: int = Field(description="stored articles that name the company")
+    articles_24h: int = Field(description="of those, published in the last 24 hours")
     latest_news: NewsItem | None
     events: tuple[EventCard, ...]
 
@@ -230,6 +238,7 @@ def _company_card(
         ticker=company.ticker, name=company.name, country=company.country, sector=company.sector,
         exchange=svc.market_policy.exchange_of(company.ticker),
         index_name=_index_name(svc, company.ticker), articles=len(news),
+        articles_24h=sum(a.published_at >= datetime.now(UTC) - timedelta(days=1) for a in news),
         latest_news=NewsItem(title=latest.title, url=latest.url,
                              source=names.get(latest.source_id, latest.source_id),
                              published_at=latest.published_at) if latest else None,

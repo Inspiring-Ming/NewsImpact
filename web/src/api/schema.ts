@@ -535,6 +535,11 @@ export interface components {
              * @description stored articles that name the company
              */
             articles: number;
+            /**
+             * Articles 24H
+             * @description of those, published in the last 24 hours
+             */
+            articles_24h: number;
             /** Country */
             country: string;
             /** Events */
@@ -890,6 +895,13 @@ export interface components {
              * @description articles published in the last 24 hours
              */
             articles_24h: number;
+            /**
+             * Articles 24H By Source
+             * @description source name -> articles, 24 hours
+             */
+            articles_24h_by_source: {
+                [key: string]: number;
+            };
             /**
              * Llm
              * @description LLM preset and model, or 'off'

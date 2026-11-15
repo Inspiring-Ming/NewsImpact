@@ -1,11 +1,12 @@
 // Home: the watchlist. Key numbers on top, filters, then one compact paged table.
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { api, type S } from "../../api/client";
-import { pct, SECTORS } from "../../shared/labels";
+import { pct, SECTORS, type Tone } from "../../shared/labels";
 import { Term } from "../../shared/Term";
-import { Fact, State } from "../../shared/ui";
+import { State } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
 import { ImpactMap } from "./ImpactMap";
+import { KpiDetail, type Kpi } from "./KpiDetail";
 import { WatchlistTable } from "./WatchlistTable";
 
 const PAGE = 12;
@@ -27,6 +28,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const [eventsOnly, setEventsOnly] = useState(true);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("latest");
+  const [open, setOpen] = useState<Kpi | null>(null);
   const [page, setPage] = useState(0);
 
   const all = data ?? [];
@@ -50,16 +52,24 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   return (
     <>
       <div className="kpis">
-        <Fact label={<Term id="eventsWeek" />} value={thisWeek.length}
-              sub={`${thisWeek.filter((e) => e.ongoing).length} still developing · ${events.length} in total`} />
-        <Fact label={<Term id="unusual">Unusual stock moves</Term>} value={unusual}
-              sub={`of ${events.filter((e) => e.stock_move != null).length} events with price data`} tone={unusual ? "warn" : undefined} />
-        <Fact label={<Term id="biggest" />}
-              value={biggest ? <a href={`#/event/${biggest.e.event_id}`} className={biggest.e.stock_move! < 0 ? "bad" : "good"}>{pct(biggest.e.stock_move!)}</a> : "–"}
-              sub={biggest ? `${biggest.c.name} vs ${biggest.c.index_name} · ${biggest.e.event_type}` : "no price data yet"} />
-        <Fact label={<Term id="news24h" />} value={overview.data?.articles_24h ?? "–"}
-              sub={`about ${inNews} companies · from ${overview.data?.outlets_enabled ?? "–"} sources`} />
+        {([
+          ["events", <Term id="eventsWeek" />, thisWeek.length, `${thisWeek.filter((e) => e.ongoing).length} still developing · ${events.length} in total`, undefined],
+          ["unusual", <Term id="unusual">Unusual stock moves</Term>, unusual, `of ${events.filter((e) => e.stock_move != null).length} events with price data`, unusual ? "warn" : undefined],
+          ["biggest", <Term id="biggest" />, biggest ? pct(biggest.e.stock_move!) : "–",
+            biggest ? `${biggest.c.name} vs ${biggest.c.index_name} · ${biggest.e.event_type}` : "no price data yet",
+            biggest ? (biggest.e.stock_move! < 0 ? "bad" : "good") : undefined],
+          ["news", <Term id="news24h" />, overview.data?.articles_24h ?? "–", `about ${inNews} companies · from ${overview.data?.outlets_enabled ?? "–"} sources`, undefined],
+        ] as [Kpi, ReactNode, ReactNode, string, Tone | undefined][]).map(([id, label, value, sub, tone]) => (
+          <button key={id} className={`fact kpi-btn ${open === id ? "open" : ""}`} aria-expanded={open === id}
+                  onClick={() => setOpen(open === id ? null : id)}>
+            <div className="fact-label">{label}</div>
+            <div className={`fact-value ${tone ?? ""}`}>{value}</div>
+            <div className="fact-sub">{sub}</div>
+            <div className="kpi-more">{open === id ? "Hide detail ▴" : "Show detail ▾"}</div>
+          </button>
+        ))}
       </div>
+      {open && data && <KpiDetail kpi={open} companies={all} overview={overview.data} />}
 
       <div className="toolbar">
         <input className="search" type="search" placeholder="Search company or ticker" value={query}
