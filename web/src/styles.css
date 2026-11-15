@@ -181,14 +181,12 @@ tr.disabled td { opacity: .5; }
   .meter-fill, .ratiobar-fill, .countbar span, .movebar-fill, .xbar-fill, .day-col .day-bar, .tile { animation: none; }
 }
 
-/* priority, needs-attention strip, brief, checklist */
+/* priority, needs-attention cards, brief, checklist */
 .priority { display: inline-flex; align-items: center; gap: 5px; font-size: .75rem; font-weight: 700; }
 .pdot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
 .priority.act { color: var(--bad); } .priority.act .pdot { background: var(--bad); box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad) 20%, transparent); }
 .priority.check { color: var(--warn); } .priority.check .pdot { background: var(--warn); }
 .priority.background { color: var(--muted); }
-.attention { margin-bottom: 18px; }
-.attention h2 { font-size: 1rem; margin-bottom: 8px; }
 .attention-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .attention-card { color: var(--text); display: grid; gap: 4px; align-content: start; padding: 14px 16px; }
 .attention-card:hover { border-color: var(--accent); }

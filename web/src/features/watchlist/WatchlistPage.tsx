@@ -6,9 +6,9 @@ import { api, type S } from "../../api/client";
 import { pct, SECTORS, type Tone } from "../../shared/labels";
 import { useStarred } from "../../shared/starred";
 import { Term } from "../../shared/Term";
-import { State } from "../../shared/ui";
+import { State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
-import { AttentionStrip } from "./AttentionStrip";
+import { attentionItems, NeedsAttention } from "./NeedsAttention";
 import { ImpactMap } from "./ImpactMap";
 import { KpiDetail, type Kpi } from "./KpiDetail";
 import { WatchlistTable } from "./WatchlistTable";
@@ -37,6 +37,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("latest");
   const [open, setOpen] = useState<Kpi | null>(null);
+  const [sub, setSub] = useState<"attention" | "all">("attention");
   const [page, setPage] = useState(0);
 
   const all = data ?? [];
@@ -74,8 +75,6 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
         ))}
       </div>
 
-      {data && <AttentionStrip companies={view === "mine" ? rows : all} mine={view === "mine"} />}
-
       <div className="kpis">
         {([
           ["events", <Term id="eventsWeek" />, thisWeek.length, `${verifiedWeek} confirmed · ${thisWeek.length - verifiedWeek} not yet confirmed`, undefined],
@@ -111,9 +110,15 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           {Object.entries(SORTS).map(([id, s]) => <option key={id} value={id}>Sort: {s.label}</option>)}
         </select>
       </div>
-      {data && <ImpactMap companies={rows} />}
+      <Tabs active={sub} onChange={(t) => change(() => setSub(t))} tabs={[
+        { id: "attention", label: `Needs attention (${attentionItems(rows).length})` },
+        { id: "all", label: `All (${rows.length})` },
+      ]} />
 
-      <State error={error} loading={loading && !data}
+      {data && sub === "attention" && <NeedsAttention companies={rows} />}
+      {data && sub === "all" && <ImpactMap companies={rows} />}
+
+      {sub === "all" && <State error={error} loading={loading && !data}
              empty={data && rows.length === 0 && (view === "mine"
                ? <p>No companies followed yet. Click ☆ next to a company, or search for one, to follow it here.</p>
                : <p>No companies match these filters.</p>)}>
@@ -123,7 +128,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           <button className="small" disabled={current === 0} onClick={() => setPage(current - 1)}>← Previous</button>
           <button className="small" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>Next →</button>
         </div>
-      </State>
+      </State>}
     </>
   );
 }

@@ -35,3 +35,9 @@ line. So we say what to check, never what to buy, sell or hold.
 ## Consequences
 + Every event answers "how urgent, what happened, what to check" in one place.
 - Rules for priority are judgment calls; revisit them with user feedback.
+
+## Follow-up (2026-11-16)
+The "Needs attention" strip above the key numbers made the home page long. It
+is now a sub-tab of both views (All events, My companies): **Needs attention**
+(every Act now / Check event in the view, most urgent first) and **All** (the
+impact map and the table). Filters apply to both tabs.
