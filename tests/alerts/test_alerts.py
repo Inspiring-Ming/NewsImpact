@@ -5,6 +5,7 @@ import pytest
 
 from newsimpact.alerts.adapters.discord import DiscordNotifier
 from newsimpact.alerts.adapters.memory import InMemoryAlertState
+from newsimpact.alerts.adapters.shared import SharedChannels
 from newsimpact.alerts.models import Alert, EventSnapshot
 from newsimpact.alerts.service import AlertsService
 
@@ -27,8 +28,8 @@ class Collect:
 
 def test_baseline_then_changes_for_followed_companies_only() -> None:
     out = Collect()
-    svc = AlertsService(InMemoryAlertState(), [out], "http://site.test")
-    svc.follow("NVDA")
+    svc = AlertsService(InMemoryAlertState(), SharedChannels([out]), "http://site.test")
+    svc.follow("ana", "NVDA")
     assert svc.check([_event(), _event(event_id="e2", ticker="AAPL")]) == []  # baseline
     changed = _event(confirmed=True, updates=2, stock_move=-0.185, unusual=True)
     kinds = [a.kind for a in svc.check([changed, _event(event_id="e2", ticker="AAPL", updates=3)])]
@@ -50,3 +51,15 @@ def test_discord_posts_an_embed_and_never_leaks_the_webhook() -> None:
     with pytest.raises(RuntimeError) as exc:
         DiscordNotifier(bad, "https://discord.test/api/webhooks/secret").send(alert, "")
     assert "secret" not in str(exc.value)
+
+
+def test_each_user_gets_only_their_companies_and_each_alert_once() -> None:
+    out = Collect()
+    svc = AlertsService(InMemoryAlertState(), SharedChannels([out]), "http://site.test")
+    svc.follow("ana", "NVDA")
+    svc.follow("ben", "NVDA")
+    svc.follow("ben", "AAPL")
+    svc.check([_event(), _event(event_id="e2", ticker="AAPL")])  # baseline
+    svc.check([_event(updates=2), _event(event_id="e2", ticker="AAPL", updates=2)])
+    assert sorted(a.ticker for a in out.sent) == ["AAPL", "NVDA", "NVDA"]  # ana 1, ben 2
+    assert svc.followed("ana") == {"NVDA"}

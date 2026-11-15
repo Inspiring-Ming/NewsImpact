@@ -30,7 +30,7 @@ export interface paths {
         };
         /**
          * Alerts Status
-         * @description Is an alert channel configured? ('on' / 'off'; the channel itself stays secret).
+         * @description Does this user have an alert channel? ('on' / 'off'; the channel stays secret).
          */
         get: operations["alerts_status_v1_alerts_get"];
         put?: never;
@@ -52,7 +52,7 @@ export interface paths {
         put?: never;
         /**
          * Alerts Test
-         * @description Send one test message to every configured channel.
+         * @description Send one test message to every channel of this user.
          */
         post: operations["alerts_test_v1_alerts_test_post"];
         delete?: never;
@@ -384,7 +384,7 @@ export interface paths {
         };
         /**
          * Watchlist
-         * @description Companies followed for alerts (one list for now: a single user).
+         * @description The companies this user follows (alerts are sent for them).
          */
         get: operations["watchlist_v1_watchlist_get"];
         put?: never;

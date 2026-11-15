@@ -75,7 +75,7 @@ source_modules = ["newsimpact.shared"]
 forbidden_modules = [
     "newsimpact.app", "newsimpact.sources", "newsimpact.semantics", "newsimpact.reliability",
     "newsimpact.storylines", "newsimpact.market", "newsimpact.validation",
-    "newsimpact.llm", "newsimpact.alerts",
+    "newsimpact.llm", "newsimpact.alerts", "newsimpact.identity",
 ]
 
 [[tool.importlinter.contracts]]
@@ -84,7 +84,7 @@ type = "independence"
 modules = [
     "newsimpact.sources", "newsimpact.semantics", "newsimpact.reliability",
     "newsimpact.storylines", "newsimpact.market", "newsimpact.validation",
-    "newsimpact.llm", "newsimpact.alerts",
+    "newsimpact.llm", "newsimpact.alerts", "newsimpact.identity",
 ]
 ignore_imports = ["newsimpact.** -> newsimpact.*.models"]
 

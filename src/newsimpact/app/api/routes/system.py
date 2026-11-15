@@ -1,4 +1,4 @@
-"""Health, overview counts, and the method: settings with reasons, calibration, accuracy."""
+"""Overview counts, and the method: settings with reasons, calibration, accuracy."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from newsimpact import __version__
 from newsimpact.app.api.context import ApiContext
 from newsimpact.app.views import system as views
 from newsimpact.app.views.system import Evaluation, Overview
@@ -35,11 +34,6 @@ class Method(Model):
 def router(api: ApiContext) -> APIRouter:
     r = APIRouter()
     svc = api.svc
-
-    @r.get("/health")
-    def health() -> dict[str, str]:
-        s = svc.settings
-        return {"status": "ok", "version": __version__, "env": s.env, "profile": s.profile}
 
     @r.get("/v1/overview", response_model=Overview)
     def overview() -> Overview:

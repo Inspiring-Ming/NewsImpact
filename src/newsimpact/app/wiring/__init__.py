@@ -18,10 +18,12 @@ from typing import Any
 
 import httpx
 
+from newsimpact.alerts.adapters.shared import SharedChannels
 from newsimpact.alerts.service import AlertsService
 from newsimpact.app.config import Settings
 from newsimpact.app.views.briefs import BriefStore
 from newsimpact.app.wiring.plugins import (
+    AUTH,
     EVENT_BUSES,
     FEEDS,
     LLM_PROVIDERS,
@@ -33,6 +35,7 @@ from newsimpact.app.wiring.plugins import (
     Stores,
     pick,
 )
+from newsimpact.identity.ports import Authenticator
 from newsimpact.llm.adapters.json_file import load_models
 from newsimpact.llm.adapters.memory import InMemoryResponseCache, InMemorySpendLedger
 from newsimpact.llm.adapters.sqlite import SqliteResponseCache, SqliteSpendLedger
@@ -89,6 +92,7 @@ class Services:
     articles: ArticleStore
     storyline_store: StorylineStore
     alerts: AlertsService
+    auth: Authenticator  # who is signed in (identity module)
     briefs: BriefStore  # three-line event briefs (app/views/briefs.py)
 
 
@@ -235,7 +239,8 @@ def build_services(settings: Settings | None = None) -> Services:
         market_policy=market_policy,
         articles=stores.articles,
         storyline_store=stores.storylines,
-        alerts=AlertsService(stores.alerts, notifiers, s.site_url),
+        alerts=AlertsService(stores.alerts, SharedChannels(notifiers), s.site_url),
+        auth=pick(AUTH, s.auth, "sign-in provider")(s),
         briefs=stores.briefs,
     )
     services.sources.register_listed()  # every listed source is tracked from the start

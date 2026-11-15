@@ -2224,7 +2224,7 @@
     },
     "/v1/alerts": {
       "get": {
-        "description": "Is an alert channel configured? ('on' / 'off'; the channel itself stays secret).",
+        "description": "Does this user have an alert channel? ('on' / 'off'; the channel stays secret).",
         "operationId": "alerts_status_v1_alerts_get",
         "responses": {
           "200": {
@@ -2247,7 +2247,7 @@
     },
     "/v1/alerts/test": {
       "post": {
-        "description": "Send one test message to every configured channel.",
+        "description": "Send one test message to every channel of this user.",
         "operationId": "alerts_test_v1_alerts_test_post",
         "responses": {
           "200": {
@@ -2780,7 +2780,7 @@
     },
     "/v1/watchlist": {
       "get": {
-        "description": "Companies followed for alerts (one list for now: a single user).",
+        "description": "The companies this user follows (alerts are sent for them).",
         "operationId": "watchlist_v1_watchlist_get",
         "responses": {
           "200": {

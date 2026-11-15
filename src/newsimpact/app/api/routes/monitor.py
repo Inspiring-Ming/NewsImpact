@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from newsimpact.app.api.auth import admin_user
 from newsimpact.app.api.context import ApiContext
 from newsimpact.app.demo import run_demo
 from newsimpact.app.monitor import RoundResult
@@ -29,19 +30,20 @@ def _status(last: RoundResult | None, every: float) -> MonitorStatus:
 def router(api: ApiContext) -> APIRouter:
     r = APIRouter()
     svc = api.svc
+    admin = [Depends(admin_user(api))]  # running updates and loading data is for admins
 
     @r.get("/v1/monitor", response_model=MonitorStatus)
     def monitor_status() -> MonitorStatus:
         return _status(api.monitor.last, svc.settings.monitor_every_minutes)
 
-    @r.post("/v1/monitor/run", response_model=MonitorStatus)
+    @r.post("/v1/monitor/run", response_model=MonitorStatus, dependencies=admin)
     def run_monitor_round() -> MonitorStatus:
         """Run one full round now (every step in app/monitor.py ROUND)."""
         if svc.settings.profile == "demo" and not api.demo_loaded:
             raise HTTPException(409, "demo profile: load the demo data first")
         return _status(api.monitor.run_now(), svc.settings.monitor_every_minutes)
 
-    @r.post("/v1/demo/load")
+    @r.post("/v1/demo/load", dependencies=admin)
     def load_demo() -> dict[str, int]:
         if svc.settings.env == "prod" or svc.settings.profile != "demo":
             raise HTTPException(404)

@@ -38,6 +38,7 @@ For live news, copy `.env.example` to `.env` (git-ignored, keys stay there) and 
 | `NI_MARKET_DATA=eodhd` + `NI_EODHD_API_KEY` | stock prices (US and ASX) |
 | `NI_LLM_PRESET=economy` + `ANTHROPIC_API_KEY` | AI reading and briefs; capped by `NI_LLM_MONTHLY_BUDGET_USD` (default $5) |
 | `NI_DISCORD_WEBHOOK_URL` | alerts for followed companies |
+| `NI_AUTH=local` (default) | one built-in admin, no sign-in: for one person on their own computer. Many users: Amazon Cognito (next step) |
 
 Then `make docker` serves the site on <http://localhost:8000>.
 
@@ -62,7 +63,8 @@ way. Modules only talk through events and each other's data classes; CI enforces
 ```
 src/newsimpact/
   sources/ semantics/ reliability/ storylines/ market/ validation/   the pipeline
-  alerts/       tell followers what changed (Discord now, email later)
+  alerts/       tell each follower what changed (Discord now, email later)
+  identity/     who is signed in and what they may do (local now, Cognito next)
   llm/          one budgeted, cached gateway to language models
      every module: __init__.py (what it is) · models.py · logic.py · ports.py · service.py · adapters/
   shared/       event base classes, event bus, text ids, SQLite helper

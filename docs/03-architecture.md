@@ -60,7 +60,8 @@ changes.
 | ④ | `storylines` | Which story is this part of, which stage, which decisions follow? Which outlets reported it? | `StorylineUpdated` |
 | ⑤ | `market` | What did prices, volume and volatility actually do? | – (queried) |
 | ⑥ | `validation` | Is each stage backed by independent origins, did the expected decisions show up in the market, what do we conclude, and do playbooks hold across many stories? | – (queried) |
-| – | `alerts` | What changed for the companies people follow, and telling them (Discord; email next) | – (sends messages) |
+| – | `alerts` | What changed for the companies each person follows, and telling them (Discord; email next) | – (sends messages) |
+| – | `identity` | Who is signed in and what they may do: `User` (id, email, roles) and the `Authenticator` port (local single user now; Amazon Cognito next) | – |
 | – | `llm` | Platform module: one budgeted, cached gateway to local or hosted language models (semantics step, event briefs) | – |
 
 The design separates **what the news claims and predicts** (①–④) from
@@ -132,6 +133,7 @@ Reading order for a newcomer: `__init__.py` → `models.py` → `service.py`.
 | Monitor on a schedule in the cloud | EventBridge Scheduler → a function calling `app.monitor.run_round()`, or one per step with `run_step()` | deployment only |
 | Replace storage (Postgres) | `adapters/postgres.py` in each storing module, one entry in `STORES` (`app/wiring/plugins.py`), then `NI_STORE=postgres` | 1 file per module + 1 line |
 | Add a module | New folder with the files above (copy `alerts/` as the smallest example); add it to the two import-linter lists in `pyproject.toml`; build it in `app/wiring/__init__.py`. Its events are exported automatically. | new module |
+| **Add a sign-in provider** (Amazon Cognito) | `identity/adapters/cognito.py` (verify the sign-in token, read the user's id, email and groups), one entry in `AUTH` (`app/wiring/plugins.py`), then `NI_AUTH=cognito`. Followed companies and alerts are already per user. | 1 file + 1 line |
 | **Add an alert channel** (email, Slack) | One `Notifier` adapter in `alerts/adapters/`, one entry in `NOTIFIERS` (`app/wiring/plugins.py`); every configured channel is used | 1 file + 1 line |
 | Change what counts as urgent, or the checklist | `app/views/guidance.py` (small, documented rules; tests in `tests/app/test_views.py`) | rules only |
 | Change the brief | the prompt and checks in `app/views/briefs.py`; the facts it may use in `brief_facts` (`app/views/companies.py`) | 1 file |

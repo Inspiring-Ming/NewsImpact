@@ -10,6 +10,7 @@ name; an unknown name fails at start-up with the list of known ones.
   MARKET_DATA     NI_MARKET_DATA      none | eodhd | csv
   LLM_PROVIDERS   llm_models.json     anthropic | ollama
   SEMANTIC_STEPS  NI_SEMANTIC_STEPS   taxonomy | attribution | sentiment | uncertainty
+  AUTH            NI_AUTH             local               (next: cognito)
   NOTIFIERS       all configured ones are used: discord (NI_DISCORD_WEBHOOK_URL)
 """
 
@@ -26,6 +27,8 @@ from newsimpact.alerts.adapters.sqlite import SqliteAlertState
 from newsimpact.alerts.ports import AlertState, Notifier
 from newsimpact.app.config import Settings
 from newsimpact.app.views.briefs import BriefStore, InMemoryBriefs, SqliteBriefs
+from newsimpact.identity.adapters.local import LocalSingleUser
+from newsimpact.identity.ports import Authenticator
 from newsimpact.llm.adapters.ollama import OllamaProvider
 from newsimpact.llm.models import LlmPreset
 from newsimpact.llm.ports import LlmProvider
@@ -125,6 +128,12 @@ STORES: dict[str, Callable[[Settings], Stores]] = {
 
 EVENT_BUSES: dict[str, Callable[[Settings], EventBus]] = {
     "memory": lambda s: InMemoryEventBus(),
+}
+
+
+# ------------------------------------------------------------ sign-in
+AUTH: dict[str, Callable[[Settings], Authenticator]] = {
+    "local": lambda s: LocalSingleUser(),
 }
 
 

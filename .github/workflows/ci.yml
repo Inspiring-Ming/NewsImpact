@@ -1,5 +1,13 @@
 name: ci
 
+# Five independent jobs run in parallel, one per kind of risk:
+#   python     code quality, types, architecture rules, tests, dependency audit
+#   web        API contracts in sync, website type-check and build
+#   docker     the production image builds, starts, answers, and has no known
+#              high/critical vulnerabilities
+#   secrets    no key committed anywhere in the repository
+#   terraform  cloud infrastructure files are valid
+
 on:
   pull_request:
   push:
@@ -8,9 +16,15 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same branch makes the older run pointless: cancel it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   python:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -25,6 +39,18 @@ jobs:
         run: uv run lint-imports
       - name: Tests
         run: uv run pytest --cov=newsimpact --cov-fail-under=80
+      - name: Dependency vulnerability audit
+        run: uv export --no-hashes --format requirements-txt > /tmp/req.txt && uvx pip-audit -r /tmp/req.txt
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5  # the contracts are exported by the Python app
+        with:
+          enable-cache: true
+      - run: uv sync
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -35,14 +61,22 @@ jobs:
         run: make contracts-check
       - name: Website type-check and build
         run: make web-build
-      - name: Dependency vulnerability audit
-        run: uv export --no-hashes --format requirements-txt > /tmp/req.txt && uvx pip-audit -r /tmp/req.txt
 
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t newsimpact:ci .
+      # The image must start and serve the API and the website (demo profile: no keys,
+      # no network), so a broken image never reaches a deployment.
+      - name: Start-up smoke test
+        run: |
+          docker run -d --name smoke -p 8000:8000 newsimpact:ci
+          for i in $(seq 1 30); do curl -fs localhost:8000/health && break; sleep 1; done
+          curl -fs localhost:8000/v1/companies > /dev/null
+          curl -fs localhost:8000/ | grep -q '<div id="root">'
+          docker rm -f smoke
       # Vulnerabilities in the image (OS + Python packages). Secrets are checked in the
       # repository scan below: third-party library docs trigger false "secret" alarms here.
       - name: Image vulnerability scan
@@ -56,6 +90,7 @@ jobs:
 
   secrets:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       # Our own files are where a key could leak (e.g. pasted into .env.example).
@@ -69,6 +104,7 @@ jobs:
 
   terraform:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

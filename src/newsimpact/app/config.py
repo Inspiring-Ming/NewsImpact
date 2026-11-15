@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Where state lives: memory (lost on exit) or sqlite (survives restarts).
     store: str = "memory"  # memory | sqlite (wiring/plugins.py STORES)
     event_bus: str = "memory"  # memory; cloud buses join wiring/plugins.py EVENT_BUSES
+    # Who may use the site: local = one built-in admin, no sign-in (a single person on their
+    # own computer). A shared deployment needs a real provider (cognito, next).
+    auth: str = "local"
     db_path: Path = _REPO_ROOT / "var" / "newsimpact.db"
     # Automatic monitoring inside the server: minutes between rounds, 0 = only on demand.
     monitor_every_minutes: float = 0
