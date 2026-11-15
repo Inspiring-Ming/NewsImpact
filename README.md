@@ -35,15 +35,15 @@ To watch the real outlets, copy `.env.example` to `.env` and set these values:
 
 ## The website
 
-Two pages, written for clients rather than engineers:
+The site is organised around the product's four steps: **Monitor → Connect → Anticipate → Verify**. Each step has its own number and colour, and they appear the same way on every page.
 
 | Page | What it shows |
 |---|---|
-| **Briefing** (home) | What NewsImpact does, in four steps. Every story it follows, as a card: what happened, how many stages are confirmed, the market reaction, and confidence. Filter by US or Australia. |
-| **Story** (opens from a card) | *In short* (four facts and what to watch), *What the market did* (price vs. market with numbered stages), and *How the story unfolded* (each stage, its sources, and whether people acted as expected). Statistics are behind *Details*. |
-| **How it works** | Sources and trust, analysis accuracy, track record (calibration), and every setting with its reason. |
+| **Briefing** (home) | The four steps with live numbers (articles read, stories built, reactions predicted, reactions confirmed by the market). Below that, every story as a card with the same four-step rail for that story. Filter by US or Australia. |
+| **Story** (opens from a card) | The conclusion, as one fact per step plus what to watch. How the story unfolded: each event, who reported it, what we predicted, and what happened. The share price against its market. Statistics are folded away. |
+| **How it works** | The same four steps, each with what we do, the rule (with real numbers) and the live evidence. All settings and their reasons are folded at the end. |
 
-The header shows whether monitoring is live and has an **Update now** button.
+The header shows whether monitoring is live and has an **Update now** button. Names shown to people come from the data files (`playbooks.json` titles, `sources.json` names), so new story types and outlets need no website change.
 
 ## How it works: seven modules, in the order news flows
 

@@ -223,6 +223,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pipeline
+         * @description The four-step workflow with live numbers (top of the website).
+         */
+        get: operations["pipeline_v1_pipeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sources": {
         parameters: {
             query?: never;
@@ -455,9 +475,22 @@ export interface components {
              * @description home exchange, e.g. US or ASX
              */
             market: string;
+            /**
+             * Outlets
+             * @description different outlets that reported the story (step 1)
+             */
+            outlets: number;
+            /**
+             * Predictions
+             * @description predicted reactions (step 3)
+             */
+            predictions: number;
             /** @description the headline market move: combined reaction, else the strongest price move */
             reaction: components["schemas"]["ChannelObservation"] | null;
-            /** Stages */
+            /**
+             * Stages
+             * @description linked events (step 2)
+             */
             stages: number;
             /**
              * Stages Confirmed
@@ -703,6 +736,8 @@ export interface components {
          * @description Every setting with its reason - what the website's "Method" page shows.
          */
         Method: {
+            /** Late Report Days */
+            late_report_days: number;
             /** Llm Preset In Use */
             llm_preset_in_use: string;
             /** Llm Presets */
@@ -739,6 +774,11 @@ export interface components {
              * @description share that copy another outlet's article
              */
             copies: number;
+            /**
+             * In Stories
+             * @description share of articles that became part of a story
+             */
+            in_stories: number;
             /** Per Day */
             per_day: number;
             /** Source Id */
@@ -755,11 +795,6 @@ export interface components {
              * @description share of articles naming a watched company
              */
             with_company: number;
-            /**
-             * With Trigger
-             * @description share with a storyline trigger (event type)
-             */
-            with_trigger: number;
         };
         /** Overview */
         Overview: {
@@ -789,6 +824,26 @@ export interface components {
             storylines_resolved: number;
         };
         /**
+         * Pipeline
+         * @description The workflow with live numbers: what the product has done so far.
+         */
+        Pipeline: {
+            /** Steps */
+            steps: components["schemas"]["PipelineStep"][];
+        };
+        /** PipelineStep */
+        PipelineStep: {
+            /** Detail */
+            detail: string;
+            /** Headline */
+            headline: number;
+            /**
+             * Step
+             * @description monitor | connect | anticipate | verify
+             */
+            step: string;
+        };
+        /**
          * Playbook
          * @description The typical progression of one kind of story (reference data, not code).
          */
@@ -804,6 +859,12 @@ export interface components {
             stages: components["schemas"]["PlaybookStage"][];
             /** Theme */
             theme: string;
+            /**
+             * Title
+             * @description plain-English name shown to people
+             * @default
+             */
+            title: string;
             /** Triggers */
             triggers: string[];
             /**
@@ -835,6 +896,12 @@ export interface components {
              * @default false
              */
             resolves: boolean;
+            /**
+             * Title
+             * @description plain-English name shown to people
+             * @default
+             */
+            title: string;
         };
         /**
          * PricePath
@@ -1408,6 +1475,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Overview"];
+                };
+            };
+        };
+    };
+    pipeline_v1_pipeline_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pipeline"];
                 };
             };
         };

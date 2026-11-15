@@ -25,6 +25,13 @@ def test_api_contract_for_the_website() -> None:
     assert client.get("/v1/sources/nope/reliability").status_code == 404
     assert client.get("/v1/coverage").json()
 
+    steps = {s["step"]: s for s in client.get("/v1/pipeline").json()["steps"]}
+    assert list(steps) == ["monitor", "connect", "anticipate", "verify"]
+    assert steps["monitor"]["headline"] == 10 and steps["connect"]["headline"] == 3
+    assert 0 < steps["verify"]["headline"] <= steps["anticipate"]["headline"]
+    coverage = {c["source_id"]: c for c in client.get("/v1/coverage").json()}
+    assert coverage["wire-alpha"]["in_stories"] > 0
+
     cards = client.get("/v1/briefing").json()
     crisis_card = next(c for c in cards if c["theme"] == "leadership_crisis")
     assert crisis_card["market"] == "US" and crisis_card["stages"] == 3

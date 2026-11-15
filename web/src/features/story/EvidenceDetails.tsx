@@ -1,12 +1,14 @@
 // For analysts: the statistics and exactly how this result was produced.
-import { describe, humanize, label } from "../../shared/labels";
+import { describe, humanize } from "../../shared/labels";
+import { useNames } from "../../shared/names";
 import type { StoryData } from "./context";
 
 export function EvidenceDetails({ assessment: a }: StoryData) {
+  const { title } = useNames();
   const rows = a.stages.flatMap((s) => s.decisions.filter((d) => d.evidence).map((d) => ({ s, d })));
   return (
     <details className="details">
-      <summary>Statistics and provenance (for analysts)</summary>
+      <summary>Show statistics and sources</summary>
       <p className="small">{a.conclusion}</p>
       {a.combined_reaction && (
         <p className="small">Combined reaction for stages in the same week: {a.combined_reaction.metric} = {describe(a.combined_reaction)}, z = {a.combined_reaction.statistic}</p>
@@ -16,7 +18,7 @@ export function EvidenceDetails({ assessment: a }: StoryData) {
         <tbody>
           {rows.map(({ s, d }) => (
             <tr key={s.stage_name + d.actor + d.decision}>
-              <td>{label(s.stage_name)}</td><td>{humanize(d.actor)}</td>
+              <td>{title(s.stage_name)}</td><td>{humanize(d.actor)}</td>
               <td className="mono">{d.evidence!.metric}</td><td>{d.evidence!.value.toFixed(3)}</td><td>{d.evidence!.statistic ?? "–"}</td>
             </tr>
           ))}

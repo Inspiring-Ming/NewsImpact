@@ -40,18 +40,3 @@ export function State({ error, loading, empty, children }: {
   if (empty) return <div className="state empty">{empty}</div>;
   return <>{children}</>;
 }
-
-export function Tabs<T extends string>({ tabs, active, onChange }: {
-  tabs: { id: T; label: string }[]; active: T; onChange: (id: T) => void;
-}) {
-  return (
-    <div className="tabs" role="tablist">
-      {tabs.map((t) => (
-        <button key={t.id} role="tab" aria-selected={t.id === active}
-                className={t.id === active ? "tab active" : "tab"} onClick={() => onChange(t.id)}>
-          {t.label}
-        </button>
-      ))}
-    </div>
-  );
-}

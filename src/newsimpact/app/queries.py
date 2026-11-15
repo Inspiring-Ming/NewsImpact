@@ -13,7 +13,7 @@ from pydantic import Field
 from newsimpact.app.wiring import Services
 from newsimpact.market.models import ChannelObservation
 from newsimpact.semantics.logic import FieldScore, score_field
-from newsimpact.semantics.models import OTHER, Claim, EntityMention
+from newsimpact.semantics.models import Claim, EntityMention
 from newsimpact.shared.events import Model
 from newsimpact.sources.logic import coverage
 from newsimpact.sources.models import OutletCoverage
@@ -41,7 +41,9 @@ class BriefingItem(Model):
     theme: str
     status: str
     confidence: str
-    stages: int
+    outlets: int = Field(description="different outlets that reported the story (step 1)")
+    stages: int = Field(description="linked events (step 2)")
+    predictions: int = Field(description="predicted reactions (step 3)")
     stages_confirmed: int = Field(description="stages backed by independent origins or the company")
     latest_stage: str
     latest_at: str
@@ -111,6 +113,8 @@ def briefing(svc: Services) -> list[BriefingItem]:
             storyline_id=story.storyline_id, ticker=story.ticker, company=story.entity_name,
             market=svc.market_policy.exchange_of(story.ticker), theme=story.theme,
             status=story.status.value, confidence=a.confidence, stages=len(a.stages),
+            outlets=len({o for st in a.stages for o in st.claim.outlets}),
+            predictions=sum(len(st.decisions) for st in a.stages),
             stages_confirmed=sum(st.claim.status != "single_source" for st in a.stages),
             latest_stage=latest.stage_name, latest_at=latest.published_at.isoformat(),
             latest_summary=latest.summary, reaction=a.combined_reaction or strongest,
@@ -121,18 +125,52 @@ def briefing(svc: Services) -> list[BriefingItem]:
 
 
 def outlet_coverage(svc: Services) -> list[OutletCoverage]:
+    """Per outlet: volume, relevance, part in stories, speed. Free: no analysis or LLM calls."""
     articles = list(svc.articles.recent(10**6))
-    with_company: set[str] = set()
-    with_trigger: set[str] = set()
-    for article in articles:
-        claims = svc.semantics.claims_for(article)
-        if any(e.ticker for c in claims for e in c.entities):
-            with_company.add(article.article_id)
-        if any(c.event_type != OTHER for c in claims):
-            with_trigger.add(article.article_id)
+    with_company = {a.article_id for a in articles if svc.semantics.names_watched_company(a)}
+    stories = svc.storyline_store.all()
+    in_stories = {r.article_id for s in stories for e in s.events for r in e.reports}
     stage_reports = [[(r.source_id, r.published_at) for r in e.reports]
-                     for s in svc.storyline_store.all() for e in s.events]  # fmt: skip
-    return coverage(articles, with_company, with_trigger, stage_reports)
+                     for s in stories for e in s.events]  # fmt: skip
+    return coverage(articles, with_company, in_stories, stage_reports)
+
+
+class PipelineStep(Model):
+    step: str = Field(description="monitor | connect | anticipate | verify")
+    headline: int
+    detail: str
+
+
+class Pipeline(Model):
+    """The workflow with live numbers: what the product has done so far."""
+
+    steps: tuple[PipelineStep, ...]
+
+
+def pipeline(svc: Services) -> Pipeline:
+    """Counts for the four steps. Uses stored data only (no analysis, LLM or price calls)."""
+    articles = list(svc.articles.recent(10**6))
+    stories = svc.storyline_store.all()
+    assessments = [a for s in stories if (a := svc.validation.latest(s.storyline_id))]
+    events = [st for a in assessments for st in a.stages]
+    predictions = [d for st in events for d in st.decisions]
+    tested = [
+        d for d in predictions if d.verdict in ("consistent", "inconsistent", "not_significant")
+    ]
+    happened = sum(d.verdict == "consistent" for d in tested)
+    verified = sum(st.claim.status != "single_source" for st in events)
+    outlets = sum(x.enabled for x in svc.sources.listed())
+    return Pipeline(steps=(
+        PipelineStep(step="monitor", headline=len(articles),
+                     detail=f"articles read from {outlets} trusted outlets"),
+        PipelineStep(step="connect", headline=len(stories),
+                     detail=f"stories built from {len(events)} linked events"),
+        PipelineStep(step="anticipate", headline=len(predictions),
+                     detail="predicted reactions by investors, analysts and boards"),
+        PipelineStep(step="verify", headline=happened,
+                     detail=f"reactions confirmed by market data, of {len(tested)} tested; "
+                            f"{verified} of {len(events)} events backed by independent sources"),
+    ))  # fmt: skip
 
 
 def evaluation(svc: Services) -> Evaluation:

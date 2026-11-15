@@ -1,20 +1,18 @@
-// The ONE place that turns internal codes into plain English.
-// New event types, stages or channels work without changes (humanize fallback);
-// add an entry here only to give something a nicer name.
+// The ONE place that turns internal codes into plain English, using one small
+// vocabulary: story, event, source, predicted reaction, result.
+// New codes work without changes (humanize fallback); add entries only for nicer names.
 import type { S } from "../api/client";
 
 const NAMES: Record<string, string> = {
-  // storyline types
-  leadership_crisis: "Leadership crisis", product_safety: "Product safety", m_and_a: "Deal (M&A)",
-  // stages
-  public_pressure: "Public pressure", leader_departure: "Leader steps down", succession: "Successor named",
-  recall: "Product recall", regulatory_action: "Regulator acts", litigation: "Lawsuit",
-  rumour: "Deal rumour", announcement: "Deal announced",
-  // market channels
-  price: "Share price", volume: "Trading volume", volatility: "Volatility",
-  analyst_revisions: "Analyst forecasts", credit_spreads: "Credit spreads", peer_spillover: "Competitors",
-  // statuses
-  developing: "Developing", escalating: "Escalating", resolved: "Resolved",
+  // (story types and events are named in data/reference/playbooks.json - see names.ts)
+  // where a reaction shows
+  price: "share price", volume: "trading volume", volatility: "price swings",
+  analyst_revisions: "analyst forecasts", credit_spreads: "borrowing costs", peer_spillover: "competitors",
+  // who reacts
+  institutional_investors: "Large investors", retail_investors: "Individual investors",
+  sell_side_analysts: "Analysts", options_market: "Options traders", credit_investors: "Bond investors",
+  event_driven_funds: "Event-driven funds", customers_partners: "Customers and partners",
+  all_investors: "Investors",
 };
 
 export function label(code: string): string {
@@ -28,19 +26,28 @@ export function humanize(code: string): string {
 
 export type Tone = "good" | "ok" | "warn" | "bad" | "neutral" | "muted";
 
-export const VERDICT: Record<string, { text: string; tone: Tone }> = {
-  consistent: { text: "As expected", tone: "good" },
-  inconsistent: { text: "Opposite of expected", tone: "bad" },
-  not_significant: { text: "No clear move", tone: "neutral" },
-  pending: { text: "Waiting for data", tone: "neutral" },
-  no_evidence: { text: "No data source yet", tone: "muted" },
-  not_measurable: { text: "Not visible in markets", tone: "muted" },
+/** Story status in plain words. */
+export const STATUS: Record<string, { text: string; tone: Tone }> = {
+  developing: { text: "Ongoing", tone: "ok" },
+  escalating: { text: "Getting worse", tone: "bad" },
+  resolved: { text: "Concluded", tone: "neutral" },
 };
 
-export const CLAIM: Record<string, { text: string; tone: Tone }> = {
-  confirmed: { text: "Confirmed", tone: "good" },
-  corroborated: { text: "Corroborated", tone: "ok" },
-  single_source: { text: "Single source", tone: "warn" },
+/** Did the predicted reaction happen? */
+export const RESULT: Record<string, { text: string; tone: Tone }> = {
+  consistent: { text: "Happened", tone: "good" },
+  inconsistent: { text: "Opposite happened", tone: "bad" },
+  not_significant: { text: "No clear reaction", tone: "neutral" },
+  pending: { text: "Too early to tell", tone: "neutral" },
+  no_evidence: { text: "No data yet", tone: "muted" },
+  not_measurable: { text: "Not in market data", tone: "muted" },
+};
+
+/** Is the event backed by independent sources? */
+export const SOURCES: Record<string, { text: string; tone: Tone }> = {
+  confirmed: { text: "Verified", tone: "good" },
+  corroborated: { text: "Two sources agree", tone: "ok" },
+  single_source: { text: "One source so far", tone: "warn" },
 };
 
 export const CONFIDENCE: Record<string, { text: string; tone: Tone }> = {
@@ -49,15 +56,13 @@ export const CONFIDENCE: Record<string, { text: string; tone: Tone }> = {
   low: { text: "Low confidence", tone: "warn" },
 };
 
-export const STATUS_TONE: Record<string, Tone> = { developing: "ok", escalating: "bad", resolved: "neutral" };
+export const DIRECTION: Record<string, string> = { up: "rise", down: "fall", uncertain: "move sharply" };
 
-export const EXPECTED: Record<string, string> = { up: "rise", down: "fall", uncertain: "move" };
-
-/** "−5.3% vs market", "2.0× normal volume" ... */
+/** "−5.3% vs market", "2.0× normal trading" ... */
 export function describe(o: S["ChannelObservation"]): string {
   if (o.channel === "price") return `${signedPct(o.value)} vs market`;
   if (o.channel === "volume") return `${o.value.toFixed(1)}× normal trading`;
-  if (o.channel === "volatility") return `${o.value.toFixed(1)}× normal volatility`;
+  if (o.channel === "volatility") return `${o.value.toFixed(1)}× normal price swings`;
   return `${o.metric} = ${o.value}`;
 }
 

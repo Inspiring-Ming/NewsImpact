@@ -1,21 +1,23 @@
-// One story, read top to bottom. The page is a list of sections: to show
-// something new (e.g. analyst revisions), add one entry to SECTIONS.
+// One story, read top to bottom in the product's own four steps. The page is a
+// list of sections: to show something new, add one entry to SECTIONS.
 import type { ComponentType } from "react";
 import { api } from "../../api/client";
-import { label, STATUS_TONE } from "../../shared/labels";
-import { Pill, Section, State } from "../../shared/ui";
+import { STATUS } from "../../shared/labels";
+import { useNames } from "../../shared/names";
+import { StepTitle, type StepId } from "../../shared/steps";
+import { Pill, State } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
 import type { StoryData } from "./context";
 import { EvidenceDetails } from "./EvidenceDetails";
-import { InShort } from "./InShort";
 import { PriceReaction } from "./PriceReaction";
+import { Summary } from "./Summary";
 import { Timeline } from "./Timeline";
 
-const SECTIONS: { title: string; hint?: string; component: ComponentType<StoryData> }[] = [
-  { title: "In short", component: InShort },
-  { title: "What the market did", hint: "Share price vs. its market. A gap after a marker is the reaction to that stage.", component: PriceReaction },
-  { title: "How the story unfolded", hint: "Each stage, who reported it, and whether people acted as typically expected.", component: Timeline },
-  { title: "Details", component: EvidenceDetails },
+const SECTIONS: { title: string; step?: StepId; hint?: string; component: ComponentType<StoryData> }[] = [
+  { title: "Conclusion", component: Summary },
+  { title: "How the story unfolded", step: "connect", hint: "Each event, who reported it, what we predicted and what happened.", component: Timeline },
+  { title: "What the share price did", step: "verify", hint: "The company's share price against its whole market. Numbers mark the events above.", component: PriceReaction },
+  { title: "Statistics and sources", hint: "For analysts: the exact measurements and how this result can be reproduced.", component: EvidenceDetails },
 ];
 
 export function StoryPage({ id }: { id: string }) {
@@ -23,6 +25,8 @@ export function StoryPage({ id }: { id: string }) {
   const assessment = useApi(() => api.assessment(id), [id]);
   const prices = useApi(() => api.prices(id), [id]);
   const s = story.data, a = assessment.data;
+  const status = s ? STATUS[s.status] : undefined;
+  const { title } = useNames();
   return (
     <>
       <a className="back" href="#/">← All stories</a>
@@ -32,14 +36,17 @@ export function StoryPage({ id }: { id: string }) {
             <header className="story-head">
               <h1>{s.entity_name}</h1>
               <div className="story-head-meta">
-                <span className="muted">{s.ticker} · {label(s.theme)}</span>
-                <Pill tone={STATUS_TONE[s.status]}>{label(s.status)}</Pill>
+                <span className="muted">{s.ticker} · {title(s.theme)}</span>
+                {status && <Pill tone={status.tone}>{status.text}</Pill>}
               </div>
             </header>
-            {SECTIONS.map(({ title, hint, component: Body }) => (
-              <Section key={title} title={title} hint={hint}>
+            {SECTIONS.map(({ title, step, hint, component: Body }) => (
+              <section key={title} className="section">
+                {step ? <StepTitle id={step} title={title} hint={hint} /> : (
+                  <div className="section-head"><h2>{title}</h2>{hint && <p className="muted">{hint}</p>}</div>
+                )}
                 <Body story={s} assessment={a} prices={prices.data ?? null} />
-              </Section>
+              </section>
             ))}
           </>
         )}

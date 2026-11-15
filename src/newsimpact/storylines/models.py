@@ -108,6 +108,7 @@ class StorylineUpdated(Event):
 # ---------------------------------------------------------------- playbooks
 class PlaybookStage(Model):
     name: str
+    title: str = Field(default="", description="plain-English name shown to people")
     event_types: tuple[str, ...]
     follow_up_terms: tuple[str, ...] = ()
     resolves: bool = False
@@ -118,6 +119,7 @@ class Playbook(Model):
     """The typical progression of one kind of story (reference data, not code)."""
 
     theme: str
+    title: str = Field(default="", description="plain-English name shown to people")
     description: str
     link_window_days: int = Field(gt=0, description="how long a story stays open for new stages")
     window_basis: str = Field(

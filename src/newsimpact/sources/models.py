@@ -99,7 +99,7 @@ class OutletCoverage(Model):
     articles: int
     per_day: float
     with_company: float = Field(description="share of articles naming a watched company")
-    with_trigger: float = Field(description="share with a storyline trigger (event type)")
+    in_stories: float = Field(description="share of articles that became part of a story")
     copies: float = Field(description="share that copy another outlet's article")
     stages_reported: int
     stages_first: int = Field(description="storyline stages this outlet reported first")

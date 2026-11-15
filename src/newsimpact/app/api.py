@@ -60,6 +60,7 @@ class Method(Model):
 
     methodology: dict[str, Any]
     playbooks: tuple[Playbook, ...]
+    late_report_days: int
     llm_presets: dict[str, LlmPreset]
     llm_preset_in_use: str
 
@@ -91,6 +92,11 @@ def create_app(services: Services | None = None) -> FastAPI:
     def briefing() -> list[queries.BriefingItem]:
         """Every storyline as a ready-to-show card (the website's home page)."""
         return queries.briefing(svc)
+
+    @app.get("/v1/pipeline", response_model=queries.Pipeline)
+    def pipeline() -> queries.Pipeline:
+        """The four-step workflow with live numbers (top of the website)."""
+        return queries.pipeline(svc)
 
     @app.get("/v1/monitor", response_model=MonitorStatus)
     def monitor_status() -> MonitorStatus:
@@ -197,6 +203,7 @@ def create_app(services: Services | None = None) -> FastAPI:
     def method() -> Method:
         raw = json.loads((svc.settings.reference_dir / "methodology.json").read_text())
         return Method(methodology=raw, playbooks=tuple(svc.playbooks.playbooks()),
+                      late_report_days=svc.playbooks.late_report_days,
                       llm_presets=svc.llm_presets,
                       llm_preset_in_use=svc.settings.llm_preset)  # fmt: skip
 

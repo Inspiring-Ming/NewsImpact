@@ -18,6 +18,7 @@ export const api = {
   monitor: () => request<S["MonitorStatus"]>("GET", "/v1/monitor"),
   runRound: () => request<S["MonitorStatus"]>("POST", "/v1/monitor/run"),
   loadDemo: () => request<Record<string, number>>("POST", "/v1/demo/load"),
+  pipeline: () => request<S["Pipeline"]>("GET", "/v1/pipeline"),
   briefing: () => request<S["BriefingItem"][]>("GET", "/v1/briefing"),
   storyline: (id: string) => request<S["Storyline"]>("GET", `/v1/storylines/${id}`),
   assessment: (id: string) => request<S["Assessment"]>("GET", `/v1/storylines/${id}/assessment`),

@@ -17,7 +17,11 @@ OUT = Path(__file__).resolve().parents[1] / "web" / "openapi.json"
 
 
 def main() -> None:
-    app = create_app(build_services(Settings(env="test", profile="demo")))
+    # Never touches local state: in-memory store, no LLM, no price vendor (ignores .env choices).
+    settings = Settings(
+        env="test", profile="demo", store="memory", llm_preset="off", market_data="none"
+    )
+    app = create_app(build_services(settings))
     OUT.write_text(json.dumps(app.openapi(), indent=2, sort_keys=True) + "\n")
     print(f"wrote {OUT}")
 

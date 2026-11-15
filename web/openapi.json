@@ -237,6 +237,16 @@
             "title": "Market",
             "type": "string"
           },
+          "outlets": {
+            "description": "different outlets that reported the story (step 1)",
+            "title": "Outlets",
+            "type": "integer"
+          },
+          "predictions": {
+            "description": "predicted reactions (step 3)",
+            "title": "Predictions",
+            "type": "integer"
+          },
           "reaction": {
             "anyOf": [
               {
@@ -249,6 +259,7 @@
             "description": "the headline market move: combined reaction, else the strongest price move"
           },
           "stages": {
+            "description": "linked events (step 2)",
             "title": "Stages",
             "type": "integer"
           },
@@ -282,7 +293,9 @@
           "theme",
           "status",
           "confidence",
+          "outlets",
           "stages",
+          "predictions",
           "stages_confirmed",
           "latest_stage",
           "latest_at",
@@ -800,6 +813,10 @@
         "additionalProperties": false,
         "description": "Every setting with its reason - what the website's \"Method\" page shows.",
         "properties": {
+          "late_report_days": {
+            "title": "Late Report Days",
+            "type": "integer"
+          },
           "llm_preset_in_use": {
             "title": "Llm Preset In Use",
             "type": "string"
@@ -827,6 +844,7 @@
         "required": [
           "methodology",
           "playbooks",
+          "late_report_days",
           "llm_presets",
           "llm_preset_in_use"
         ],
@@ -896,6 +914,11 @@
             "title": "Copies",
             "type": "number"
           },
+          "in_stories": {
+            "description": "share of articles that became part of a story",
+            "title": "In Stories",
+            "type": "number"
+          },
           "per_day": {
             "title": "Per Day",
             "type": "number"
@@ -917,11 +940,6 @@
             "description": "share of articles naming a watched company",
             "title": "With Company",
             "type": "number"
-          },
-          "with_trigger": {
-            "description": "share with a storyline trigger (event type)",
-            "title": "With Trigger",
-            "type": "number"
           }
         },
         "required": [
@@ -929,7 +947,7 @@
           "articles",
           "per_day",
           "with_company",
-          "with_trigger",
+          "in_stories",
           "copies",
           "stages_reported",
           "stages_first"
@@ -1000,6 +1018,49 @@
         "title": "Overview",
         "type": "object"
       },
+      "Pipeline": {
+        "additionalProperties": false,
+        "description": "The workflow with live numbers: what the product has done so far.",
+        "properties": {
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "title": "Pipeline",
+        "type": "object"
+      },
+      "PipelineStep": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "integer"
+          },
+          "step": {
+            "description": "monitor | connect | anticipate | verify",
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "headline",
+          "detail"
+        ],
+        "title": "PipelineStep",
+        "type": "object"
+      },
       "Playbook": {
         "additionalProperties": false,
         "description": "The typical progression of one kind of story (reference data, not code).",
@@ -1023,6 +1084,12 @@
           },
           "theme": {
             "title": "Theme",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "description": "plain-English name shown to people",
+            "title": "Title",
             "type": "string"
           },
           "triggers": {
@@ -1088,6 +1155,12 @@
             "default": false,
             "title": "Resolves",
             "type": "boolean"
+          },
+          "title": {
+            "default": "",
+            "description": "plain-English name shown to people",
+            "title": "Title",
+            "type": "string"
           }
         },
         "required": [
@@ -2036,6 +2109,25 @@
           }
         },
         "summary": "Overview"
+      }
+    },
+    "/v1/pipeline": {
+      "get": {
+        "description": "The four-step workflow with live numbers (top of the website).",
+        "operationId": "pipeline_v1_pipeline_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pipeline"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Pipeline"
       }
     },
     "/v1/sources": {

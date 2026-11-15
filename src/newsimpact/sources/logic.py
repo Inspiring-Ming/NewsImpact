@@ -35,7 +35,7 @@ def resemblance(a: frozenset[str], b: frozenset[str]) -> float:
 def coverage(
     articles: Sequence[Article],
     with_company: set[str],
-    with_trigger: set[str],
+    in_stories: set[str],
     stage_reports: Iterable[Sequence[tuple[str, datetime]]],
 ) -> list[OutletCoverage]:
     """Per outlet: volume, relevance, originality and speed.
@@ -61,7 +61,7 @@ def coverage(
         rows.append(OutletCoverage(
             source_id=source_id, articles=n, per_day=round(n / days, 2),
             with_company=round(sum(a.article_id in with_company for a in items) / n, 3),
-            with_trigger=round(sum(a.article_id in with_trigger for a in items) / n, 3),
+            in_stories=round(sum(a.article_id in in_stories for a in items) / n, 3),
             copies=round(sum(a.copy_of is not None for a in items) / n, 3),
             stages_reported=reported[source_id], stages_first=first[source_id],
         ))  # fmt: skip
