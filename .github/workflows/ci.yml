@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - name: Lint & format
+        run: uv run ruff format --check . && uv run ruff check .
+      - name: Type check
+        run: uv run mypy src
+      - name: Architecture boundaries
+        run: uv run lint-imports
+      - name: Tests
+        run: uv run pytest --cov=newsimpact --cov-fail-under=80
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: cd web && npm ci
+      - name: Contracts (event schemas, OpenAPI, website client) are up to date
+        run: make contracts-check
+      - name: Website type-check and build
+        run: make web-build
+      - name: Dependency vulnerability audit
+        run: uv export --no-hashes --format requirements-txt > /tmp/req.txt && uvx pip-audit -r /tmp/req.txt
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t newsimpact:ci .
+      - name: Image vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: newsimpact:ci
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+          ignore-unfixed: true
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: make tf-check

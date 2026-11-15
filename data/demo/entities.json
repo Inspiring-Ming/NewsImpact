@@ -1,0 +1,12 @@
+{
+  "_note": "FICTIONAL entity master for the demo. The real one is data/reference/entities.json.",
+  "aliases": {
+    "Acme Semiconductors": "ACMX",
+    "Acme": "ACMX",
+    "Globex Motors": "GLBX",
+    "Globex": "GLBX",
+    "Helix Cloud": "HLXC",
+    "Helix": "HLXC",
+    "Orbit Auto": "ORBT"
+  }
+}

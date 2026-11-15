@@ -1,0 +1,45 @@
+.PHONY: install fmt lint typecheck arch test contracts contracts-check check dev api web web-build docker tf-check
+
+install:        ## Python deps (.venv) + website deps (web/node_modules)
+	uv sync && cd web && npm ci
+
+fmt:            ## auto-format and auto-fix
+	uv run ruff format . && uv run ruff check --fix .
+
+lint:
+	uv run ruff format --check . && uv run ruff check .
+
+typecheck:
+	uv run mypy src
+
+arch:           ## enforce architecture boundaries (pyproject.toml [tool.importlinter])
+	uv run lint-imports
+
+test:
+	uv run pytest --cov=newsimpact --cov-report=term-missing
+
+contracts:      ## regenerate event schemas + the OpenAPI document and the website's typed client
+	uv run python scripts/export_schemas.py
+	uv run python scripts/export_openapi.py
+	cd web && npm run gen:api
+
+contracts-check: contracts
+	git diff --exit-code -- schemas/ web/openapi.json web/src/api/schema.ts || \
+	  (echo "contracts out of date: run make contracts and commit" && exit 1)
+
+check: lint typecheck arch test contracts-check web-build   ## everything CI runs
+
+dev:            ## API (reload) on :8000 + website dev server on :5173 (open the website)
+	(uv run uvicorn newsimpact.app.api:app --reload &) && cd web && npm run dev
+
+api:            ## API + built website on :8000
+	uv run uvicorn newsimpact.app.api:app --reload
+
+web-build:      ## type-check and build the website into web/dist
+	cd web && npm run build
+
+docker:         ## build and run the production image (API + website) on :8000
+	docker build -t newsimpact:local . && docker run --rm -p 8000:8000 newsimpact:local
+
+tf-check:
+	cd infra/terraform/bootstrap && terraform fmt -check && terraform init -backend=false -input=false >/dev/null && terraform validate

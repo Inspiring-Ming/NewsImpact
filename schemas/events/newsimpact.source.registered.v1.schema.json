@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "Source": {
+      "additionalProperties": false,
+      "description": "A news outlet. Reliability is tracked per outlet.",
+      "properties": {
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Country"
+        },
+        "domains": {
+          "description": "web domains this outlet publishes on",
+          "items": {
+            "type": "string"
+          },
+          "title": "Domains",
+          "type": "array"
+        },
+        "listed": {
+          "default": true,
+          "description": "on our curated list (sources.json)",
+          "title": "Listed",
+          "type": "boolean"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceType",
+          "default": "unknown"
+        }
+      },
+      "required": [
+        "source_id",
+        "name",
+        "domains"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "SourceType": {
+      "description": "Kind of outlet. Sets the starting reliability before any track record exists.",
+      "enum": [
+        "wire",
+        "major_outlet",
+        "regulatory_filing",
+        "company_press_release",
+        "blog",
+        "social",
+        "unknown"
+      ],
+      "title": "SourceType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "$ref": "#/$defs/Source"
+    }
+  },
+  "required": [
+    "source"
+  ],
+  "title": "SourceRegistered",
+  "type": "object"
+}

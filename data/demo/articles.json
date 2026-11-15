@@ -1,0 +1,77 @@
+{
+  "_note": "FICTIONAL companies, people, outlets, news and prices - demo/testing only. 'feed' = delivered by the outlets' regular feeds; 'archive' = only discoverable by follow-up search.",
+  "feed": [
+    {
+      "source_id": "wire-alpha",
+      "url": "https://alphawire.example/acme-q1",
+      "published_at": "2026-03-10T13:30:00+00:00",
+      "title": "Acme Semiconductors beats revenue guidance on record chip demand",
+      "body": "Acme Semiconductors reported quarterly revenue that beat guidance, driven by record demand for its data-center chips. The company raised its full-year outlook. Globex Motors said it expects stable supply of Acme components through next year."
+    },
+    {
+      "source_id": "daily-markets",
+      "url": "https://dailymarkets.example/acme-q1-copy",
+      "published_at": "2026-03-10T14:05:00+00:00",
+      "title": "Acme Semiconductors beats revenue guidance on record chip demand",
+      "body": "Acme Semiconductors reported quarterly revenue that beat guidance, driven by record demand for its data-center chips. The company raised its full-year outlook. Globex Motors said it expects stable supply of Acme components through next year."
+    },
+    {
+      "source_id": "rumor-blog",
+      "url": "https://streetwhispers.example/helix-acme",
+      "published_at": "2026-03-11T09:00:00+00:00",
+      "title": "Helix Cloud said to be eyeing Acme",
+      "body": "Helix Cloud is reportedly considering an acquisition of Acme Semiconductors, according to people familiar with the matter. Neither company commented."
+    },
+    {
+      "source_id": "daily-markets",
+      "url": "https://dailymarkets.example/globex-recall",
+      "published_at": "2026-03-12T15:00:00+00:00",
+      "title": "Globex Motors recalls 40,000 vehicles",
+      "body": "Globex Motors announced a recall of 40,000 vehicles after a safety investigation found a braking defect. Analysts downgraded Globex and warned of higher warranty costs."
+    },
+    {
+      "source_id": "wire-alpha",
+      "url": "https://alphawire.example/globex-ceo-letter",
+      "published_at": "2026-03-16T12:00:00+00:00",
+      "title": "Globex Motors CEO publishes apology letter",
+      "body": "Globex Motors chief executive Dana Reyes published an open letter apologising to customers for the braking defect. The board said an internal review is under way."
+    }
+  ],
+  "archive": [
+    {
+      "source_id": "daily-markets",
+      "url": "https://dailymarkets.example/globex-probe",
+      "published_at": "2026-03-18T10:00:00+00:00",
+      "title": "Regulator opens probe into braking defect",
+      "body": "A federal regulator opened an investigation into Globex Motors over the braking defect."
+    },
+    {
+      "source_id": "wire-alpha",
+      "url": "https://alphawire.example/globex-ceo-out",
+      "published_at": "2026-03-20T13:00:00+00:00",
+      "title": "Globex Motors CEO to step down",
+      "body": "Globex Motors said chief executive Dana Reyes will step down at the end of the month. The announcement comes days after the apology letter."
+    },
+    {
+      "source_id": "wire-alpha",
+      "url": "https://alphawire.example/globex-new-ceo",
+      "published_at": "2026-03-27T13:00:00+00:00",
+      "title": "Globex Motors appoints new CEO",
+      "body": "Globex Motors named Sam Patel as its new CEO, effective immediately."
+    },
+    {
+      "source_id": "daily-markets",
+      "url": "https://dailymarkets.example/globex-ceo-exit",
+      "published_at": "2026-03-20T15:30:00+00:00",
+      "title": "Globex chief Dana Reyes steps down",
+      "body": "Globex Motors chief executive Dana Reyes steps down, days after her apology letter to customers."
+    },
+    {
+      "source_id": "globex-ir",
+      "url": "https://ir.globexmotors.example/ceo-transition",
+      "published_at": "2026-03-20T12:00:00+00:00",
+      "title": "Globex Motors announces leadership transition",
+      "body": "Globex Motors today announced that Dana Reyes will step down as chief executive officer at the end of the month. The board has begun a search for her replacement."
+    }
+  ]
+}

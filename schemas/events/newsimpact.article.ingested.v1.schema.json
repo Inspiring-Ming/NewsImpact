@@ -1,0 +1,122 @@
+{
+  "$defs": {
+    "Article": {
+      "additionalProperties": false,
+      "properties": {
+        "article_id": {
+          "description": "stable id derived from the URL",
+          "title": "Article Id",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "content_hash": {
+          "description": "hash of normalised text, used for dedupe",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "copy_of": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "earlier article this one copies",
+          "title": "Copy Of"
+        },
+        "copy_of_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "outlet of that earlier article",
+          "title": "Copy Of Source"
+        },
+        "ingested_at": {
+          "format": "date-time",
+          "title": "Ingested At",
+          "type": "string"
+        },
+        "language": {
+          "default": "en",
+          "description": "ISO 639-1 code of the original text",
+          "title": "Language",
+          "type": "string"
+        },
+        "published_at": {
+          "format": "date-time",
+          "title": "Published At",
+          "type": "string"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "translated_body": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "English pivot translation",
+          "title": "Translated Body"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "article_id",
+        "source_id",
+        "url",
+        "title",
+        "body",
+        "published_at",
+        "ingested_at",
+        "content_hash"
+      ],
+      "title": "Article",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "article": {
+      "$ref": "#/$defs/Article"
+    },
+    "discovered_by": {
+      "default": "feed",
+      "enum": [
+        "feed",
+        "follow_up"
+      ],
+      "title": "Discovered By",
+      "type": "string"
+    }
+  },
+  "required": [
+    "article"
+  ],
+  "title": "ArticleIngested",
+  "type": "object"
+}
