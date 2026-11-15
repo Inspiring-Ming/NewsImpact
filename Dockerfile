@@ -1,7 +1,7 @@
 # One image: API + website. Runs locally, on ECS Fargate, or (with a Lambda handler) on AWS Lambda.
 
 # 1. Website: type-check and build static files
-FROM node:22-slim AS web
+FROM node:26-slim AS web
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
