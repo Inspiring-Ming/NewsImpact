@@ -9,9 +9,20 @@ from __future__ import annotations
 import json
 from collections import Counter, defaultdict
 from datetime import UTC, date, datetime, timedelta
+from typing import Literal
 
 from pydantic import Field
 
+from newsimpact.app.briefs import facts_key, rules_brief
+from newsimpact.app.guidance import (
+    Check,
+    Priority,
+    TypeRecord,
+    checks,
+    close_after,
+    priority,
+    type_record,
+)
 from newsimpact.app.wiring import Services
 from newsimpact.market.models import ChannelObservation
 from newsimpact.semantics.logic import FieldScore, score_field
@@ -185,6 +196,15 @@ class EventCard(Model):
         "company_statement | filing | anonymous"
     )
     next_update: str | None = Field(description="the update this kind of event usually brings next")
+    link_window_days: int | None = Field(description="how long new reports join this event")
+    final_measure_on: date | None = Field(description="close after which the move is final")
+    # Guidance (app/guidance.py) and the brief (app/briefs.py), filled in by companies()
+    priority: Priority = "background"
+    priority_reason: str = ""
+    checks: tuple[Check, ...] = ()
+    record: TypeRecord | None = Field(default=None, description="this event type's track record")
+    brief: tuple[str, ...] = ()
+    brief_by: Literal["ai", "rules"] = "rules"
 
 
 class CompanyCard(Model):
@@ -196,6 +216,7 @@ class CompanyCard(Model):
     index_name: str = Field(description="the index the stock is compared with, e.g. S&P 500")
     articles: int = Field(description="stored articles that name the company")
     articles_24h: int = Field(description="of those, published in the last 24 hours")
+    articles_24h_by_source: dict[str, int] = Field(description="source name -> those articles")
     latest_news: NewsItem | None
     events: tuple[EventCard, ...]
 
@@ -213,6 +234,7 @@ def companies(svc: Services) -> list[CompanyCard]:
         events[story.ticker].append(_event_card(svc, story, names, articles))
     cards = [_company_card(svc, c, mentions.get(c.ticker, []), events.get(c.ticker, []), names)
              for c in svc.companies]  # fmt: skip
+    cards = _with_guidance(svc, cards)
 
     def latest(c: CompanyCard) -> float:  # newest update of any event
         if c.events:
@@ -223,15 +245,81 @@ def companies(svc: Services) -> list[CompanyCard]:
 
 
 def event_summary(svc: Services, event_id: str) -> CompanyCard | None:
-    """The company card for one event (the event page)."""
-    story = svc.storyline_store.get(event_id)
-    if story is None:
-        return None
-    fallback = Company(ticker=story.ticker, name=story.entity_name, country="", aliases=())
-    company = next((c for c in svc.companies if c.ticker == story.ticker), fallback)
-    names = _source_names(svc)
-    articles = {a.article_id: a for a in svc.articles.recent(10**6)}
-    return _company_card(svc, company, [], [_event_card(svc, story, names, articles)], names)
+    """The company card for one event (the event page). Built from the full list, because
+    the event's priority and track record compare it with every other event."""
+    for card in companies(svc):
+        for e in card.events:
+            if e.event_id == event_id:
+                return card.model_copy(update={"events": (e,)})
+    return None
+
+
+def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:
+    """Everything a brief may say, as plain values (the AI may use nothing else)."""
+    if e.stock_move is not None:
+        side = "worse" if e.stock_move < 0 else "better"
+        market = (
+            f"The stock did {abs(e.stock_move) * 100:.1f}% {side} than the {c.index_name} "
+            f"({e.stock_move_period}), "
+            f"{'an unusual move' if e.stock_move_unusual else 'within its normal range'}."
+        )
+    elif e.move_so_far is not None:
+        side = "worse" if e.move_so_far < 0 else "better"
+        market = (
+            f"So far {abs(e.move_so_far) * 100:.1f}% {side} than the {c.index_name} to the "
+            f"close of {e.so_far_through}; provisional until the window closes."
+        )
+    else:
+        market = "The stock reaction is not measured yet."
+    finding = e.research[0] if e.research else None
+    r = e.record
+    return {
+        "company": c.name, "ticker": c.ticker, "sector": c.sector, "event_type": e.event_type,
+        "updates": [f"{u.published_at:%-d %b}: {u.title}" for u in e.updates],
+        "latest_update": e.updates[-1].title if e.updates else e.event_type,
+        "headline": e.latest_headline, "confirmed": e.verified,
+        "sources": list(e.source_names), "rumour": e.is_rumour, "market": market,
+        "volume": f"{e.volume_ratio:.1f}x a normal day" if e.volume_ratio else None,
+        "research": finding.finding if finding else None,
+        "research_source": finding.source if finding else None,
+        "past_record": (f"{r.n} past {e.event_type} events measured: average move "
+                        f"{r.average * 100:+.1f}%, {r.as_expected} of {r.n} as expected"
+                        if r and r.n and r.average is not None else None),
+        "next_update": e.next_update,
+    }  # fmt: skip
+
+
+def _with_guidance(svc: Services, cards: list[CompanyCard]) -> list[CompanyCard]:
+    """Add each event's priority, checks, its type's track record and its brief."""
+    playbooks = {p.title or p.theme: p for p in svc.playbooks.playbooks()}
+    moves: dict[str, list[tuple[float, bool]]] = defaultdict(list)
+    for c in cards:
+        for e in c.events:
+            if e.stock_move is not None:
+                moves[e.event_type].append((e.stock_move, e.stock_move_unusual))
+    now = datetime.now(UTC)
+    out = []
+    for c in cards:
+        events = []
+        for e in c.events:
+            level, reason = priority(confirmed=e.verified, unusual=e.stock_move_unusual,
+                                     last_update=e.updates[-1].published_at, now=now)  # fmt: skip
+            e = e.model_copy(update={
+                "priority": level, "priority_reason": reason,
+                "record": type_record(playbooks.get(e.event_type), moves[e.event_type]),
+                "checks": tuple(checks(url=e.latest_url, confirmed=e.verified,
+                                       unusual=e.stock_move_unusual, final_on=e.final_measure_on,
+                                       sector=c.sector, next_update=e.next_update,
+                                       window_days=e.link_window_days)),
+            })  # fmt: skip
+            facts = brief_facts(c, e)
+            stored = svc.briefs.get(e.event_id)
+            brief = (
+                stored if stored and stored.facts_key == facts_key(facts) else rules_brief(facts)
+            )
+            events.append(e.model_copy(update={"brief": brief.bullets, "brief_by": brief.by}))
+        out.append(c.model_copy(update={"events": tuple(events)}))
+    return out
 
 
 def _source_names(svc: Services) -> dict[str, str]:
@@ -246,11 +334,14 @@ def _company_card(
     names: dict[str, str],
 ) -> CompanyCard:
     latest = max(news, key=lambda a: a.published_at, default=None)
+    day_ago = datetime.now(UTC) - timedelta(days=1)
     return CompanyCard(
         ticker=company.ticker, name=company.name, country=company.country, sector=company.sector,
         exchange=svc.market_policy.exchange_of(company.ticker),
         index_name=_index_name(svc, company.ticker), articles=len(news),
-        articles_24h=sum(a.published_at >= datetime.now(UTC) - timedelta(days=1) for a in news),
+        articles_24h=sum(day_ago <= a.published_at for a in news),
+        articles_24h_by_source=dict(Counter(names.get(a.source_id, a.source_id)
+                                            for a in news if day_ago <= a.published_at)),
         latest_news=NewsItem(title=latest.title, url=latest.url,
                              source=names.get(latest.source_id, latest.source_id),
                              published_at=latest.published_at) if latest else None,
@@ -366,6 +457,10 @@ def _event_card(
         stock_move_unusual=bool(move and move.significant),
         stock_move_period=period,
         stock_move_status=status,
+        link_window_days=playbook.link_window_days if playbook else None,
+        final_measure_on=(close_after(svc.market.event_day(story.ticker, first_at),
+                                      svc.market_policy.windows["price"][1])
+                          if status == "pending" and svc.market else None),
         move_so_far=so_far[0] if so_far else None,
         so_far_through=so_far[1] if so_far else None,
         sources=len(source_ids),

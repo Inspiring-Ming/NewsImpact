@@ -41,6 +41,9 @@ def test_api_contract_for_the_website() -> None:
     assert change["stock_move"] < 0 and change["stock_move_unusual"] is True
     assert change["stock_move_status"] == "measured" and change["move_so_far"] is None
     assert change["verified"] and change["latest_url"].startswith("http")
+    assert change["priority"] in {"act", "check"} and change["checks"][0]["url"]
+    assert len(change["brief"]) == 3 and change["brief_by"] == "rules"
+    assert change["record"]["n"] >= 1
     assert all(u["articles"] for u in change["updates"])
     assert change["said_by"] and -1 <= change["tone"] <= 1 and change["next_update"] is None
     assert change["sources"] >= 3 and change["notes"] and change["watch"]

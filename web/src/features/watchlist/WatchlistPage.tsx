@@ -8,6 +8,7 @@ import { useStarred } from "../../shared/starred";
 import { Term } from "../../shared/Term";
 import { State } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
+import { AttentionStrip } from "./AttentionStrip";
 import { ImpactMap } from "./ImpactMap";
 import { KpiDetail, type Kpi } from "./KpiDetail";
 import { WatchlistTable } from "./WatchlistTable";
@@ -72,6 +73,8 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           <button key={id} className={id === view ? "active" : ""} onClick={() => change(() => { chosen.current = true; setView(id); })}>{name}</button>
         ))}
       </div>
+
+      {data && <AttentionStrip companies={view === "mine" ? rows : all} mine={view === "mine"} />}
 
       <div className="kpis">
         {([

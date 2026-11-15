@@ -572,6 +572,16 @@ export interface components {
             /** Value */
             value: number;
         };
+        /** Check */
+        Check: {
+            /** Text */
+            text: string;
+            /**
+             * Url
+             * @description where to check it, if anywhere
+             */
+            url?: string | null;
+        };
         /**
          * ClaimCheck
          * @description Is the stage's claim backed by independent sources?
@@ -618,6 +628,13 @@ export interface components {
              * @description of those, published in the last 24 hours
              */
             articles_24h: number;
+            /**
+             * Articles 24H By Source
+             * @description source name -> those articles
+             */
+            articles_24h_by_source: {
+                [key: string]: number;
+            };
             /** Country */
             country: string;
             /** Events */
@@ -680,6 +697,22 @@ export interface components {
         /** EventCard */
         EventCard: {
             /**
+             * Brief
+             * @default []
+             */
+            brief: string[];
+            /**
+             * Brief By
+             * @default rules
+             * @enum {string}
+             */
+            brief_by: "ai" | "rules";
+            /**
+             * Checks
+             * @default []
+             */
+            checks: components["schemas"]["Check"][];
+            /**
              * Confidence
              * @description chance the news is true, 0-1: the weakest update's combined confidence across its independent sources
              */
@@ -691,6 +724,11 @@ export interface components {
              * @description e.g. Leadership change, Earnings miss
              */
             event_type: string;
+            /**
+             * Final Measure On
+             * @description close after which the move is final
+             */
+            final_measure_on: string | null;
             /**
              * Is Rumour
              * @description the latest update is hedged or rumoured
@@ -705,6 +743,11 @@ export interface components {
              * @description link to the original article
              */
             latest_url: string;
+            /**
+             * Link Window Days
+             * @description how long new reports join this event
+             */
+            link_window_days: number | null;
             /**
              * Move So Far
              * @description provisional stock move vs its index to the latest close, while pending
@@ -722,6 +765,19 @@ export interface components {
             notes: string[];
             /** Ongoing */
             ongoing: boolean;
+            /**
+             * Priority
+             * @default background
+             * @enum {string}
+             */
+            priority: "act" | "check" | "background";
+            /**
+             * Priority Reason
+             * @default
+             */
+            priority_reason: string;
+            /** @description this event type's track record */
+            record?: components["schemas"]["TypeRecord"] | null;
             /**
              * Research
              * @description how markets usually react, cited
@@ -1404,6 +1460,23 @@ export interface components {
          * @enum {string}
          */
         StorylineStatus: "developing" | "escalating" | "resolved";
+        /**
+         * TypeRecord
+         * @description How this kind of event has moved stocks across the events we measured.
+         */
+        TypeRecord: {
+            /** As Expected */
+            as_expected: number;
+            /** Average */
+            average: number | null;
+            /**
+             * Expected
+             * @description up | down | uncertain: the usual share price move
+             */
+            expected: string | null;
+            /** N */
+            n: number;
+        };
         /** UpdateItem */
         UpdateItem: {
             /**

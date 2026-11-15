@@ -291,6 +291,32 @@
         "title": "ChannelObservation",
         "type": "object"
       },
+      "Check": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "where to check it, if anywhere",
+            "title": "Url"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "Check",
+        "type": "object"
+      },
       "ClaimCheck": {
         "additionalProperties": false,
         "description": "Is the stage's claim backed by independent sources?",
@@ -363,6 +389,14 @@
             "title": "Articles 24H",
             "type": "integer"
           },
+          "articles_24h_by_source": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "source name -> those articles",
+            "title": "Articles 24H By Source",
+            "type": "object"
+          },
           "country": {
             "title": "Country",
             "type": "string"
@@ -415,6 +449,7 @@
           "index_name",
           "articles",
           "articles_24h",
+          "articles_24h_by_source",
           "latest_news",
           "events"
         ],
@@ -543,6 +578,31 @@
       "EventCard": {
         "additionalProperties": false,
         "properties": {
+          "brief": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Brief",
+            "type": "array"
+          },
+          "brief_by": {
+            "default": "rules",
+            "enum": [
+              "ai",
+              "rules"
+            ],
+            "title": "Brief By",
+            "type": "string"
+          },
+          "checks": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Check"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
           "confidence": {
             "description": "chance the news is true, 0-1: the weakest update's combined confidence across its independent sources",
             "title": "Confidence",
@@ -556,6 +616,19 @@
             "description": "e.g. Leadership change, Earnings miss",
             "title": "Event Type",
             "type": "string"
+          },
+          "final_measure_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "close after which the move is final",
+            "title": "Final Measure On"
           },
           "is_rumour": {
             "description": "the latest update is hedged or rumoured",
@@ -574,6 +647,18 @@
             "description": "link to the original article",
             "title": "Latest Url",
             "type": "string"
+          },
+          "link_window_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "how long new reports join this event",
+            "title": "Link Window Days"
           },
           "move_so_far": {
             "anyOf": [
@@ -610,6 +695,32 @@
           "ongoing": {
             "title": "Ongoing",
             "type": "boolean"
+          },
+          "priority": {
+            "default": "background",
+            "enum": [
+              "act",
+              "check",
+              "background"
+            ],
+            "title": "Priority",
+            "type": "string"
+          },
+          "priority_reason": {
+            "default": "",
+            "title": "Priority Reason",
+            "type": "string"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TypeRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "this event type's track record"
           },
           "research": {
             "description": "how markets usually react, cited",
@@ -745,7 +856,9 @@
           "tone",
           "is_rumour",
           "said_by",
-          "next_update"
+          "next_update",
+          "link_window_days",
+          "final_measure_on"
         ],
         "title": "EventCard",
         "type": "object"
@@ -1971,6 +2084,51 @@
         ],
         "title": "StorylineStatus",
         "type": "string"
+      },
+      "TypeRecord": {
+        "additionalProperties": false,
+        "description": "How this kind of event has moved stocks across the events we measured.",
+        "properties": {
+          "as_expected": {
+            "title": "As Expected",
+            "type": "integer"
+          },
+          "average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average"
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "up | down | uncertain: the usual share price move",
+            "title": "Expected"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected",
+          "n",
+          "average",
+          "as_expected"
+        ],
+        "title": "TypeRecord",
+        "type": "object"
       },
       "UpdateItem": {
         "additionalProperties": false,

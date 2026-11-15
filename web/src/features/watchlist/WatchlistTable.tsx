@@ -4,6 +4,7 @@
 import type { S } from "../../api/client";
 import { COUNTRY, date, NO_MOVE, pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
 import { Signals } from "../../shared/Signals";
+import { PriorityBadge } from "../../shared/PriorityBadge";
 import { SourceBadge } from "../../shared/SourceBadge";
 import { Term } from "../../shared/Term";
 import { Dots, MoveBar } from "../../shared/viz";
@@ -43,6 +44,7 @@ export function WatchlistTable({ rows, starred, onStar }: {
                   <>
                     <td className="c-event">
                       <div className="event-top">
+                        <PriorityBadge e={e} />
                         <span className="tag">{e.event_type}</span>
                         <span className="progress" title={`${e.updates.length} of ${e.stages_total} usual updates`}>
                           <Dots n={e.updates.length} of={Math.max(e.stages_total, e.updates.length)} />

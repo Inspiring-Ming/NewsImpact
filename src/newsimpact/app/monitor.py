@@ -9,7 +9,8 @@ One round:
                                       (claims re-scored with current reliability);
                                       market checks that were "pending" mature
                                       as trading days pass
-  5. send_alerts()                    tell followers what changed (Discord, ...)
+  5. write_briefs()                   three-line AI briefs for events that changed
+  6. send_alerts()                    tell followers what changed (Discord, ...)
 Where rounds come from is a deployment choice, not business logic:
   * the web server:  NI_MONITOR_EVERY_MINUTES=15 runs BackgroundMonitor; the
                      website's "Run a round now" button triggers one on demand
@@ -26,6 +27,7 @@ from datetime import UTC, datetime
 
 from newsimpact.alerts.models import EventSnapshot
 from newsimpact.app import queries
+from newsimpact.app.briefs import ai_brief, facts_key
 from newsimpact.app.wiring import Services
 
 log = logging.getLogger(__name__)
@@ -51,6 +53,25 @@ def update_track_records(svc: Services) -> None:
         svc.reliability.set_corroboration(r.source_id, r.confirmed, r.unconfirmed * weight)
 
 
+def write_briefs(svc: Services) -> int:
+    """AI briefs for events whose facts changed (app/briefs.py); returns how many were written.
+    Without a language model, pages use the rules brief and nothing is stored."""
+    if svc.llm is None:
+        return 0
+    written = 0
+    for c in queries.companies(svc):
+        for e in c.events:
+            facts = queries.brief_facts(c, e)
+            stored = svc.briefs.get(e.event_id)
+            if stored and stored.facts_key == facts_key(facts):
+                continue
+            brief = ai_brief(svc.llm, facts)
+            if brief is not None:
+                svc.briefs.put(e.event_id, brief)
+                written += 1
+    return written
+
+
 def send_alerts(svc: Services) -> None:
     """Tell followers what changed for the companies they follow (alerts module)."""
     snapshots = [
@@ -59,7 +80,8 @@ def send_alerts(svc: Services) -> None:
                       latest_update=e.updates[-1].title if e.updates else "",
                       headline=e.latest_headline, article_url=e.latest_url,
                       stock_move=e.stock_move, unusual=e.stock_move_unusual,
-                      index_name=c.index_name)
+                      index_name=c.index_name, brief=e.brief,
+                      next_step=e.checks[1].text if len(e.checks) > 1 else "")
         for c in queries.companies(svc) for e in c.events
     ]  # fmt: skip
     sent = svc.alerts.check(snapshots)
@@ -74,6 +96,7 @@ def run_round(svc: Services, *, follow_up: bool = True) -> RoundResult:
     found = svc.sources.follow_up() if follow_up else 0
     update_track_records(svc)  # from the last assessments, so this round's scores use them
     updated = svc.validation.assess_and_store(svc.storyline_store.all())
+    write_briefs(svc)
     send_alerts(svc)
     result = RoundResult(datetime.now(UTC), counts, found, len(svc.sources.active_watches),
                          len(updated))  # fmt: skip

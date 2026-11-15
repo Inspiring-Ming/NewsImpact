@@ -1,7 +1,8 @@
 // What opens under a key number when it is clicked: the detail behind the number, as a
 // small chart. Bars are HTML (ranked lists), so labels stay readable and every row links
 // to its event.
-import type { S } from "../../api/client";
+import { api, type S } from "../../api/client";
+import { useApi } from "../../shared/useApi";
 import { date, pct, vsWords } from "../../shared/labels";
 import { MoveBar } from "../../shared/viz";
 
@@ -43,10 +44,47 @@ function CountRows({ rows }: { rows: { label: string; n: number; href?: string }
   );
 }
 
+/** Articles per company, one coloured segment per source. Colours follow the source (fixed
+ * order from sources.json), never its rank, so a source keeps its colour across views. */
+function SourceStacks({ companies, order }: { companies: S["CompanyCard"][]; order: string[] }) {
+  const max = Math.max(1, ...companies.map((c) => c.articles_24h));
+  const colour = (name: string) => `var(--cat-${(Math.max(order.indexOf(name), 0) % 8) + 1})`;
+  const used = order.filter((n) => companies.some((c) => (c.articles_24h_by_source[n] ?? 0) > 0));
+  return (
+    <>
+      <div className="rank">
+        {companies.map((c) => {
+          const parts = Object.entries(c.articles_24h_by_source).sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
+          const body = (
+            <>
+              <span className="rank-label">{c.name}</span>
+              <span className="stack" style={{ width: `${(c.articles_24h / max) * 100}%` }}>
+                {parts.map(([name, n]) => (
+                  <span key={name} title={`${name}: ${n}`} style={{ flexGrow: n, background: colour(name) }} />
+                ))}
+              </span>
+              <span className="rank-value"><b>{c.articles_24h}</b>
+                <span className="muted small"> {parts.map(([name, n]) => `${name} ${n}`).join(" · ")}</span></span>
+            </>
+          );
+          return c.events[0]
+            ? <a key={c.ticker} className="rank-row" href={`#/event/${c.events[0].event_id}`}>{body}</a>
+            : <div key={c.ticker} className="rank-row">{body}</div>;
+        })}
+      </div>
+      <div className="legend-row small">
+        {used.map((n) => <span key={n}><span className="swatch-sq" style={{ background: colour(n) }} />{n}</span>)}
+      </div>
+    </>
+  );
+}
+
 export function KpiDetail({ kpi, companies, newsCompanies, overview }: {
   kpi: Kpi; companies: S["CompanyCard"][]; newsCompanies: S["CompanyCard"][];
   overview: S["Overview"] | null; // null = the view is narrowed, so per-source totals do not apply
 }) {
+  const sources = useApi(api.sources);
+  const sourceOrder = (sources.data ?? []).filter((x) => x.enabled).map((x) => x.source.name.split(" - ")[0]);
   const all: Ev[] = companies.flatMap((c) => c.events.map((e) => ({ c, e })));
   const lastUpdate = (e: S["EventCard"]) => e.updates[e.updates.length - 1].published_at;
   if (kpi === "events") {
@@ -97,14 +135,13 @@ export function KpiDetail({ kpi, companies, newsCompanies, overview }: {
     );
   }
   const bySource = Object.entries(overview?.articles_24h_by_source ?? {}).map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
-  const byCompany = newsCompanies.filter((c) => c.articles_24h > 0).sort((a, b) => b.articles_24h - a.articles_24h).slice(0, 8)
-    .map((c) => ({ label: c.name, n: c.articles_24h, href: c.events[0] ? `#/event/${c.events[0].event_id}` : undefined }));
+  const top = newsCompanies.filter((c) => c.articles_24h > 0).sort((a, b) => b.articles_24h - a.articles_24h).slice(0, 8);
   return (
     <div className={`kpi-detail ${overview ? "two" : ""}`}>
       {overview && <div><h3>Articles in the last 24 hours, by source</h3><CountRows rows={bySource} /></div>}
       <div>
         <h3>Most-mentioned companies, last 24 hours</h3>
-        {byCompany.length ? <CountRows rows={byCompany} /> : <p className="muted small">No news on these companies in the last 24 hours.</p>}
+        {top.length ? <SourceStacks companies={top} order={sourceOrder} /> : <p className="muted small">No news on these companies in the last 24 hours.</p>}
       </div>
     </div>
   );

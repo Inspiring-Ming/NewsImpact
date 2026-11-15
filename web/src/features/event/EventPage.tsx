@@ -3,6 +3,7 @@
 import { useState, type ComponentType } from "react";
 import { api } from "../../api/client";
 import { COUNTRY, date, NO_MOVE, pct, vsWords } from "../../shared/labels";
+import { PriorityBadge } from "../../shared/PriorityBadge";
 import { SourceBadge } from "../../shared/SourceBadge";
 import { Dots, Meter, MoveBar, RatioBar } from "../../shared/viz";
 import { Signals } from "../../shared/Signals";
@@ -39,6 +40,7 @@ export function EventPage({ id }: { id: string }) {
           <>
             <header className="event-head">
               <div className="event-top">
+                <PriorityBadge e={card} />
                 <span className="tag">{card.event_type}</span>
                 <Dots n={card.updates.length} of={Math.max(card.stages_total, card.updates.length)} />
                 <span className="small muted">

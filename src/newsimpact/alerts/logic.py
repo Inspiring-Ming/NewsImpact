@@ -14,6 +14,11 @@ def _move(e: EventSnapshot) -> str:
     return f"The stock did {abs(e.stock_move) * 100:.1f}% {side} than the {e.index_name}."
 
 
+def _brief(e: EventSnapshot, fallback: str) -> str:
+    body = "\n".join(f"• {line}" for line in e.brief) if e.brief else fallback
+    return f"{body}\nNext: {e.next_step}" if e.next_step else body
+
+
 def changes(
     previous: Mapping[str, EventSnapshot], current: Iterable[EventSnapshot], followed: set[str]
 ) -> list[Alert]:
@@ -28,7 +33,8 @@ def changes(
         status = "Confirmed" if e.confirmed else "Not yet confirmed (one source)"
         if before is None:
             out.append(Alert(key=f"{e.event_id}|new", kind="new_event", title=f"New event: {title}",
-                             text=f"{e.headline}\n{status}. {_move(e)}", **base))  # fmt: skip
+                             text=_brief(e, f"{e.headline}\n{status}. {_move(e)}"),
+                             **base))  # fmt: skip
             continue
         if e.confirmed and not before.confirmed:
             out.append(Alert(key=f"{e.event_id}|confirmed", kind="confirmed",

@@ -26,6 +26,10 @@ class EventSnapshot(Model):
     stock_move: float | None = Field(description="stock return minus its index, once measured")
     unusual: bool
     index_name: str
+    brief: tuple[str, ...] = Field(
+        default=(), description="what happened / market / why it matters"
+    )
+    next_step: str = Field(default="", description="the most useful thing to check next")
 
 
 class Alert(Model):

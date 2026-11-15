@@ -27,6 +27,7 @@ from newsimpact.alerts.adapters.memory import InMemoryAlertState
 from newsimpact.alerts.adapters.sqlite import SqliteAlertState
 from newsimpact.alerts.ports import AlertState, Notifier
 from newsimpact.alerts.service import AlertsService
+from newsimpact.app.briefs import BriefStore, InMemoryBriefs, SqliteBriefs
 from newsimpact.app.config import Settings
 from newsimpact.impact.adapters.json_file import JsonRelationshipGraph
 from newsimpact.impact.adapters.memory import InMemoryImpactStore
@@ -137,6 +138,7 @@ class Services:
     impacts: ImpactStore
     storyline_store: StorylineStore
     alerts: AlertsService
+    briefs: BriefStore  # three-line event briefs (app/briefs.py)
 
 
 @dataclass(frozen=True)
@@ -151,6 +153,7 @@ class Stores:
     impacts: ImpactStore
     assessments: AssessmentStore
     alerts: AlertState
+    briefs: BriefStore
 
 
 # ------------------------------------------------------------ choices
@@ -160,11 +163,12 @@ def _stores(s: Settings) -> Stores:
         return Stores(db, SqliteArticleStore(db), SqliteSeenSources(db), SqliteWatchStore(db),
                       SqliteTrackedSources(db), SqliteEvidenceStore(db),
                       SqliteStorylineStore(db), SqliteImpactStore(db),
-                      SqliteAssessmentStore(db), SqliteAlertState(db))  # fmt: skip
+                      SqliteAssessmentStore(db), SqliteAlertState(db),
+                      SqliteBriefs(db))  # fmt: skip
     return Stores(None, InMemoryArticleStore(), InMemorySeenSources(), InMemoryWatchStore(),
                   InMemoryTrackedSources(), InMemoryEvidenceStore(),
                   InMemoryStorylineStore(), InMemoryImpactStore(),
-                  InMemoryAssessmentStore(), InMemoryAlertState())  # fmt: skip
+                  InMemoryAssessmentStore(), InMemoryAlertState(), InMemoryBriefs())  # fmt: skip
 
 
 def http_client(s: Settings) -> httpx.Client:
@@ -354,6 +358,7 @@ def build_services(settings: Settings | None = None) -> Services:
         impacts=stores.impacts,
         storyline_store=stores.storylines,
         alerts=AlertsService(stores.alerts, _notifier(s, client), s.site_url),
+        briefs=stores.briefs,
     )
     services.sources.register_listed()  # every listed outlet is tracked from the start
     return services
