@@ -9,6 +9,7 @@
 | [05-aws-cost-plan](05-aws-cost-plan.md) | Account hardening, staged AWS design, cost traps |
 | [06-roadmap](06-roadmap.md) | Phases from foundation to client pilot |
 | [07-coverage-and-settings](07-coverage-and-settings.md) | What we monitor, for how long, and the reason for every number |
+| [08-codebase-guide](08-codebase-guide.md) | Every folder and file, how they connect (the hourly round, a page request), and recipes to add, change or remove a part |
 | [adr/](adr/) | Architecture Decision Records (why we chose what we chose) |
 
 Docs live with the code and change in the same pull request as the code.

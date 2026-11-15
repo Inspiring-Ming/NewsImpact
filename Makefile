@@ -1,4 +1,7 @@
-.PHONY: install fmt lint typecheck arch test contracts contracts-check check dev api web web-build docker tf-check
+.PHONY: help install fmt lint typecheck arch test contracts contracts-check check dev api web-build docker tf-check
+
+help:           ## list every command
+	@grep -E '^[a-z-]+:.*## ' Makefile | sed 's/:.*## /\t/' | expand -t 18
 
 install:        ## Python deps (.venv) + website deps (web/node_modules)
 	uv sync && cd web && npm ci
@@ -6,16 +9,16 @@ install:        ## Python deps (.venv) + website deps (web/node_modules)
 fmt:            ## auto-format and auto-fix
 	uv run ruff format . && uv run ruff check --fix .
 
-lint:
+lint:           ## check formatting and code style
 	uv run ruff format --check . && uv run ruff check .
 
-typecheck:
+typecheck:      ## static type check of src/
 	uv run mypy src
 
 arch:           ## enforce architecture boundaries (pyproject.toml [tool.importlinter])
 	uv run lint-imports
 
-test:
+test:           ## all tests with coverage
 	uv run pytest --cov=newsimpact --cov-report=term-missing
 
 contracts:      ## regenerate event schemas + the OpenAPI document and the website's typed client
@@ -23,7 +26,7 @@ contracts:      ## regenerate event schemas + the OpenAPI document and the websi
 	uv run python scripts/export_openapi.py
 	cd web && npm run gen:api
 
-contracts-check: contracts
+contracts-check: contracts  ## fail if generated contracts are out of date (CI)
 	git diff --exit-code -- schemas/ web/openapi.json web/src/api/schema.ts || \
 	  (echo "contracts out of date: run make contracts and commit" && exit 1)
 
@@ -43,5 +46,5 @@ docker:         ## build and run the production image on :8000, with .env and va
 	  $$([ -f .env ] && echo --env-file .env) -e NI_DB_PATH=/app/var/newsimpact.db \
 	  -v "$$PWD/var":/app/var newsimpact:local
 
-tf-check:
+tf-check:       ## validate the Terraform files
 	cd infra/terraform/bootstrap && terraform fmt -check && terraform init -backend=false -input=false >/dev/null && terraform validate

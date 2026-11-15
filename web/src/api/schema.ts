@@ -1018,14 +1018,14 @@ export interface components {
         };
         /**
          * Playbook
-         * @description The typical progression of one kind of story (reference data, not code).
+         * @description The typical progression of one kind of storyline (reference data, not code).
          */
         Playbook: {
             /** Description */
             description: string;
             /**
              * Link Window Days
-             * @description how long a story stays open for new stages
+             * @description how long a storyline stays open for new stages
              */
             link_window_days: number;
             /**

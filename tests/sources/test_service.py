@@ -106,13 +106,13 @@ def _open_storyline(svc: SourcesService, bus: InMemoryEventBus) -> None:
     ev = StorylineEvent(claim_id="c", article_id="a", event_type="leadership_apology",
                         stage=0, stage_name="public_pressure", published_at=T,
                         claim_reliability=0.9, summary="x")  # fmt: skip
-    story = Storyline(storyline_id="st1", ticker="GLBX", entity_name="Globex Motors",
+    storyline = Storyline(storyline_id="st1", ticker="GLBX", entity_name="Globex Motors",
                       theme="leadership_crisis", status=StorylineStatus.DEVELOPING, events=(ev,),
                       current_stage=0, max_stage=0, opened_at=T, updated_at=T,
                       model_version="t")  # fmt: skip
     req = FollowUpRequest(entity_name="Globex Motors", terms=("steps down",), since=T,
                           until=T + timedelta(days=30))  # fmt: skip
-    update = StorylineUpdated(storyline=story, latest=ev, is_new=True, escalated=False,
+    update = StorylineUpdated(storyline=storyline, latest=ev, is_new=True, escalated=False,
                               expected_decisions=(), follow_up=req)  # fmt: skip
     bus.publish(update.to_envelope("/test"))
     assert svc.active_watches

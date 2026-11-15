@@ -1,4 +1,4 @@
-"""Run the fictional demo (data/demo) through the real pipeline. Used by CLI, API, tests."""
+"""Run the fictional demo (data/demo) through the real pipeline. Used by the API and tests."""
 
 from __future__ import annotations
 

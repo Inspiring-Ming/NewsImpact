@@ -102,9 +102,9 @@ class ValidationService:
     def assess_and_store(self, storylines: Sequence[Storyline]) -> list[Assessment]:
         """Re-assess and keep the result when anything changed (new stage, matured evidence)."""
         changed = []
-        for story in storylines:
-            fresh = self.assess(story)
-            previous = self._store.latest(story.storyline_id)
+        for storyline in storylines:
+            fresh = self.assess(storyline)
+            previous = self._store.latest(storyline.storyline_id)
             if previous is None or _fingerprint(previous) != _fingerprint(fresh):
                 self._store.add(fresh)
                 changed.append(fresh)
@@ -142,7 +142,7 @@ class ValidationService:
     def _combined(
         self, ticker: str, events: list[StorylineEvent], close: list[bool]
     ) -> ChannelObservation | None:
-        """One reaction for the first run of stages too close to separate (not the whole story)."""
+        """One reaction for the first run of stages too close to measure apart (not all stages)."""
         if self._market is None or not any(close):
             return None
         start = close.index(True) - 1

@@ -34,19 +34,19 @@ def router(api: ApiContext) -> APIRouter:
 
         The latest stored assessment from monitoring, else assessed now.
         """
-        story = get_storyline(storyline_id)
-        return svc.validation.latest(storyline_id) or svc.validation.assess(story)
+        storyline = get_storyline(storyline_id)
+        return svc.validation.latest(storyline_id) or svc.validation.assess(storyline)
 
     @r.get("/v1/storylines/{storyline_id}/prices", response_model=PricePath | None)
     def storyline_prices(storyline_id: str) -> PricePath | None:
         """Stock vs. its index around the event (rebased to 100); null without price data."""
-        story = get_storyline(storyline_id)
+        storyline = get_storyline(storyline_id)
         if svc.market is None:
             return None
-        first = min(e.published_at for e in story.events).date()
-        last = max(e.published_at for e in story.events).date()
+        first = min(e.published_at for e in storyline.events).date()
+        last = max(e.published_at for e in storyline.events).date()
         try:
-            return svc.market.price_path(story.ticker, first - timedelta(days=30),
+            return svc.market.price_path(storyline.ticker, first - timedelta(days=30),
                                          last + timedelta(days=20))  # fmt: skip
         except ValueError:
             return None

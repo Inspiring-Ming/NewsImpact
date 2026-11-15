@@ -1,4 +1,4 @@
-// Share price vs. its market (both rebased to 100), with a marker for every stage.
+// Share price vs. its market (both rebased to 100), with a numbered marker for every update.
 import type { S } from "../api/client";
 
 const W = 760, H = 260, PAD = { l: 40, r: 16, t: 24, b: 30 };

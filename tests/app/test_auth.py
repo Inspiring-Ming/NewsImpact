@@ -48,3 +48,12 @@ def test_each_user_has_their_own_watchlist() -> None:
     client.put("/v1/watchlist/GLBX", headers=_as("ana-token"))
     assert client.get("/v1/watchlist", headers=_as("ana-token")).json() == ["GLBX"]
     assert client.get("/v1/watchlist", headers=_as("boss-token")).json() == []
+
+
+def test_alert_routes_answer_per_user() -> None:
+    client = _client()
+    assert client.get("/v1/alerts", headers=_as("ana-token")).json() == {"channel": "off"}
+    assert client.post("/v1/alerts/test", headers=_as("ana-token")).status_code == 409  # no channel
+    client.put("/v1/watchlist/GLBX", headers=_as("ana-token"))
+    assert client.delete("/v1/watchlist/GLBX", headers=_as("ana-token")).json() == []
+    assert client.put("/v1/watchlist/NOPE", headers=_as("ana-token")).status_code == 404

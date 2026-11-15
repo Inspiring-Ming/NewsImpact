@@ -15,5 +15,6 @@ How cost and change are controlled:
   * prices live in the same file (dated, with source)
   * any new provider = one adapter implementing LlmProvider
 
-Publishes / consumes: nothing (called through the TextModel port of semantics).
+Publishes / consumes: nothing (called through the TextModel port of semantics, and by the
+event briefs in app/views/briefs.py).
 """

@@ -21,11 +21,11 @@ const TABS: { id: string; label: string; component: ComponentType<EventData> }[]
 
 export function EventPage({ id }: { id: string }) {
   const summary = useApi(() => api.eventSummary(id), [id]);
-  const story = useApi(() => api.storyline(id), [id]);
+  const storyline = useApi(() => api.storyline(id), [id]);
   const assessment = useApi(() => api.assessment(id), [id]);
   const prices = useApi(() => api.prices(id), [id]);
   const [tab, setTab] = useState(TABS[0].id);
-  const company = summary.data, card = company?.events[0], s = story.data, a = assessment.data;
+  const company = summary.data, card = company?.events[0], s = storyline.data, a = assessment.data;
   const country = company ? COUNTRY[company.country] : undefined;
   const checks = a ? a.stages.flatMap((st) => st.decisions).filter((d) => ["consistent", "inconsistent", "not_significant"].includes(d.verdict)) : [];
   const measured = checks, hits = checks.filter((d) => d.verdict === "consistent").length;
@@ -33,7 +33,7 @@ export function EventPage({ id }: { id: string }) {
   return (
     <>
       <a className="back" href="#/">← Watchlist</a>
-      <State error={summary.error ?? story.error ?? assessment.error} loading={!company || !card || !s || !a}>
+      <State error={summary.error ?? storyline.error ?? assessment.error} loading={!company || !card || !s || !a}>
         {company && card && s && a && (
           <>
             <header className="event-head">
@@ -79,7 +79,7 @@ export function EventPage({ id }: { id: string }) {
                           <div>measured market reactions that matched</div></> : "waiting for the next trading days to close"} />
             </div>
             <Tabs tabs={TABS} active={tab} onChange={setTab} />
-            <Body company={company} card={card} story={s} assessment={a} prices={prices.data ?? null} />
+            <Body company={company} card={card} storyline={s} assessment={a} prices={prices.data ?? null} />
           </>
         )}
       </State>

@@ -187,7 +187,6 @@ tr.disabled td { opacity: .5; }
 .priority.act { color: var(--bad); } .priority.act .pdot { background: var(--bad); box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad) 20%, transparent); }
 .priority.check { color: var(--warn); } .priority.check .pdot { background: var(--warn); }
 .priority.background { color: var(--muted); }
-.next-step { color: var(--accent); }
 .brief-row { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; margin-bottom: 16px; }
 .brief-lines { display: grid; gap: 10px; margin: 0; }
 .brief-lines dt { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }

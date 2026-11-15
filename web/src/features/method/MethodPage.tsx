@@ -1,4 +1,5 @@
-// How it works: three parts, one tab each, each with its rule and the data behind it. To explain a new part, add one entry to TABS.
+// How it works: three parts, one tab each, each with its live data and definitions on hover.
+// To explain a new part, add one entry to TABS.
 import { useState, type ReactNode } from "react";
 import { api, type S } from "../../api/client";
 import { State, Tabs } from "../../shared/ui";

@@ -108,8 +108,8 @@ def companies(svc: Services) -> list[CompanyCard]:
         for ticker in svc.semantics.mentioned_tickers(article):
             mentions[ticker].append(article)
     events: dict[str, list[EventCard]] = defaultdict(list)
-    for story in svc.storyline_store.all():
-        events[story.ticker].append(_event_card(svc, story, names, articles))
+    for storyline in svc.storyline_store.all():
+        events[storyline.ticker].append(_event_card(svc, storyline, names, articles))
     cards = [_company_card(svc, c, mentions.get(c.ticker, []), events.get(c.ticker, []), names)
              for c in svc.companies]  # fmt: skip
     cards = _with_guidance(svc, cards)
@@ -245,32 +245,32 @@ def _news(article: Article, names: dict[str, str]) -> NewsItem:
 
 
 def _observe(
-    svc: Services, story: Storyline, channel: str, at: datetime
+    svc: Services, storyline: Storyline, channel: str, at: datetime
 ) -> ChannelObservation | None:
     """A market measure for the first update even when the playbook expects no reaction in
     that channel, so every event shows its stock move and trading volume. None = not yet."""
     if svc.market is None:
         return None
     try:
-        return svc.market.observe(story.ticker, channel, at)
+        return svc.market.observe(storyline.ticker, channel, at)
     except ValueError:  # too early (WindowNotComplete) or no data from the vendor
         return None
 
 
-def _measure(svc: Services, story: Storyline, channel: str, at: datetime) -> float | None:
-    o = _observe(svc, story, channel, at)
+def _measure(svc: Services, storyline: Storyline, channel: str, at: datetime) -> float | None:
+    o = _observe(svc, storyline, channel, at)
     return o.value if o else None
 
 
-def _so_far(svc: Services, story: Storyline) -> tuple[float, date] | None:
+def _so_far(svc: Services, storyline: Storyline) -> tuple[float, date] | None:
     """Stock return minus its index from the close before the first update to the latest
     close: what the market has done so far while the measured window is still open."""
     if svc.market is None:
         return None
-    first = min(e.published_at for e in story.events)
-    day = svc.market.event_day(story.ticker, first)
+    first = min(e.published_at for e in storyline.events)
+    day = svc.market.event_day(storyline.ticker, first)
     try:
-        path = svc.market.price_path(story.ticker, day - timedelta(days=10), date.today())
+        path = svc.market.price_path(storyline.ticker, day - timedelta(days=10), date.today())
     except ValueError:
         return None
     before = [p for p in path.points if p.day < day]
@@ -281,18 +281,20 @@ def _so_far(svc: Services, story: Storyline) -> tuple[float, date] | None:
 
 
 def _event_card(
-    svc: Services, story: Storyline, names: dict[str, str], articles: dict[str, Article]
+    svc: Services, storyline: Storyline, names: dict[str, str], articles: dict[str, Article]
 ) -> EventCard:
-    a: Assessment = svc.validation.latest(story.storyline_id) or svc.validation.assess(story)
-    playbook = next((p for p in svc.playbooks.playbooks() if p.theme == story.theme), None)
+    a: Assessment = svc.validation.latest(storyline.storyline_id) or svc.validation.assess(
+        storyline
+    )
+    playbook = next((p for p in svc.playbooks.playbooks() if p.theme == storyline.theme), None)
     titles = {st.name: st.title for st in playbook.stages} if playbook else {}
 
     def title(name: str) -> str:
         return titles.get(name) or name.replace("_", " ").capitalize()
 
-    latest = max(story.events, key=lambda e: e.published_at)
+    latest = max(storyline.events, key=lambda e: e.published_at)
     latest_article = articles.get(latest.article_id)
-    reports = {(e.stage, e.published_at): e.reports for e in story.events}
+    reports = {(e.stage, e.published_at): e.reports for e in storyline.events}
     prices = [d.evidence for st in a.stages for d in st.decisions
               if d.evidence is not None and d.evidence.channel == "price"]  # fmt: skip
     move = a.combined_reaction or max(prices, key=lambda o: abs(o.statistic or 0), default=None)
@@ -303,16 +305,16 @@ def _event_card(
     latest_sources = next(
         (st.claim.outlets for st in a.stages if st.published_at == latest.published_at), ()
     )
-    first_at = min(e.published_at for e in story.events)
+    first_at = min(e.published_at for e in storyline.events)
     if move is None:  # this event type expects no price reaction: measure it anyway
-        move = _observe(svc, story, "price", first_at)
+        move = _observe(svc, storyline, "price", first_at)
     pending = any(d.channel == "price" and d.verdict == "pending"
                   for st in a.stages for d in st.decisions)  # fmt: skip
     status = "measured" if move else "pending" if pending else "no_data"
-    so_far = _so_far(svc, story) if status == "pending" else None
+    so_far = _so_far(svc, storyline) if status == "pending" else None
     return EventCard(
-        event_id=story.storyline_id,
-        event_type=(playbook.title if playbook and playbook.title else story.theme),
+        event_id=storyline.storyline_id,
+        event_type=(playbook.title if playbook and playbook.title else storyline.theme),
         updates=tuple(
             UpdateItem(title=title(st.stage_name), published_at=st.published_at,
                        articles=tuple(_news(articles[r.article_id], names)
@@ -326,7 +328,7 @@ def _event_card(
         # count (the attribution reading can be wrong, and one outlet is still one source).
         verified=any(len(st.claim.origins) >= svc.validation.policy.corroborating_origins
                      for st in a.stages)
-        or any(r.source_type in AUTHORITATIVE for e in story.events for r in e.reports),
+        or any(r.source_type in AUTHORITATIVE for e in storyline.events for r in e.reports),
         # Titles are joined to the body with ". " for sentence splitting; drop that extra stop.
         latest_headline=latest.summary.replace("?.", "?").replace("!.", "!"),
         latest_source=names.get(latest_sources[0], latest_sources[0]) if latest_sources else "",
@@ -335,7 +337,7 @@ def _event_card(
         stock_move_period=period,
         stock_move_status=status,
         link_window_days=playbook.link_window_days if playbook else None,
-        final_measure_on=(close_after(svc.market.event_day(story.ticker, first_at),
+        final_measure_on=(close_after(svc.market.event_day(storyline.ticker, first_at),
                                       svc.market_policy.windows["price"][1])
                           if status == "pending" and svc.market else None),
         move_so_far=so_far[0] if so_far else None,
@@ -348,10 +350,10 @@ def _event_card(
         stages_total=len(playbook.stages) if playbook else len(a.stages),
         volume_ratio=max((d.evidence.value for st in a.stages for d in st.decisions
                           if d.evidence is not None and d.evidence.channel == "volume"),
-                         default=None) or _measure(svc, story, "volume", first_at),
+                         default=None) or _measure(svc, storyline, "volume", first_at),
         tone=latest.tone,
         is_rumour=latest.is_rumour,
-        next_update=(title(playbook.stages[story.max_stage + 1].name)
-                     if playbook and story.status.value != "resolved"
-                     and story.max_stage + 1 < len(playbook.stages) else None),
+        next_update=(title(playbook.stages[storyline.max_stage + 1].name)
+                     if playbook and storyline.status.value != "resolved"
+                     and storyline.max_stage + 1 < len(playbook.stages) else None),
     )  # fmt: skip

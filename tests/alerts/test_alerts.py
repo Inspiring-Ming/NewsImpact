@@ -1,13 +1,17 @@
 """Alerts: only followed companies, only real changes, never twice, baseline first."""
 
+from pathlib import Path
+
 import httpx
 import pytest
 
 from newsimpact.alerts.adapters.discord import DiscordNotifier
 from newsimpact.alerts.adapters.memory import InMemoryAlertState
 from newsimpact.alerts.adapters.shared import SharedChannels
+from newsimpact.alerts.adapters.sqlite import SqliteAlertState
 from newsimpact.alerts.models import Alert, EventSnapshot
 from newsimpact.alerts.service import AlertsService
+from newsimpact.shared.sqlite import Database
 
 
 def _event(**kw: object) -> EventSnapshot:
@@ -63,3 +67,31 @@ def test_each_user_gets_only_their_companies_and_each_alert_once() -> None:
     svc.check([_event(updates=2), _event(event_id="e2", ticker="AAPL", updates=2)])
     assert sorted(a.ticker for a in out.sent) == ["AAPL", "NVDA", "NVDA"]  # ana 1, ben 2
     assert svc.followed("ana") == {"NVDA"}
+
+
+class Broken:
+    def send(self, alert: Alert, event_link: str) -> None:
+        raise RuntimeError("channel down")
+
+
+def test_a_failed_channel_is_retried_next_round_and_test_needs_a_channel() -> None:
+    state = InMemoryAlertState()
+    svc = AlertsService(state, SharedChannels([Broken()]), "http://site.test")
+    svc.follow("ana", "NVDA")
+    svc.check([_event()])  # baseline
+    assert svc.check([_event(updates=2)]) == []  # not delivered: not marked as sent
+    assert not state.was_sent("ana", "e1|update2")
+    with pytest.raises(RuntimeError):
+        AlertsService(state, SharedChannels([]), "http://site.test").test("ana")
+
+
+def test_sqlite_state_keeps_each_users_list_and_sent_alerts(tmp_path: Path) -> None:
+    state = SqliteAlertState(Database(tmp_path / "a.db"))
+    state.set_followed("ana", "NVDA", True)
+    state.set_followed("ben", "AAPL", True)
+    state.set_followed("ben", "AAPL", False)
+    assert state.followed("ana") == {"NVDA"} and state.followers() == {"ana": {"NVDA"}}
+    state.save_snapshot([_event()])
+    assert set(state.snapshot() or {}) == {"e1"}
+    state.mark_sent("ana", "k")
+    assert state.was_sent("ana", "k") and not state.was_sent("ben", "k")

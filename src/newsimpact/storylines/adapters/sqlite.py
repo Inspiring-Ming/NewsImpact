@@ -13,8 +13,8 @@ class SqliteStorylineStore:
         self._c = db.collection("storylines")
 
     def latest_for(self, ticker: str, theme: str) -> Storyline | None:
-        stories = [Storyline.model_validate_json(d) for d in self._c.find(f"{ticker}|{theme}")]
-        return max(stories, key=lambda s: s.updated_at, default=None)
+        storylines = [Storyline.model_validate_json(d) for d in self._c.find(f"{ticker}|{theme}")]
+        return max(storylines, key=lambda s: s.updated_at, default=None)
 
     def save(self, storyline: Storyline) -> None:
         self._c.put(storyline.storyline_id, storyline.model_dump_json(),

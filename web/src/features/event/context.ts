@@ -4,7 +4,7 @@ import type { S } from "../../api/client";
 export interface EventData {
   company: S["CompanyCard"];
   card: S["EventCard"];
-  story: S["Storyline"];
+  storyline: S["Storyline"];
   assessment: S["Assessment"];
   prices: S["PricePath"] | null;
 }

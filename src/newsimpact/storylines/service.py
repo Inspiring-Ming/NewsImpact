@@ -5,10 +5,10 @@ Linking rule (v0.2, deterministic and explainable):
   2. If a storyline exists for the same ticker + theme and its last event
      was within that playbook's link window, the claim belongs to it:
        * a stage it already has  -> another outlet's report (corroboration);
-       * a new stage             -> the story moves on (maybe escalates/resolves);
-     outlets report events out of order, so a resolved story still absorbs
+       * a new stage             -> the storyline moves on (maybe escalates/resolves);
+     outlets report events out of order, so a resolved storyline still absorbs
      reports of its earlier stages published within `late_report_days` of its
-     latest stage, without being reopened; later reports start a new story.
+     latest stage, without being reopened; later reports start a new storyline.
   3. Otherwise the claim opens a new storyline if its event type is one of
      that playbook's triggers.
 Roadmap: embedding similarity and LLM adjudication for ambiguous links.
@@ -217,21 +217,21 @@ class StorylinesService:
         """The storyline this claim belongs to, if any.
 
         A resolved storyline still absorbs late reports of stages it already
-        has (corroboration), but a new stage after resolution starts a new story.
+        has (corroboration), but a new stage after resolution starts a new storyline.
         """
         for playbook in self._catalog.playbooks():
             stage = playbook.stage_of(event_type)
             if stage is None:
                 continue
-            story = self._store.latest_for(ticker, playbook.theme)
-            if story is None or abs(at - story.updated_at) > timedelta(
+            storyline = self._store.latest_for(ticker, playbook.theme)
+            if storyline is None or abs(at - storyline.updated_at) > timedelta(
                 days=playbook.link_window_days
             ):
                 continue
-            if story.status is StorylineStatus.RESOLVED and (
-                stage > story.max_stage
-                or at - story.updated_at > timedelta(days=self._catalog.late_report_days)
+            if storyline.status is StorylineStatus.RESOLVED and (
+                stage > storyline.max_stage
+                or at - storyline.updated_at > timedelta(days=self._catalog.late_report_days)
             ):
                 continue
-            return story, playbook
+            return storyline, playbook
         return None, None

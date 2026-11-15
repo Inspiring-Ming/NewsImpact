@@ -87,9 +87,9 @@ def test_same_stage_from_another_outlet_corroborates_instead_of_repeating() -> N
     again = h.news("leadership_departure", days=4, source="paper")
     assert first and again and again.corroborated and not again.escalated
     assert again.expected_decisions == ()  # decisions were already announced
-    (story,) = h.store.all()
-    assert [e.stage_name for e in story.events] == ["public_pressure", "leader_departure"]
-    assert [r.source_id for r in story.events[1].reports] == ["wire", "paper"]
+    (storyline,) = h.store.all()
+    assert [e.stage_name for e in storyline.events] == ["public_pressure", "leader_departure"]
+    assert [r.source_id for r in storyline.events[1].reports] == ["wire", "paper"]
 
 
 def test_same_outlet_repeating_itself_is_not_corroboration() -> None:
@@ -105,15 +105,15 @@ def test_resolved_storyline_absorbs_late_reports_but_new_trigger_starts_new_stor
     assert resolved and resolved.storyline.status.value == "resolved"
     late = h.news("leadership_departure", days=3, source="paper")  # late report, known stage
     assert late and late.corroborated and late.storyline.status.value == "resolved"
-    fresh = h.news("leadership_apology", days=10, source="wire")  # weeks later: a new story
+    fresh = h.news("leadership_apology", days=10, source="wire")  # weeks later: a new storyline
     assert fresh and fresh.is_new
 
 
 def test_out_of_order_reports_join_the_resolved_story_without_reopening_it() -> None:
-    """As with Nvidia: 'interim CEO in charge' was published before the resignation story."""
+    """As with Nvidia: 'interim CEO in charge' was published before the resignation storyline."""
     h = Harness()
     opened = h.news("leadership_misconduct", source="bbc")
-    h.news("leadership_appointment", days=3, source="bbc")  # resolves the story
+    h.news("leadership_appointment", days=3, source="bbc")  # resolves the storyline
     late = h.news("leadership_departure", days=3, source="nyt")  # same day, published later
     assert opened and late and not late.is_new
     assert late.storyline.storyline_id == opened.storyline.storyline_id

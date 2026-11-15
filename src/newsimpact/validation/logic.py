@@ -275,11 +275,11 @@ def calibrate_windows(
     storylines: Sequence[Storyline], playbooks: Sequence[Playbook], policy: ValidationPolicy
 ) -> list[WindowCalibration]:
     gaps: dict[str, list[float]] = defaultdict(list)
-    for story in storylines:
-        events = sorted(story.events, key=lambda e: e.published_at)
+    for storyline in storylines:
+        events = sorted(storyline.events, key=lambda e: e.published_at)
         for earlier, later in itertools.pairwise(events):
             seconds = (later.published_at - earlier.published_at).total_seconds()
-            gaps[story.theme].append(seconds / 86400)
+            gaps[storyline.theme].append(seconds / 86400)
     out = []
     for pb in playbooks:
         g = sorted(gaps.get(pb.theme, []))

@@ -1,8 +1,8 @@
 """Shared test fixtures: the real reference policies, so tests use the configured numbers.
 
-Tests never use a developer's local .env deployment choices (LLM presets, keys,
-live data): environment variables override .env, so these pin an offline,
-free configuration for every test.
+Tests never read a developer's .env (keys, alert links, live data): Settings
+is told not to load it, and the variables below pin an offline, free setup even
+when a shell or CI exports NI_* values. A new setting is safe by default.
 """
 
 import json
@@ -12,8 +12,11 @@ from typing import Any
 
 import pytest
 
+from newsimpact.app.config import Settings
 from newsimpact.market.models import MeasurementPolicy
 from newsimpact.validation.models import ValidationPolicy
+
+Settings.model_config["env_file"] = None  # never the developer's .env
 
 os.environ.update(
     {
@@ -23,6 +26,9 @@ os.environ.update(
         "NI_LLM_PRESET": "off",
         "NI_MONITOR_EVERY_MINUTES": "0",
         "ANTHROPIC_API_KEY": "",
+        "NI_EODHD_API_KEY": "",
+        "NI_DISCORD_WEBHOOK_URL": "",
+        "NI_AUTH": "local",
     }
 )
 

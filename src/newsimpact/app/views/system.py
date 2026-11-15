@@ -45,8 +45,8 @@ class Evaluation(Model):
 
 
 def overview(svc: Services) -> Overview:
-    stories = svc.storyline_store.all()
-    resolved = sum(s.status.value == "resolved" for s in stories)
+    storylines = svc.storyline_store.all()
+    resolved = sum(s.status.value == "resolved" for s in storylines)
     s = svc.settings
     articles = list(svc.articles.recent(10**6))
     day_ago = datetime.now(UTC) - timedelta(days=1)
@@ -64,7 +64,7 @@ def overview(svc: Services) -> Overview:
                 names.get(a.source_id, a.source_id) for a in articles if a.published_at >= day_ago
             )
         ),
-        storylines_open=len(stories) - resolved,
+        storylines_open=len(storylines) - resolved,
         storylines_resolved=resolved,
         market_data=(
             "synthetic demo prices"
@@ -80,13 +80,13 @@ def overview(svc: Services) -> Overview:
 
 
 def outlet_coverage(svc: Services) -> list[OutletCoverage]:
-    """Per outlet: volume, relevance, part in stories, speed. Free: no analysis or LLM calls."""
+    """Per outlet: volume, relevance, part in storylines, speed. Free: no analysis or LLM calls."""
     articles = list(svc.articles.recent(10**6))
     with_company = {a.article_id for a in articles if svc.semantics.mentioned_tickers(a)}
-    stories = svc.storyline_store.all()
-    in_stories = {r.article_id for s in stories for e in s.events for r in e.reports}
+    storylines = svc.storyline_store.all()
+    in_stories = {r.article_id for s in storylines for e in s.events for r in e.reports}
     stage_reports = [[(r.source_id, r.published_at) for r in e.reports]
-                     for s in stories for e in s.events]  # fmt: skip
+                     for s in storylines for e in s.events]  # fmt: skip
     return coverage(articles, with_company, in_stories, stage_reports)
 
 

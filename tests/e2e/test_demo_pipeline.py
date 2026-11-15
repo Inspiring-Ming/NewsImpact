@@ -31,14 +31,14 @@ def test_every_listed_outlet_is_tracked(demo: tuple[Services, DemoRun]) -> None:
 
 def test_leadership_storyline_is_chained_and_resolved(demo: tuple[Services, DemoRun]) -> None:
     svc, _ = demo
-    stories = {(s.ticker, s.theme): s for s in svc.storyline_store.all()}
-    crisis = stories[("GLBX", "leadership_crisis")]
+    storylines = {(s.ticker, s.theme): s for s in svc.storyline_store.all()}
+    crisis = storylines[("GLBX", "leadership_crisis")]
     assert [e.stage_name for e in crisis.events] == [
         "public_pressure", "leader_departure", "succession",
     ]  # fmt: skip
     assert crisis.status is StorylineStatus.RESOLVED
 
-    safety = stories[("GLBX", "product_safety")]
+    safety = storylines[("GLBX", "product_safety")]
     assert [e.stage_name for e in safety.events] == ["recall", "regulatory_action"]
     assert safety.status is StorylineStatus.ESCALATING
 

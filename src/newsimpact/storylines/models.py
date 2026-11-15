@@ -1,4 +1,4 @@
-"""Data owned by the storylines module: stories, their stages, and playbooks.
+"""Data owned by the storylines module: storylines, their stages, and playbooks.
 
 Example chain: public apology -> leader steps down -> successor named.
 Each stage carries the decisions market participants typically make and
@@ -125,12 +125,14 @@ class ResearchFinding(Model):
 
 
 class Playbook(Model):
-    """The typical progression of one kind of story (reference data, not code)."""
+    """The typical progression of one kind of storyline (reference data, not code)."""
 
     theme: str
     title: str = Field(default="", description="plain-English name shown to people")
     description: str
-    link_window_days: int = Field(gt=0, description="how long a story stays open for new stages")
+    link_window_days: int = Field(
+        gt=0, description="how long a storyline stays open for new stages"
+    )
     window_basis: str = Field(
         description="where the window comes from: judgment prior | calibrated"
     )

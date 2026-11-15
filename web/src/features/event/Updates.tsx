@@ -11,9 +11,9 @@ const DAY = 86_400_000;
 // Same rule as the event's "Confirmed": 2+ independent origins, or a company press release or filing.
 const AUTHORITATIVE = ["regulatory_filing", "company_press_release"];
 
-export function Updates({ story, assessment, company, card }: EventData) {
+export function Updates({ storyline, assessment, company, card }: EventData) {
   const { title, source } = useNames();
-  const byStage = new Map(story.events.map((e) => [`${e.stage}|${e.published_at}`, e]));
+  const byStage = new Map(storyline.events.map((e) => [`${e.stage}|${e.published_at}`, e]));
   const stages = assessment.stages;
   const t0 = Date.parse(stages[0].published_at), t1 = Date.parse(stages[stages.length - 1].published_at);
   const span = Math.max(t1 - t0, DAY);
@@ -30,7 +30,7 @@ export function Updates({ story, assessment, company, card }: EventData) {
       </div>
       <ol className="timeline">
         {stages.map((st, i) => {
-          const ev = byStage.get(`${st.stage}|${st.published_at}`) ?? story.events.find((e) => e.stage === st.stage);
+          const ev = byStage.get(`${st.stage}|${st.published_at}`) ?? storyline.events.find((e) => e.stage === st.stage);
           const t = tone(ev?.tone ?? 0);
           const price = st.decisions.find((d) => d.channel === "price")?.evidence;
           const gap = i > 0 ? Math.round((Date.parse(st.published_at) - Date.parse(stages[i - 1].published_at)) / DAY) : null;

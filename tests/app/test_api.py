@@ -53,9 +53,9 @@ def test_api_contract_for_the_website() -> None:
     summary = client.get(f"/v1/events/{change['event_id']}/summary").json()
     assert summary["name"] == "Globex Motors" and summary["events"][0]["updates"]
 
-    stories = client.get("/v1/storylines?ticker=GLBX").json()
-    assert {s["theme"] for s in stories} == {"leadership_crisis", "product_safety"}
-    crisis = next(s for s in stories if s["theme"] == "leadership_crisis")
+    storylines = client.get("/v1/storylines?ticker=GLBX").json()
+    assert {s["theme"] for s in storylines} == {"leadership_crisis", "product_safety"}
+    crisis = next(s for s in storylines if s["theme"] == "leadership_crisis")
     assessment = client.get(f"/v1/storylines/{crisis['storyline_id']}/assessment").json()
     assert assessment["conclusion"] and assessment["provenance"]["components"]
     prices = client.get(f"/v1/storylines/{crisis['storyline_id']}/prices").json()

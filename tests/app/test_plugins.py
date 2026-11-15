@@ -37,3 +37,10 @@ def test_round_steps_run_in_order_and_alone() -> None:
     svc = build_services(Settings(env="test", profile="demo"))
     run_step(svc, "collect")
     assert svc.articles.recent(100)
+
+
+def test_tests_never_read_the_developers_env_file() -> None:
+    s = Settings()
+    assert Settings.model_config["env_file"] is None
+    assert s.discord_webhook_url is None or not s.discord_webhook_url.get_secret_value()
+    assert s.profile == "demo" and s.llm_preset == "off"

@@ -92,6 +92,7 @@ schemas/        generated event schemas   scripts/  their export   docs/  design
 
 Each change has one test folder to match (tests mirror the code). Moving a step to
 the cloud or a module to another language is a plug-in, not a rewrite.
+What every folder and file does and how they connect: [docs/08-codebase-guide.md](docs/08-codebase-guide.md).
 Everything else, with the reasons behind the design: [docs/03-architecture.md](docs/03-architecture.md).
 Why every source, window and threshold was chosen: [docs/07-coverage-and-settings.md](docs/07-coverage-and-settings.md).
 

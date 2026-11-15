@@ -8,7 +8,7 @@ For every stage of a storyline it asks two questions:
      actually did, using the market module's measurements.
 It then writes a conclusion, a confidence level and suggestions, stamped
 with the versions of everything used, so results can be reproduced. Every
-monitoring round re-assesses open stories (checks that were "pending" mature
+monitoring round re-assesses open storylines (checks that were "pending" mature
 as market data arrives) and keeps the history.
 
 Across many storylines, calibrate() tests whether each stage really moves each
@@ -20,6 +20,6 @@ Extend it: a new kind of evidence (credit spreads, analyst revisions,
 filings) = a new MarketEvidence channel or a new port here. Rules for
 conclusions live in logic.py.
 
-Publishes: nothing (queried by the API, CLI and the monitoring loop)
+Publishes: nothing (queried by the API and the monitoring round)
 Consumes:  nothing (reads storylines handed to it)
 """

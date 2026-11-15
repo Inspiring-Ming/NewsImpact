@@ -10,5 +10,5 @@ Start with a few outlets, add more later:
     outlets we track.
 
 Publishes: SourceRegistered, ArticleIngested
-Consumes:  StorylineUpdated (searches the listed outlets for a story's next chapter)
+Consumes:  StorylineUpdated (searches the listed outlets for a storyline's next stage)
 """
