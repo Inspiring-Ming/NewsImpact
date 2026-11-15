@@ -25,7 +25,7 @@ jobs:
         run: uv run lint-imports
       - name: Tests
         run: uv run pytest --cov=newsimpact --cov-fail-under=80
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
