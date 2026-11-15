@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import { WatchlistPage } from "./features/watchlist/WatchlistPage";
 import { MethodPage } from "./features/method/MethodPage";
-import { StoryPage } from "./features/story/StoryPage";
+import { EventPage } from "./features/event/EventPage";
 
 export interface Route {
   pattern: RegExp;
@@ -12,8 +12,8 @@ export interface Route {
 }
 
 export const ROUTES: Route[] = [
-  { pattern: /^#\/?$/, nav: "Companies", href: "#/", render: (_, k) => <WatchlistPage refreshKey={k} /> },
-  { pattern: /^#\/story\/(.+)$/, render: ([id]) => <StoryPage key={id} id={id} /> },
+  { pattern: /^#\/?$/, nav: "Watchlist", href: "#/", render: (_, k) => <WatchlistPage refreshKey={k} /> },
+  { pattern: /^#\/event\/(.+)$/, render: ([id]) => <EventPage key={id} id={id} /> },
   { pattern: /^#\/method$/, nav: "How it works", href: "#/method", render: () => <MethodPage /> },
 ];
 

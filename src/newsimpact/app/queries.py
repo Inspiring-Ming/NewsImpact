@@ -13,7 +13,6 @@ from datetime import datetime
 from pydantic import Field
 
 from newsimpact.app.wiring import Services
-from newsimpact.market.models import ChannelObservation
 from newsimpact.semantics.logic import FieldScore, score_field
 from newsimpact.semantics.models import Claim, Company, EntityMention
 from newsimpact.shared.events import Model
@@ -119,112 +118,111 @@ def evaluation(svc: Services) -> Evaluation:
 
 # ------------------------------------------------------------ watchlist
 # Plain answers are written here once, so the website and any client read the same words.
+# Vocabulary: an "event" (e.g. a leadership change) is made of dated "updates".
 
 
 class NewsItem(Model):
     title: str
     url: str
-    outlet: str
+    source: str
     published_at: datetime
 
 
-class EventItem(Model):
+class UpdateItem(Model):
     title: str
     published_at: datetime
 
 
-class StoryCard(Model):
-    storyline_id: str
-    story_type: str = Field(description="e.g. Leadership crisis")
-    status: str = Field(description="unfolding | escalating | settled")
-    status_text: str = Field(description="e.g. 'Settled - new leader named'")
-    events: tuple[EventItem, ...]
+class EventCard(Model):
+    event_id: str
+    event_type: str = Field(description="e.g. Leadership change, Earnings miss")
+    ongoing: bool
+    updates: tuple[UpdateItem, ...]
     latest_headline: str
-    reaction: ChannelObservation | None
-    reaction_text: str = Field(
-        description="e.g. '18.5% below the S&P 500 - an unusually large move'"
-    )
-    confirmed: str = Field(description="yes | partly | no")
-    confirmed_text: str
-    evidence: str = Field(description="strong | partial | weak")
-    evidence_text: str
+    latest_source: str
+    stock_move: float | None = Field(description="stock return minus its index, e.g. -0.185")
+    stock_move_unusual: bool = Field(description="larger than on 19 of 20 normal trading days")
+    stock_move_period: str = Field(description="e.g. '9-13 Nov'")
+    sources: int = Field(description="independent news sources that reported the event")
+    source_names: tuple[str, ...]
+    source_reliability: float = Field(description="average reliability of those sources, 0-1")
+    actions: tuple[str, ...] = Field(description="what to watch or do next, most important first")
 
 
 class CompanyCard(Model):
     ticker: str
     name: str
     country: str
+    sector: str
     exchange: str
-    benchmark_name: str
+    index_name: str = Field(description="the index the stock is compared with, e.g. S&P 500")
     articles: int = Field(description="stored articles that name the company")
     latest_news: NewsItem | None
-    stories: tuple[StoryCard, ...]
-
-
-STATUS = {"developing": "unfolding", "escalating": "escalating", "resolved": "settled"}
-EVIDENCE = {"high": "strong", "medium": "partial", "low": "weak"}
+    events: tuple[EventCard, ...]
 
 
 def companies(svc: Services) -> list[CompanyCard]:
-    """Every company we follow: stories first, then companies in the news, then the rest."""
-    outlet_names = {s.source_id: s.name.split(" - ")[0] for s in svc.sources.listed()}
+    """Every company we follow, with its events (most recent first) and latest news."""
+    names = _source_names(svc)
     mentions: dict[str, list[Article]] = defaultdict(list)
     for article in svc.articles.recent(10**6):
         for ticker in svc.semantics.mentioned_tickers(article):
             mentions[ticker].append(article)
-    stories: dict[str, list[StoryCard]] = defaultdict(list)
+    events: dict[str, list[EventCard]] = defaultdict(list)
     for story in svc.storyline_store.all():
-        stories[story.ticker].append(_story_card(svc, story, outlet_names))
-    cards = []
-    for company in svc.companies:
-        news = sorted(mentions.get(company.ticker, []), key=lambda a: a.published_at)
-        latest = news[-1] if news else None
-        exchange = svc.market_policy.exchange_of(company.ticker)
-        cards.append(CompanyCard(
-            ticker=company.ticker, name=company.name, country=company.country, exchange=exchange,
-            benchmark_name=_benchmark_name(svc, company.ticker), articles=len(news),
-            latest_news=NewsItem(title=latest.title, url=latest.url,
-                                 outlet=outlet_names.get(latest.source_id, latest.source_id),
-                                 published_at=latest.published_at) if latest else None,
-            stories=tuple(sorted(stories.get(company.ticker, []),
-                                 key=lambda c: c.events[-1].published_at, reverse=True)),
-        ))  # fmt: skip
-    return sorted(cards, key=lambda c: (
-        not c.stories, not c.articles,
-        -(c.stories[0].events[-1].published_at.timestamp() if c.stories else
-          c.latest_news.published_at.timestamp() if c.latest_news else 0),
-        c.name,
-    ))  # fmt: skip
+        events[story.ticker].append(_event_card(svc, story, names))
+    cards = [_company_card(svc, c, mentions.get(c.ticker, []), events.get(c.ticker, []), names)
+             for c in svc.companies]  # fmt: skip
+
+    def latest(c: CompanyCard) -> float:
+        if c.events:
+            return c.events[0].updates[-1].published_at.timestamp()
+        return c.latest_news.published_at.timestamp() if c.latest_news else 0.0
+
+    return sorted(cards, key=lambda c: (not c.events, -latest(c), c.name))
 
 
-def story_summary(svc: Services, storyline_id: str) -> CompanyCard | None:
-    """The company card for one story (the story page header)."""
-    story = svc.storyline_store.get(storyline_id)
+def event_summary(svc: Services, event_id: str) -> CompanyCard | None:
+    """The company card for one event (the event page)."""
+    story = svc.storyline_store.get(event_id)
     if story is None:
         return None
     fallback = Company(ticker=story.ticker, name=story.entity_name, country="", aliases=())
     company = next((c for c in svc.companies if c.ticker == story.ticker), fallback)
-    outlet_names = {s.source_id: s.name.split(" - ")[0] for s in svc.sources.listed()}
-    card = _story_card(svc, story, outlet_names)
+    names = _source_names(svc)
+    return _company_card(svc, company, [], [_event_card(svc, story, names)], names)
+
+
+def _source_names(svc: Services) -> dict[str, str]:
+    return {s.source_id: s.name.split(" - ")[0] for s in svc.sources.listed()}
+
+
+def _company_card(
+    svc: Services,
+    company: Company,
+    news: list[Article],
+    events: list[EventCard],
+    names: dict[str, str],
+) -> CompanyCard:
+    latest = max(news, key=lambda a: a.published_at, default=None)
     return CompanyCard(
-        ticker=company.ticker,
-        name=company.name,
-        country=company.country,
+        ticker=company.ticker, name=company.name, country=company.country, sector=company.sector,
         exchange=svc.market_policy.exchange_of(company.ticker),
-        benchmark_name=_benchmark_name(svc, company.ticker),
-        articles=0,
-        latest_news=None,
-        stories=(card,),
-    )
+        index_name=_index_name(svc, company.ticker), articles=len(news),
+        latest_news=NewsItem(title=latest.title, url=latest.url,
+                             source=names.get(latest.source_id, latest.source_id),
+                             published_at=latest.published_at) if latest else None,
+        events=tuple(sorted(events, key=lambda e: e.updates[-1].published_at, reverse=True)),
+    )  # fmt: skip
 
 
-def _benchmark_name(svc: Services, ticker: str) -> str:
+def _index_name(svc: Services, ticker: str) -> str:
     if svc.settings.profile == "demo":
         return "market index"
     return svc.market_policy.exchanges[svc.market_policy.exchange_of(ticker)].benchmark_name
 
 
-def _story_card(svc: Services, story: Storyline, outlet_names: dict[str, str]) -> StoryCard:
+def _event_card(svc: Services, story: Storyline, names: dict[str, str]) -> EventCard:
     a: Assessment = svc.validation.latest(story.storyline_id) or svc.validation.assess(story)
     playbook = next((p for p in svc.playbooks.playbooks() if p.theme == story.theme), None)
     titles = {st.name: st.title for st in playbook.stages} if playbook else {}
@@ -232,70 +230,32 @@ def _story_card(svc: Services, story: Storyline, outlet_names: dict[str, str]) -
     def title(name: str) -> str:
         return titles.get(name) or name.replace("_", " ").capitalize()
 
-    events = tuple(EventItem(title=title(st.stage_name), published_at=st.published_at)
-                   for st in a.stages)  # fmt: skip
     latest = max(story.events, key=lambda e: e.published_at)
-    status = STATUS.get(story.status.value, story.status.value)
-    if status == "settled":
-        status_text = f"Settled - {events[-1].title.lower()}"
-    elif status == "escalating":
-        status_text = f"Escalating - {events[-1].title.lower()}"
-    else:
-        later = playbook.stages[story.max_stage + 1 :] if playbook else ()
-        upcoming = later[0].title if later else ""
-        status_text = (
-            f"Still unfolding - watching for: {upcoming.lower()}" if upcoming else "Still unfolding"
-        )
-
     prices = [d.evidence for st in a.stages for d in st.decisions
               if d.evidence is not None and d.evidence.channel == "price"]  # fmt: skip
-    reaction = a.combined_reaction or max(prices, key=lambda o: abs(o.statistic or 0), default=None)
-    bench = _benchmark_name(svc, story.ticker)
-    if reaction is None:
-        reaction_text = ("No price data connected yet" if svc.market is None
-                         else "Not measured yet - needs a few trading days")  # fmt: skip
-    else:
-        side = "below" if reaction.value < 0 else "above"
-        size = "an unusually large move" if reaction.significant else "within normal daily swings"
-        reaction_text = f"{abs(reaction.value):.1%} {side} the {bench} - {size}"
-
-    outlets = {o for st in a.stages for o in st.claim.outlets}
-    backed = sum(st.claim.status != "single_source" for st in a.stages)
-    if backed == len(a.stages):
-        confirmed, confirmed_text = "yes", f"Yes - reported by {len(outlets)} outlets"
-    elif backed:
-        confirmed = "partly"
-        confirmed_text = (
-            f"Partly - {backed} of {len(a.stages)} events reported by more than one outlet"
-        )
-    else:
-        names = ", ".join(sorted(outlet_names.get(o, o) for o in outlets))
-        confirmed, confirmed_text = "no", f"Not yet - only {names} so far"
-
-    evidence = EVIDENCE.get(a.confidence, a.confidence)
-    market_clear = reaction is not None and reaction.significant
-    evidence_text = {
-        "strong": "Confirmed by several outlets, and the stock clearly reacted",
-        "partial": (
-            "Confirmed news, but no clear stock reaction yet"
-            if confirmed == "yes"
-            else "The stock reacted, but the news is not fully confirmed yet"
-            if market_clear
-            else "Partly confirmed news; stock reaction still unclear"
-        ),
-        "weak": "Not yet confirmed, and no clear stock reaction",
-    }.get(evidence, "")
-    return StoryCard(
-        storyline_id=story.storyline_id,
-        story_type=(playbook.title if playbook and playbook.title else story.theme),
-        status=status,
-        status_text=status_text,
-        events=events,
-        latest_headline=latest.summary,
-        reaction=reaction,
-        reaction_text=reaction_text,
-        confirmed=confirmed,
-        confirmed_text=confirmed_text,
-        evidence=evidence,
-        evidence_text=evidence_text,
+    move = a.combined_reaction or max(prices, key=lambda o: abs(o.statistic or 0), default=None)
+    first, last = a.stages[0].published_at, a.stages[-1].published_at
+    period = (f"{first:%-d %b}" if first.date() == last.date()
+              else f"{first:%-d %b}-{last:%-d %b}")  # fmt: skip
+    source_ids = sorted({o for st in a.stages for o in st.claim.outlets})
+    scores = [svc.reliability.score_source(s).score for s in source_ids]
+    latest_sources = next(
+        (st.claim.outlets for st in a.stages if st.published_at == latest.published_at), ()
     )
+    return EventCard(
+        event_id=story.storyline_id,
+        event_type=(playbook.title if playbook and playbook.title else story.theme),
+        ongoing=story.status.value != "resolved",
+        updates=tuple(UpdateItem(title=title(st.stage_name), published_at=st.published_at)
+                      for st in a.stages),
+        # Titles are joined to the body with ". " for sentence splitting; drop that extra stop.
+        latest_headline=latest.summary.replace("?.", "?").replace("!.", "!"),
+        latest_source=names.get(latest_sources[0], latest_sources[0]) if latest_sources else "",
+        stock_move=move.value if move else None,
+        stock_move_unusual=bool(move and move.significant),
+        stock_move_period=period,
+        sources=len(source_ids),
+        source_names=tuple(names.get(s, s) for s in source_ids),
+        source_reliability=round(sum(scores) / len(scores), 3) if scores else 0.0,
+        actions=a.suggestions,
+    )  # fmt: skip

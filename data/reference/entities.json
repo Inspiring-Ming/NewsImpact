@@ -1,5 +1,5 @@
 {
- "_note": "Companies we follow. ticker: bare = US listing, '.AX' = ASX (measured on its home exchange). name/country are shown to people; aliases are how news writes the name - only unambiguous ones (e.g. 'Ford Motor', not 'Ford'; 'Santos Ltd', not 'Santos'). Selection: the largest, most-covered companies in each market, because media coverage concentrates there (docs/07). Phase 1 replaces this with exchange listings + OpenFIGI/GLEIF.",
+ "_note": "Companies we follow. ticker: bare = US listing, '.AX' = ASX (measured on its home exchange). name/country/sector are shown to people (sector = GICS, the classification investors use); aliases are how news writes the name - only unambiguous ones (e.g. 'Ford Motor', not 'Ford'; 'Santos Ltd', not 'Santos'). Selection: the largest, most-covered companies in each market, because media coverage concentrates there (docs/07). Phase 1 replaces this with exchange listings + OpenFIGI/GLEIF.",
  "companies": [
   {
    "ticker": "NVDA",
@@ -7,7 +7,8 @@
    "country": "US",
    "aliases": [
     "Nvidia"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "MSFT",
@@ -15,7 +16,8 @@
    "country": "US",
    "aliases": [
     "Microsoft"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "AAPL",
@@ -23,7 +25,8 @@
    "country": "US",
    "aliases": [
     "Apple Inc"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "GOOGL",
@@ -32,7 +35,8 @@
    "aliases": [
     "Alphabet",
     "Google"
-   ]
+   ],
+   "sector": "Communication Services"
   },
   {
    "ticker": "AMZN",
@@ -40,7 +44,8 @@
    "country": "US",
    "aliases": [
     "Amazon"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "META",
@@ -48,7 +53,8 @@
    "country": "US",
    "aliases": [
     "Meta Platforms"
-   ]
+   ],
+   "sector": "Communication Services"
   },
   {
    "ticker": "TSLA",
@@ -56,7 +62,8 @@
    "country": "US",
    "aliases": [
     "Tesla"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "AVGO",
@@ -64,7 +71,8 @@
    "country": "US",
    "aliases": [
     "Broadcom"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "BA",
@@ -72,7 +80,8 @@
    "country": "US",
    "aliases": [
     "Boeing"
-   ]
+   ],
+   "sector": "Industrials"
   },
   {
    "ticker": "INTC",
@@ -80,7 +89,8 @@
    "country": "US",
    "aliases": [
     "Intel"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "AMD",
@@ -89,7 +99,8 @@
    "aliases": [
     "AMD",
     "Advanced Micro Devices"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "TSM",
@@ -98,7 +109,8 @@
    "aliases": [
     "TSMC",
     "Taiwan Semiconductor"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "ORCL",
@@ -107,7 +119,8 @@
    "aliases": [
     "Oracle Corp",
     "Oracle"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "CRM",
@@ -115,7 +128,8 @@
    "country": "US",
    "aliases": [
     "Salesforce"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "ADBE",
@@ -123,7 +137,8 @@
    "country": "US",
    "aliases": [
     "Adobe"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "PLTR",
@@ -131,7 +146,8 @@
    "country": "US",
    "aliases": [
     "Palantir"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "UBER",
@@ -139,7 +155,8 @@
    "country": "US",
    "aliases": [
     "Uber"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "ABNB",
@@ -147,7 +164,8 @@
    "country": "US",
    "aliases": [
     "Airbnb"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "NFLX",
@@ -155,7 +173,8 @@
    "country": "US",
    "aliases": [
     "Netflix"
-   ]
+   ],
+   "sector": "Communication Services"
   },
   {
    "ticker": "DIS",
@@ -163,7 +182,8 @@
    "country": "US",
    "aliases": [
     "Disney"
-   ]
+   ],
+   "sector": "Communication Services"
   },
   {
    "ticker": "JPM",
@@ -171,7 +191,8 @@
    "country": "US",
    "aliases": [
     "JPMorgan"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "GS",
@@ -179,7 +200,8 @@
    "country": "US",
    "aliases": [
     "Goldman Sachs"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "BAC",
@@ -187,7 +209,8 @@
    "country": "US",
    "aliases": [
     "Bank of America"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "WFC",
@@ -195,7 +218,8 @@
    "country": "US",
    "aliases": [
     "Wells Fargo"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "V",
@@ -203,7 +227,8 @@
    "country": "US",
    "aliases": [
     "Visa Inc"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "MA",
@@ -211,7 +236,8 @@
    "country": "US",
    "aliases": [
     "Mastercard"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "WMT",
@@ -219,7 +245,8 @@
    "country": "US",
    "aliases": [
     "Walmart"
-   ]
+   ],
+   "sector": "Consumer Staples"
   },
   {
    "ticker": "COST",
@@ -227,7 +254,8 @@
    "country": "US",
    "aliases": [
     "Costco"
-   ]
+   ],
+   "sector": "Consumer Staples"
   },
   {
    "ticker": "KO",
@@ -235,7 +263,8 @@
    "country": "US",
    "aliases": [
     "Coca-Cola"
-   ]
+   ],
+   "sector": "Consumer Staples"
   },
   {
    "ticker": "PEP",
@@ -243,7 +272,8 @@
    "country": "US",
    "aliases": [
     "PepsiCo"
-   ]
+   ],
+   "sector": "Consumer Staples"
   },
   {
    "ticker": "MCD",
@@ -251,7 +281,8 @@
    "country": "US",
    "aliases": [
     "McDonald's"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "SBUX",
@@ -259,7 +290,8 @@
    "country": "US",
    "aliases": [
     "Starbucks"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "NKE",
@@ -268,7 +300,8 @@
    "aliases": [
     "Nike Inc",
     "Nike"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "JNJ",
@@ -276,7 +309,8 @@
    "country": "US",
    "aliases": [
     "Johnson & Johnson"
-   ]
+   ],
+   "sector": "Health Care"
   },
   {
    "ticker": "PFE",
@@ -284,7 +318,8 @@
    "country": "US",
    "aliases": [
     "Pfizer"
-   ]
+   ],
+   "sector": "Health Care"
   },
   {
    "ticker": "LLY",
@@ -292,7 +327,8 @@
    "country": "US",
    "aliases": [
     "Eli Lilly"
-   ]
+   ],
+   "sector": "Health Care"
   },
   {
    "ticker": "UNH",
@@ -300,7 +336,8 @@
    "country": "US",
    "aliases": [
     "UnitedHealth"
-   ]
+   ],
+   "sector": "Health Care"
   },
   {
    "ticker": "XOM",
@@ -310,7 +347,8 @@
     "ExxonMobil",
     "Exxon Mobil",
     "Exxon"
-   ]
+   ],
+   "sector": "Energy"
   },
   {
    "ticker": "CVX",
@@ -318,7 +356,8 @@
    "country": "US",
    "aliases": [
     "Chevron"
-   ]
+   ],
+   "sector": "Energy"
   },
   {
    "ticker": "F",
@@ -326,7 +365,8 @@
    "country": "US",
    "aliases": [
     "Ford Motor"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "GM",
@@ -334,7 +374,8 @@
    "country": "US",
    "aliases": [
     "General Motors"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "TEAM",
@@ -342,7 +383,8 @@
    "country": "AU",
    "aliases": [
     "Atlassian"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "BHP.AX",
@@ -351,7 +393,8 @@
    "aliases": [
     "BHP Group",
     "BHP"
-   ]
+   ],
+   "sector": "Materials"
   },
   {
    "ticker": "CBA.AX",
@@ -360,7 +403,8 @@
    "aliases": [
     "Commonwealth Bank",
     "CommBank"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "CSL.AX",
@@ -368,7 +412,8 @@
    "country": "AU",
    "aliases": [
     "CSL Limited"
-   ]
+   ],
+   "sector": "Health Care"
   },
   {
    "ticker": "WBC.AX",
@@ -376,7 +421,8 @@
    "country": "AU",
    "aliases": [
     "Westpac"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "NAB.AX",
@@ -384,7 +430,8 @@
    "country": "AU",
    "aliases": [
     "National Australia Bank"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "ANZ.AX",
@@ -393,7 +440,8 @@
    "aliases": [
     "ANZ Group",
     "ANZ Bank"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "MQG.AX",
@@ -401,7 +449,8 @@
    "country": "AU",
    "aliases": [
     "Macquarie Group"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "WES.AX",
@@ -409,7 +458,8 @@
    "country": "AU",
    "aliases": [
     "Wesfarmers"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "WOW.AX",
@@ -417,7 +467,8 @@
    "country": "AU",
    "aliases": [
     "Woolworths Group"
-   ]
+   ],
+   "sector": "Consumer Staples"
   },
   {
    "ticker": "COL.AX",
@@ -426,7 +477,8 @@
    "aliases": [
     "Coles Group",
     "Coles"
-   ]
+   ],
+   "sector": "Consumer Staples"
   },
   {
    "ticker": "TLS.AX",
@@ -434,7 +486,8 @@
    "country": "AU",
    "aliases": [
     "Telstra"
-   ]
+   ],
+   "sector": "Communication Services"
   },
   {
    "ticker": "RIO.AX",
@@ -442,7 +495,8 @@
    "country": "AU",
    "aliases": [
     "Rio Tinto"
-   ]
+   ],
+   "sector": "Materials"
   },
   {
    "ticker": "FMG.AX",
@@ -450,7 +504,8 @@
    "country": "AU",
    "aliases": [
     "Fortescue"
-   ]
+   ],
+   "sector": "Materials"
   },
   {
    "ticker": "WDS.AX",
@@ -459,7 +514,8 @@
    "aliases": [
     "Woodside Energy",
     "Woodside"
-   ]
+   ],
+   "sector": "Energy"
   },
   {
    "ticker": "STO.AX",
@@ -467,7 +523,8 @@
    "country": "AU",
    "aliases": [
     "Santos Ltd"
-   ]
+   ],
+   "sector": "Energy"
   },
   {
    "ticker": "ORG.AX",
@@ -475,7 +532,8 @@
    "country": "AU",
    "aliases": [
     "Origin Energy"
-   ]
+   ],
+   "sector": "Utilities"
   },
   {
    "ticker": "AGL.AX",
@@ -483,7 +541,8 @@
    "country": "AU",
    "aliases": [
     "AGL Energy"
-   ]
+   ],
+   "sector": "Utilities"
   },
   {
    "ticker": "QAN.AX",
@@ -491,7 +550,8 @@
    "country": "AU",
    "aliases": [
     "Qantas"
-   ]
+   ],
+   "sector": "Industrials"
   },
   {
    "ticker": "TCL.AX",
@@ -499,7 +559,8 @@
    "country": "AU",
    "aliases": [
     "Transurban"
-   ]
+   ],
+   "sector": "Industrials"
   },
   {
    "ticker": "GMG.AX",
@@ -507,7 +568,8 @@
    "country": "AU",
    "aliases": [
     "Goodman Group"
-   ]
+   ],
+   "sector": "Real Estate"
   },
   {
    "ticker": "XRO.AX",
@@ -515,7 +577,8 @@
    "country": "AU",
    "aliases": [
     "Xero"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "WTC.AX",
@@ -523,7 +586,8 @@
    "country": "AU",
    "aliases": [
     "WiseTech"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "REA.AX",
@@ -531,7 +595,8 @@
    "country": "AU",
    "aliases": [
     "REA Group"
-   ]
+   ],
+   "sector": "Communication Services"
   },
   {
    "ticker": "QBE.AX",
@@ -539,7 +604,8 @@
    "country": "AU",
    "aliases": [
     "QBE"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "SUN.AX",
@@ -547,7 +613,8 @@
    "country": "AU",
    "aliases": [
     "Suncorp"
-   ]
+   ],
+   "sector": "Financials"
   },
   {
    "ticker": "MPL.AX",
@@ -555,7 +622,8 @@
    "country": "AU",
    "aliases": [
     "Medibank"
-   ]
+   ],
+   "sector": "Health Care"
   },
   {
    "ticker": "ALL.AX",
@@ -563,7 +631,8 @@
    "country": "AU",
    "aliases": [
     "Aristocrat Leisure"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "JBH.AX",
@@ -571,7 +640,8 @@
    "country": "AU",
    "aliases": [
     "JB Hi-Fi"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "SGR.AX",
@@ -579,7 +649,8 @@
    "country": "AU",
    "aliases": [
     "Star Entertainment"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "PLS.AX",
@@ -587,7 +658,8 @@
    "country": "AU",
    "aliases": [
     "Pilbara Minerals"
-   ]
+   ],
+   "sector": "Materials"
   },
   {
    "ticker": "NST.AX",
@@ -595,7 +667,8 @@
    "country": "AU",
    "aliases": [
     "Northern Star Resources"
-   ]
+   ],
+   "sector": "Materials"
   }
  ]
 }

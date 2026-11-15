@@ -92,6 +92,7 @@ class Company(Model):
     ticker: str = Field(description="bare = US listing, '.AX' = ASX")
     name: str
     country: str = Field(description="ISO country code, e.g. US, AU")
+    sector: str = Field(default="", description="GICS sector, e.g. Information Technology")
     aliases: tuple[str, ...]
 
 

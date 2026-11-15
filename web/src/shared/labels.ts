@@ -1,6 +1,6 @@
 // The ONE place for wording shown to people. Plain words, as a newspaper or a
-// broker's watchlist would use them. Story and event names come from
-// data/reference/playbooks.json and outlet names from sources.json (see names.ts).
+// broker's watchlist would use them. Event and update names come from
+// data/reference/playbooks.json and source names from sources.json (see names.ts).
 import type { S } from "../api/client";
 
 const NAMES: Record<string, string> = {
@@ -30,23 +30,27 @@ export const COUNTRY: Record<string, { flag: string; name: string }> = {
   TW: { flag: "🇹🇼", name: "Taiwan" }, GB: { flag: "🇬🇧", name: "United Kingdom" },
 };
 
-export const STATUS_TONE: Record<string, Tone> = { unfolding: "ok", escalating: "bad", settled: "neutral" };
-export const CONFIRMED_TONE: Record<string, Tone> = { yes: "good", partly: "ok", no: "warn" };
-export const EVIDENCE: Record<string, { text: string; tone: Tone }> = {
-  strong: { text: "Strong evidence", tone: "good" },
-  partial: { text: "Partial evidence", tone: "ok" },
-  weak: { text: "Weak evidence", tone: "warn" },
-};
+export const SECTORS = [
+  "Information Technology", "Communication Services", "Consumer Discretionary", "Consumer Staples",
+  "Financials", "Health Care", "Energy", "Materials", "Industrials", "Utilities", "Real Estate",
+];
+
+/** "−18.5%" with a sign, for stock moves against an index. */
+export function pct(x: number, digits = 1): string {
+  return `${x >= 0 ? "+" : "−"}${Math.abs(x * 100).toFixed(digits)}%`;
+}
 
 /** Did the predicted reaction happen? */
-export const RESULT: Record<string, { text: string; tone: Tone }> = {
-  consistent: { text: "Yes", tone: "good" },
-  inconsistent: { text: "No - the opposite", tone: "bad" },
-  not_significant: { text: "No clear reaction", tone: "neutral" },
-  pending: { text: "Too early to tell", tone: "neutral" },
-  no_evidence: { text: "No data yet", tone: "muted" },
-  not_measurable: { text: "Not visible in prices", tone: "muted" },
+export const RESULT: Record<string, { text: string; icon: string; tone: Tone }> = {
+  consistent: { text: "As expected", icon: "✓", tone: "good" },
+  inconsistent: { text: "Opposite of expected", icon: "✗", tone: "bad" },
+  not_significant: { text: "No clear move", icon: "–", tone: "neutral" },
+  pending: { text: "Too early to tell", icon: "…", tone: "neutral" },
+  no_evidence: { text: "No data yet", icon: "?", tone: "muted" },
+  not_measurable: { text: "Not visible in prices", icon: "·", tone: "muted" },
 };
+
+export const ARROW: Record<string, string> = { up: "↑", down: "↓", uncertain: "↕" };
 
 export const DIRECTION: Record<string, string> = { up: "rise", down: "fall", uncertain: "move sharply" };
 

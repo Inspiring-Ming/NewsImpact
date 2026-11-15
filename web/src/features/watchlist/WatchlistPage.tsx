@@ -1,96 +1,72 @@
-// Home: the companies we follow. Developing stories first, then other news, then the rest.
-import { useState } from "react";
+// Home: the watchlist. Key numbers on top, filters, then one compact paged table.
+import { useMemo, useState } from "react";
 import { api } from "../../api/client";
-import { State } from "../../shared/ui";
+import { SECTORS } from "../../shared/labels";
+import { Fact, State } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
-import { CompanyRow } from "./CompanyRow";
-import { StoryCard } from "./StoryCard";
+import { WatchlistTable } from "./WatchlistTable";
 
-const COUNTRIES = [["all", "All"], ["US", "🇺🇸 United States"], ["AU", "🇦🇺 Australia"]] as const;
+const PAGE = 12;
+const MARKETS = [["all", "All markets"], ["US", "🇺🇸 US"], ["AU", "🇦🇺 Australia"]] as const;
 
 export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
   const { data, error, loading } = useApi(api.companies, [refreshKey]);
-  const [country, setCountry] = useState<string>("all");
+  const overview = useApi(api.overview, [refreshKey]);
+  const [market, setMarket] = useState("all");
+  const [sector, setSector] = useState("all");
+  const [eventsOnly, setEventsOnly] = useState(true);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
+
   const all = data ?? [];
-  const shown = all.filter((c) => country === "all" || c.country === country);
-  const withStories = shown.filter((c) => c.stories.some((s) => s.confirmed !== "no"));
-  // A story reported by a single outlet may be a misreading; keep it apart until confirmed.
-  const unconfirmed = shown.flatMap((c) => c.stories.filter((s) => s.confirmed === "no").map((s) => ({ c, s })));
-  const inNews = shown.filter((c) => !c.stories.length && c.latest_news);
-  const quiet = shown.filter((c) => !c.stories.length && !c.latest_news);
-  const storyCount = withStories.reduce((n, c) => n + c.stories.filter((s) => s.confirmed !== "no").length, 0);
+  const events = all.flatMap((c) => c.events);
+  const rows = useMemo(() => all.filter((c) =>
+    (market === "all" || c.country === market) &&
+    (sector === "all" || c.sector === sector) &&
+    (!eventsOnly || c.events.length > 0) &&
+    (!query || `${c.name} ${c.ticker}`.toLowerCase().includes(query.toLowerCase())),
+  ), [all, market, sector, eventsOnly, query]);
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  const current = Math.min(page, pages - 1);
+  const change = (f: () => void) => { f(); setPage(0); };
 
   return (
     <>
-      <section className="hero">
-        <h1>Company news and stock reactions</h1>
-        <p className="lead">
-          We follow {all.length || "…"} large companies in the United States and Australia. When news about one of them
-          turns into a developing story, such as a CEO resignation, a product recall or a takeover, we track each step,
-          check that it is confirmed by several news outlets, and measure how the stock reacted compared with its market.
-        </p>
-      </section>
+      <div className="kpis">
+        <Fact label="Companies tracked" value={all.length || "–"} sub="large caps, US and Australia" />
+        <Fact label="Events" value={events.length} sub={`${events.filter((e) => e.ongoing).length} still developing`} />
+        <Fact label="Unusual stock moves" value={events.filter((e) => e.stock_move_unusual).length} sub="beyond normal daily swings" tone="warn" />
+        <Fact label="News sources" value={overview.data?.outlets_enabled ?? "–"} sub="read automatically" />
+      </div>
 
-      <div className="filters">
-        <div className="segmented" role="group" aria-label="Country">
-          {COUNTRIES.map(([id, name]) => (
-            <button key={id} className={id === country ? "active" : ""} onClick={() => setCountry(id)}>{name}</button>
+      <div className="toolbar">
+        <input className="search" type="search" placeholder="Search company or ticker" value={query}
+               onChange={(e) => change(() => setQuery(e.target.value))} />
+        <div className="segmented" role="group" aria-label="Market">
+          {MARKETS.map(([id, name]) => (
+            <button key={id} className={id === market ? "active" : ""} onClick={() => change(() => setMarket(id))}>{name}</button>
           ))}
+        </div>
+        <select value={sector} onChange={(e) => change(() => setSector(e.target.value))} aria-label="Sector">
+          <option value="all">All sectors</option>
+          {SECTORS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <div className="segmented" role="group" aria-label="Show">
+          <button className={eventsOnly ? "active" : ""} onClick={() => change(() => setEventsOnly(true))}>With events</button>
+          <button className={!eventsOnly ? "active" : ""} onClick={() => change(() => setEventsOnly(false))}>All companies</button>
         </div>
       </div>
 
-      <State error={error} loading={loading && !data}>
-        <section className="section">
-          <div className="section-head">
-            <h2>Developing stories <span className="count">{storyCount}</span></h2>
-            <p className="muted">News that is unfolding over several events, with its effect on the stock.</p>
-          </div>
-          {withStories.length ? (
-            <div className="cards">
-              {withStories.flatMap((c) => c.stories.filter((s) => s.confirmed !== "no")
-                .map((s) => <StoryCard key={s.storyline_id} company={c} story={s} />))}
-            </div>
-          ) : (
-            <p className="state empty">No developing stories right now. Press <b>Check for news</b> at the top to read the latest news.</p>
-          )}
-        </section>
-
-        {unconfirmed.length > 0 && (
-          <section className="section">
-            <div className="section-head">
-              <h2>Waiting for confirmation <span className="count">{unconfirmed.length}</span></h2>
-              <p className="muted">Possible stories reported by only one outlet so far. They may be a misreading, so we wait for a second, independent source.</p>
-            </div>
-            <ul className="company-list">
-              {unconfirmed.map(({ c, s }) => (
-                <li key={s.storyline_id} className="company-row">
-                  <div className="company-row-name"><b>{c.name}</b><span className="muted small">{s.story_type}</span></div>
-                  <a className="company-row-news" href={`#/story/${s.storyline_id}`}>{s.latest_headline}</a>
-                  <span className="muted small company-row-meta">{s.confirmed_text}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {inNews.length > 0 && (
-          <section className="section">
-            <div className="section-head">
-              <h2>Also in the news <span className="count">{inNews.length}</span></h2>
-              <p className="muted">Latest headline for companies mentioned in the news, with no developing story yet.</p>
-            </div>
-            <ul className="company-list">{inNews.map((c) => <CompanyRow key={c.ticker} company={c} />)}</ul>
-          </section>
-        )}
-
-        {quiet.length > 0 && (
-          <section className="section">
-            <div className="section-head">
-              <h2>No recent news <span className="count">{quiet.length}</span></h2>
-            </div>
-            <p className="muted small quiet">{quiet.map((c) => c.name).join(" · ")}</p>
-          </section>
-        )}
+      <State error={error} loading={loading && !data}
+             empty={data && rows.length === 0 && (
+               <p>No companies match. {eventsOnly && <button className="small" onClick={() => setEventsOnly(false)}>Show all companies</button>}</p>
+             )}>
+        <WatchlistTable rows={rows.slice(current * PAGE, current * PAGE + PAGE)} />
+        <div className="pager">
+          <span className="muted small">{current * PAGE + 1}–{Math.min(rows.length, current * PAGE + PAGE)} of {rows.length}</span>
+          <button className="small" disabled={current === 0} onClick={() => setPage(current - 1)}>← Previous</button>
+          <button className="small" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>Next →</button>
+        </div>
       </State>
     </>
   );

@@ -72,6 +72,10 @@ This follows how commercial news-analytics products work: premium wires plus sel
 - regulatory and legal action
 - product recalls
 - supply disruptions
+- cyber incidents (data breaches, outages)
+- job cuts
+
+All eight are covered by playbooks (taxonomy-v4). Each company also carries its GICS sector in `entities.json`, the standard industry classification financial users filter by.
 
 Firm-specific news that can be *identified* as a known event type explains far more stock volatility than unidentified news (Boudoukh, Feldman, Kogan & Richardson 2019). Other sentences are stored but do not open storylines.
 
@@ -91,6 +95,11 @@ Each playbook has a **link window**:
 | leadership_crisis | 60 days | Interim leaders are named at or soon after a departure; a permanent search can take months. 60 days captures the interim or announced successor without merging unrelated leadership news. |
 | product_safety | 90 days | Probes and lawsuits follow a recall by weeks to months. |
 | m_and_a | 90 days | Rumours that become deals are typically confirmed within about a quarter; after that the rumour is treated as faded. |
+| earnings_beat | 30 days | Forecast revisions and guidance updates land within weeks of a results release, inside one reporting cycle. |
+| earnings_miss | 30 days | Forecast cuts and follow-up guidance come within weeks of a results release. |
+| cyber_incident | 90 days | Regulator inquiries and class actions typically follow a breach disclosure by weeks to months. |
+| job_cuts | 30 days | Details (numbers, sites, costs) usually emerge within weeks of the first report. |
+| supply_disruption | 60 days | Supply problems tend to resolve or escalate (lost sales, guidance cuts) over one to two months. |
 
 **Calibration rule** (`methodology.json` → validation):
 - **Formula:** once a playbook has ≥ 20 observed gaps between stages, the suggested window is the **90th percentile of observed gaps × 1.25**.

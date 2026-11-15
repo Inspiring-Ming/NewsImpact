@@ -90,14 +90,14 @@ def create_app(services: Services | None = None) -> FastAPI:
 
     @app.get("/v1/companies", response_model=list[queries.CompanyCard])
     def companies() -> list[queries.CompanyCard]:
-        """Every company we follow: its stories, latest news and plain-English answers."""
+        """Every company we follow: sector, latest news, and its events with stock moves."""
         return queries.companies(svc)
 
-    @app.get("/v1/stories/{storyline_id}/summary", response_model=queries.CompanyCard)
-    def story_summary(storyline_id: str) -> queries.CompanyCard:
-        card = queries.story_summary(svc, storyline_id)
+    @app.get("/v1/events/{event_id}/summary", response_model=queries.CompanyCard)
+    def event_summary(event_id: str) -> queries.CompanyCard:
+        card = queries.event_summary(svc, event_id)
         if card is None:
-            raise HTTPException(404, "unknown story")
+            raise HTTPException(404, "unknown event")
         return card
 
     @app.get("/v1/monitor", response_model=MonitorStatus)

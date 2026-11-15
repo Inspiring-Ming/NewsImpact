@@ -67,7 +67,7 @@ export interface paths {
         };
         /**
          * Companies
-         * @description Every company we follow: its stories, latest news and plain-English answers.
+         * @description Every company we follow: sector, latest news, and its events with stock moves.
          */
         get: operations["companies_v1_companies_get"];
         put?: never;
@@ -127,6 +127,23 @@ export interface paths {
          * @description Analysis quality on the hand-labelled set (calls the LLM if a preset is on).
          */
         get: operations["evaluation_v1_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/events/{event_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Event Summary */
+        get: operations["event_summary_v1_events__event_id__summary_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -249,23 +266,6 @@ export interface paths {
         };
         /** Source Reliability */
         get: operations["source_reliability_v1_sources__source_id__reliability_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/stories/{storyline_id}/summary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Story Summary */
-        get: operations["story_summary_v1_stories__storyline_id__summary_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -527,17 +527,22 @@ export interface components {
              * @description stored articles that name the company
              */
             articles: number;
-            /** Benchmark Name */
-            benchmark_name: string;
             /** Country */
             country: string;
+            /** Events */
+            events: components["schemas"]["EventCard"][];
             /** Exchange */
             exchange: string;
+            /**
+             * Index Name
+             * @description the index the stock is compared with, e.g. S&P 500
+             */
+            index_name: string;
             latest_news: components["schemas"]["NewsItem"] | null;
             /** Name */
             name: string;
-            /** Stories */
-            stories: components["schemas"]["StoryCard"][];
+            /** Sector */
+            sector: string;
             /** Ticker */
             ticker: string;
         };
@@ -581,15 +586,55 @@ export interface components {
             /** Text */
             text: string;
         };
-        /** EventItem */
-        EventItem: {
+        /** EventCard */
+        EventCard: {
             /**
-             * Published At
-             * Format: date-time
+             * Actions
+             * @description what to watch or do next, most important first
              */
-            published_at: string;
-            /** Title */
-            title: string;
+            actions: string[];
+            /** Event Id */
+            event_id: string;
+            /**
+             * Event Type
+             * @description e.g. Leadership change, Earnings miss
+             */
+            event_type: string;
+            /** Latest Headline */
+            latest_headline: string;
+            /** Latest Source */
+            latest_source: string;
+            /** Ongoing */
+            ongoing: boolean;
+            /** Source Names */
+            source_names: string[];
+            /**
+             * Source Reliability
+             * @description average reliability of those sources, 0-1
+             */
+            source_reliability: number;
+            /**
+             * Sources
+             * @description independent news sources that reported the event
+             */
+            sources: number;
+            /**
+             * Stock Move
+             * @description stock return minus its index, e.g. -0.185
+             */
+            stock_move: number | null;
+            /**
+             * Stock Move Period
+             * @description e.g. '9-13 Nov'
+             */
+            stock_move_period: string;
+            /**
+             * Stock Move Unusual
+             * @description larger than on 19 of 20 normal trading days
+             */
+            stock_move_unusual: boolean;
+            /** Updates */
+            updates: components["schemas"]["UpdateItem"][];
         };
         /** ExpectedDecision */
         ExpectedDecision: {
@@ -737,13 +782,13 @@ export interface components {
         };
         /** NewsItem */
         NewsItem: {
-            /** Outlet */
-            outlet: string;
             /**
              * Published At
              * Format: date-time
              */
             published_at: string;
+            /** Source */
+            source: string;
             /** Title */
             title: string;
             /** Url */
@@ -1065,50 +1110,6 @@ export interface components {
             /** Stage Name */
             stage_name: string;
         };
-        /** StoryCard */
-        StoryCard: {
-            /**
-             * Confirmed
-             * @description yes | partly | no
-             */
-            confirmed: string;
-            /** Confirmed Text */
-            confirmed_text: string;
-            /** Events */
-            events: components["schemas"]["EventItem"][];
-            /**
-             * Evidence
-             * @description strong | partial | weak
-             */
-            evidence: string;
-            /** Evidence Text */
-            evidence_text: string;
-            /** Latest Headline */
-            latest_headline: string;
-            reaction: components["schemas"]["ChannelObservation"] | null;
-            /**
-             * Reaction Text
-             * @description e.g. '18.5% below the S&P 500 - an unusually large move'
-             */
-            reaction_text: string;
-            /**
-             * Status
-             * @description unfolding | escalating | settled
-             */
-            status: string;
-            /**
-             * Status Text
-             * @description e.g. 'Settled - new leader named'
-             */
-            status_text: string;
-            /**
-             * Story Type
-             * @description e.g. Leadership crisis
-             */
-            story_type: string;
-            /** Storyline Id */
-            storyline_id: string;
-        };
         /** Storyline */
         Storyline: {
             /** Current Stage */
@@ -1181,6 +1182,16 @@ export interface components {
          * @enum {string}
          */
         StorylineStatus: "developing" | "escalating" | "resolved";
+        /** UpdateItem */
+        UpdateItem: {
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Title */
+            title: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -1379,6 +1390,37 @@ export interface operations {
             };
         };
     };
+    event_summary_v1_events__event_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyCard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     impact_for_ticker_v1_impact__ticker__get: {
         parameters: {
             query?: never;
@@ -1530,37 +1572,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReliabilityScore"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    story_summary_v1_stories__storyline_id__summary_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                storyline_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompanyCard"];
                 };
             };
             /** @description Validation Error */

@@ -1,12 +1,12 @@
 {
   "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions).",
-  "version": "playbooks-v0.6",
+  "version": "playbooks-v0.7",
   "late_report_days": 3,
   "late_report_why": "Outlets publish the same events in a different order than they happened (e.g. 'interim CEO in charge' before the resignation story). A resolved story therefore still absorbs reports of its earlier stages published within 3 days of its latest stage; later ones start a new story. 3 days covers same-week reporting across time zones (US and Australian outlets) without merging a new crisis weeks later.",
   "playbooks": [
     {
       "theme": "leadership_crisis",
-      "title": "Leadership crisis",
+      "title": "Leadership change",
       "description": "Leader under pressure (misconduct report or public apology), then departure, then succession. Stages can follow within days (e.g. a conduct report and a resignation in the same week).",
       "link_window_days": 60,
       "window_basis": "judgment prior",
@@ -264,7 +264,7 @@
     },
     {
       "theme": "m_and_a",
-      "title": "Takeover / merger",
+      "title": "Takeover",
       "description": "Deal speculation to confirmed transaction.",
       "link_window_days": 90,
       "window_basis": "judgment prior",
@@ -328,6 +328,292 @@
               "market_channel": "price",
               "expected_direction": "down",
               "horizon": "days"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "earnings_beat",
+      "title": "Earnings beat",
+      "description": "Results or guidance better than expected.",
+      "link_window_days": 30,
+      "window_basis": "judgment prior",
+      "window_why": "Analysts revise forecasts and guidance updates land within weeks of a results release, inside one reporting cycle.",
+      "triggers": [
+        "earnings_positive"
+      ],
+      "stages": [
+        {
+          "name": "results_beat",
+          "title": "Results beat expectations",
+          "event_types": [
+            "earnings_positive"
+          ],
+          "follow_up_terms": [
+            "raises guidance",
+            "upgrade",
+            "price target"
+          ],
+          "resolves": false,
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "buy more shares",
+              "market_channel": "price",
+              "expected_direction": "up",
+              "horizon": "days"
+            },
+            {
+              "actor": "sell_side_analysts",
+              "decision": "raise their profit forecasts",
+              "market_channel": "analyst_revisions",
+              "expected_direction": "up",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "retail_investors",
+              "decision": "pay closer attention",
+              "market_channel": "volume",
+              "expected_direction": "up",
+              "horizon": "days"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "earnings_miss",
+      "title": "Earnings miss",
+      "description": "Results or guidance worse than expected.",
+      "link_window_days": 30,
+      "window_basis": "judgment prior",
+      "window_why": "Forecast cuts and follow-up guidance come within weeks of a results release, inside one reporting cycle.",
+      "triggers": [
+        "earnings_negative"
+      ],
+      "stages": [
+        {
+          "name": "results_miss",
+          "title": "Results miss expectations",
+          "event_types": [
+            "earnings_negative"
+          ],
+          "follow_up_terms": [
+            "cuts guidance",
+            "downgrade",
+            "price target"
+          ],
+          "resolves": false,
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "sell shares",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            },
+            {
+              "actor": "sell_side_analysts",
+              "decision": "cut their profit forecasts",
+              "market_channel": "analyst_revisions",
+              "expected_direction": "down",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "retail_investors",
+              "decision": "pay closer attention",
+              "market_channel": "volume",
+              "expected_direction": "up",
+              "horizon": "days"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "cyber_incident",
+      "title": "Cyber incident",
+      "description": "A data breach or major outage, which can lead to regulators and lawsuits.",
+      "link_window_days": 90,
+      "window_basis": "judgment prior",
+      "window_why": "Regulator inquiries and class actions typically follow a breach disclosure by weeks to months.",
+      "triggers": [
+        "data_breach"
+      ],
+      "stages": [
+        {
+          "name": "breach_disclosed",
+          "title": "Breach or outage reported",
+          "event_types": [
+            "data_breach"
+          ],
+          "follow_up_terms": [
+            "regulator",
+            "investigation",
+            "class action",
+            "lawsuit"
+          ],
+          "resolves": false,
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "sell shares until the damage is known",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            },
+            {
+              "actor": "options_market",
+              "decision": "pay more to protect against big price moves",
+              "market_channel": "volatility",
+              "expected_direction": "up",
+              "horizon": "days"
+            },
+            {
+              "actor": "customers_partners",
+              "decision": "review whether to keep using the company",
+              "market_channel": null,
+              "expected_direction": "uncertain",
+              "horizon": "weeks"
+            }
+          ]
+        },
+        {
+          "name": "regulatory_action",
+          "title": "Regulator steps in",
+          "event_types": [
+            "regulatory_action"
+          ],
+          "follow_up_terms": [
+            "class action",
+            "lawsuit",
+            "sued"
+          ],
+          "resolves": false,
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "expect fines",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            }
+          ]
+        },
+        {
+          "name": "litigation",
+          "title": "Lawsuit filed",
+          "event_types": [
+            "litigation"
+          ],
+          "follow_up_terms": [],
+          "resolves": false,
+          "decisions": [
+            {
+              "actor": "board",
+              "decision": "set money aside for legal costs",
+              "market_channel": null,
+              "expected_direction": "uncertain",
+              "horizon": "months"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "job_cuts",
+      "title": "Job cuts",
+      "description": "Layoffs or a restructuring.",
+      "link_window_days": 30,
+      "window_basis": "judgment prior",
+      "window_why": "Details of job cuts (numbers, sites, costs) usually emerge within weeks of the first report.",
+      "triggers": [
+        "job_cuts"
+      ],
+      "stages": [
+        {
+          "name": "cuts_announced",
+          "title": "Job cuts announced",
+          "event_types": [
+            "job_cuts"
+          ],
+          "follow_up_terms": [
+            "restructuring",
+            "charge",
+            "savings"
+          ],
+          "resolves": false,
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "weigh cost savings against weaker demand",
+              "market_channel": "price",
+              "expected_direction": "uncertain",
+              "horizon": "days"
+            },
+            {
+              "actor": "retail_investors",
+              "decision": "pay closer attention",
+              "market_channel": "volume",
+              "expected_direction": "up",
+              "horizon": "days"
+            },
+            {
+              "actor": "customers_partners",
+              "decision": "watch for service disruptions",
+              "market_channel": null,
+              "expected_direction": "uncertain",
+              "horizon": "months"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "supply_disruption",
+      "title": "Supply disruption",
+      "description": "Production or deliveries are disrupted.",
+      "link_window_days": 60,
+      "window_basis": "judgment prior",
+      "window_why": "Supply problems tend to resolve or escalate (lost sales, guidance cuts) over one to two months.",
+      "triggers": [
+        "supply_disruption"
+      ],
+      "stages": [
+        {
+          "name": "disruption",
+          "title": "Supply disrupted",
+          "event_types": [
+            "supply_disruption"
+          ],
+          "follow_up_terms": [
+            "guidance",
+            "resumes production",
+            "shortage"
+          ],
+          "resolves": false,
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "expect lower sales",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            },
+            {
+              "actor": "customers_partners",
+              "decision": "switch to other suppliers",
+              "market_channel": null,
+              "expected_direction": "uncertain",
+              "horizon": "months"
+            },
+            {
+              "actor": "competitors",
+              "decision": "win customers who switch",
+              "market_channel": "peer_spillover",
+              "expected_direction": "up",
+              "horizon": "weeks"
             }
           ]
         }

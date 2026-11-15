@@ -18,7 +18,7 @@ export function App() {
   const hash = useHash();
   const [refreshKey, setRefreshKey] = useState(0);
   const { route, params } = match(hash);
-  const navActive = (href?: string) => (href === "#/" ? route === ROUTES[0] || hash.startsWith("#/story") : hash === href);
+  const navActive = (href?: string) => (href === "#/" ? route === ROUTES[0] || hash.startsWith("#/event") : hash === href);
   return (
     <div className="app">
       <header className="topbar">

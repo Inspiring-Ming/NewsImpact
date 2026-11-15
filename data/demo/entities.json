@@ -8,7 +8,8 @@
    "aliases": [
     "Acme Semiconductors",
     "Acme"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "GLBX",
@@ -17,7 +18,8 @@
    "aliases": [
     "Globex Motors",
     "Globex"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   },
   {
    "ticker": "HLXC",
@@ -26,7 +28,8 @@
    "aliases": [
     "Helix Cloud",
     "Helix"
-   ]
+   ],
+   "sector": "Information Technology"
   },
   {
    "ticker": "ORBT",
@@ -34,7 +37,8 @@
    "country": "US",
    "aliases": [
     "Orbit Auto"
-   ]
+   ],
+   "sector": "Consumer Discretionary"
   }
  ]
 }

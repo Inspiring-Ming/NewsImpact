@@ -350,16 +350,24 @@
             "title": "Articles",
             "type": "integer"
           },
-          "benchmark_name": {
-            "title": "Benchmark Name",
-            "type": "string"
-          },
           "country": {
             "title": "Country",
             "type": "string"
           },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventCard"
+            },
+            "title": "Events",
+            "type": "array"
+          },
           "exchange": {
             "title": "Exchange",
+            "type": "string"
+          },
+          "index_name": {
+            "description": "the index the stock is compared with, e.g. S&P 500",
+            "title": "Index Name",
             "type": "string"
           },
           "latest_news": {
@@ -376,12 +384,9 @@
             "title": "Name",
             "type": "string"
           },
-          "stories": {
-            "items": {
-              "$ref": "#/components/schemas/StoryCard"
-            },
-            "title": "Stories",
-            "type": "array"
+          "sector": {
+            "title": "Sector",
+            "type": "string"
           },
           "ticker": {
             "title": "Ticker",
@@ -392,11 +397,12 @@
           "ticker",
           "name",
           "country",
+          "sector",
           "exchange",
-          "benchmark_name",
+          "index_name",
           "articles",
           "latest_news",
-          "stories"
+          "events"
         ],
         "title": "CompanyCard",
         "type": "object"
@@ -520,24 +526,101 @@
         "title": "EvaluationMiss",
         "type": "object"
       },
-      "EventItem": {
+      "EventCard": {
         "additionalProperties": false,
         "properties": {
-          "published_at": {
-            "format": "date-time",
-            "title": "Published At",
+          "actions": {
+            "description": "what to watch or do next, most important first",
+            "items": {
+              "type": "string"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "event_id": {
+            "title": "Event Id",
             "type": "string"
           },
-          "title": {
-            "title": "Title",
+          "event_type": {
+            "description": "e.g. Leadership change, Earnings miss",
+            "title": "Event Type",
             "type": "string"
+          },
+          "latest_headline": {
+            "title": "Latest Headline",
+            "type": "string"
+          },
+          "latest_source": {
+            "title": "Latest Source",
+            "type": "string"
+          },
+          "ongoing": {
+            "title": "Ongoing",
+            "type": "boolean"
+          },
+          "source_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Names",
+            "type": "array"
+          },
+          "source_reliability": {
+            "description": "average reliability of those sources, 0-1",
+            "title": "Source Reliability",
+            "type": "number"
+          },
+          "sources": {
+            "description": "independent news sources that reported the event",
+            "title": "Sources",
+            "type": "integer"
+          },
+          "stock_move": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "stock return minus its index, e.g. -0.185",
+            "title": "Stock Move"
+          },
+          "stock_move_period": {
+            "description": "e.g. '9-13 Nov'",
+            "title": "Stock Move Period",
+            "type": "string"
+          },
+          "stock_move_unusual": {
+            "description": "larger than on 19 of 20 normal trading days",
+            "title": "Stock Move Unusual",
+            "type": "boolean"
+          },
+          "updates": {
+            "items": {
+              "$ref": "#/components/schemas/UpdateItem"
+            },
+            "title": "Updates",
+            "type": "array"
           }
         },
         "required": [
-          "title",
-          "published_at"
+          "event_id",
+          "event_type",
+          "ongoing",
+          "updates",
+          "latest_headline",
+          "latest_source",
+          "stock_move",
+          "stock_move_unusual",
+          "stock_move_period",
+          "sources",
+          "source_names",
+          "source_reliability",
+          "actions"
         ],
-        "title": "EventItem",
+        "title": "EventCard",
         "type": "object"
       },
       "ExpectedDecision": {
@@ -876,13 +959,13 @@
       "NewsItem": {
         "additionalProperties": false,
         "properties": {
-          "outlet": {
-            "title": "Outlet",
-            "type": "string"
-          },
           "published_at": {
             "format": "date-time",
             "title": "Published At",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
             "type": "string"
           },
           "title": {
@@ -897,7 +980,7 @@
         "required": [
           "title",
           "url",
-          "outlet",
+          "source",
           "published_at"
         ],
         "title": "NewsItem",
@@ -1531,90 +1614,6 @@
         "title": "StageCheck",
         "type": "object"
       },
-      "StoryCard": {
-        "additionalProperties": false,
-        "properties": {
-          "confirmed": {
-            "description": "yes | partly | no",
-            "title": "Confirmed",
-            "type": "string"
-          },
-          "confirmed_text": {
-            "title": "Confirmed Text",
-            "type": "string"
-          },
-          "events": {
-            "items": {
-              "$ref": "#/components/schemas/EventItem"
-            },
-            "title": "Events",
-            "type": "array"
-          },
-          "evidence": {
-            "description": "strong | partial | weak",
-            "title": "Evidence",
-            "type": "string"
-          },
-          "evidence_text": {
-            "title": "Evidence Text",
-            "type": "string"
-          },
-          "latest_headline": {
-            "title": "Latest Headline",
-            "type": "string"
-          },
-          "reaction": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ChannelObservation"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "reaction_text": {
-            "description": "e.g. '18.5% below the S&P 500 - an unusually large move'",
-            "title": "Reaction Text",
-            "type": "string"
-          },
-          "status": {
-            "description": "unfolding | escalating | settled",
-            "title": "Status",
-            "type": "string"
-          },
-          "status_text": {
-            "description": "e.g. 'Settled - new leader named'",
-            "title": "Status Text",
-            "type": "string"
-          },
-          "story_type": {
-            "description": "e.g. Leadership crisis",
-            "title": "Story Type",
-            "type": "string"
-          },
-          "storyline_id": {
-            "title": "Storyline Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "storyline_id",
-          "story_type",
-          "status",
-          "status_text",
-          "events",
-          "latest_headline",
-          "reaction",
-          "reaction_text",
-          "confirmed",
-          "confirmed_text",
-          "evidence",
-          "evidence_text"
-        ],
-        "title": "StoryCard",
-        "type": "object"
-      },
       "Storyline": {
         "additionalProperties": false,
         "properties": {
@@ -1755,6 +1754,26 @@
         ],
         "title": "StorylineStatus",
         "type": "string"
+      },
+      "UpdateItem": {
+        "additionalProperties": false,
+        "properties": {
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "published_at"
+        ],
+        "title": "UpdateItem",
+        "type": "object"
       },
       "ValidationError": {
         "properties": {
@@ -1953,7 +1972,7 @@
     },
     "/v1/companies": {
       "get": {
-        "description": "Every company we follow: its stories, latest news and plain-English answers.",
+        "description": "Every company we follow: sector, latest news, and its events with stock moves.",
         "operationId": "companies_v1_companies_get",
         "responses": {
           "200": {
@@ -2036,6 +2055,45 @@
           }
         },
         "summary": "Evaluation"
+      }
+    },
+    "/v1/events/{event_id}/summary": {
+      "get": {
+        "operationId": "event_summary_v1_events__event_id__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCard"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Event Summary"
       }
     },
     "/v1/impact/{ticker}": {
@@ -2223,45 +2281,6 @@
           }
         },
         "summary": "Source Reliability"
-      }
-    },
-    "/v1/stories/{storyline_id}/summary": {
-      "get": {
-        "operationId": "story_summary_v1_stories__storyline_id__summary_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "storyline_id",
-            "required": true,
-            "schema": {
-              "title": "Storyline Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanyCard"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Story Summary"
       }
     },
     "/v1/storylines": {

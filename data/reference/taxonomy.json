@@ -1,6 +1,6 @@
 {
   "_note": "What semantics looks for. Edit this file to add event types, aspects or word lists; no code change. Event types are checked in order, first match wins (put specific ones first). 'speculative': true/false restricts a type to hedged/unhedged sentences. Every playbook trigger must be an event type here (checked at start-up). The same file can drive an LLM analyzer's labels. 'background' words mark a sentence as history, not news (no trigger). 'attribution' says where a claim comes from, so copies and re-reports are not counted as independent confirmation.",
-  "version": "taxonomy-v3",
+  "version": "taxonomy-v4",
   "event_types": [
     {
       "name": "m_and_a_rumor",
@@ -18,6 +18,16 @@
       "name": "product_recall",
       "description": "Products withdrawn for safety or quality",
       "patterns": ["recall"]
+    },
+    {
+      "name": "data_breach",
+      "description": "A cyberattack, data breach or major system outage",
+      "patterns": ["data breach", "cyberattack", "cyber attack", "cyber-attack", "ransomware", "hackers", "was hacked", "security breach", "major outage"]
+    },
+    {
+      "name": "job_cuts",
+      "description": "Layoffs, job cuts or a restructuring",
+      "patterns": ["job cuts", "cut jobs", "to cut about", "layoffs", "lay off", "redundancies", "restructuring plan", "cut its workforce", "cut workforce"]
     },
     {
       "name": "leadership_departure",

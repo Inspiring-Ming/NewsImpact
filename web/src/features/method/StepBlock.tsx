@@ -1,22 +1,20 @@
-// One part of the method, explained the same way every time: what we do, the rule, the evidence.
+// One part of the method, laid out the same way every time: the rule, then the data behind it.
 import type { ReactNode } from "react";
 
-export function StepBlock({ title, term, what, rules, children }: {
-  title: string; term: string; what: string; rules: ReactNode[]; children: ReactNode;
+export function StepBlock({ title, term, rules, children }: {
+  title: string; term: string; rules: ReactNode[]; children: ReactNode;
 }) {
   return (
     <section className="step-block">
       <h2>{title}</h2>
-      <p className="muted small">Also known as: {term}</p>
+      <p className="muted small">Research term: {term}</p>
       <div className="step-block-body">
         <div>
-          <h3>What we do</h3>
-          <p>{what}</p>
-          <h3>The rule</h3>
+          <h3>How we decide</h3>
           <ul className="rules">{rules.map((r, i) => <li key={i}>{r}</li>)}</ul>
         </div>
         <div>
-          <h3>The evidence</h3>
+          <h3>The data</h3>
           {children}
         </div>
       </div>

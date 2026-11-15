@@ -6,22 +6,6 @@ export function Pill({ tone = "neutral", children }: { tone?: Tone; children: Re
   return <span className={`pill ${tone}`}>{children}</span>;
 }
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`card ${className}`}>{children}</div>;
-}
-
-export function Section({ title, hint, children }: { title: string; hint?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="section">
-      <div className="section-head">
-        <h2>{title}</h2>
-        {hint && <p className="muted">{hint}</p>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 export function Fact({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: Tone }) {
   return (
     <div className="fact">

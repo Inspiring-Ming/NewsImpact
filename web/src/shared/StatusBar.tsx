@@ -30,7 +30,7 @@ export function StatusBar({ onChanged }: { onChanged: () => void }) {
       {empty ? (
         <button className="small primary" disabled={busy} onClick={() => act(api.loadDemo)}>{busy ? "Loading…" : "Load demo"}</button>
       ) : (
-        <button className="small" disabled={busy || !o} onClick={() => act(api.runRound)} title="Read the latest news, update stories and re-check stock reactions">
+        <button className="small" disabled={busy || !o} onClick={() => act(api.runRound)} title="Read the latest news, update events and re-check stock reactions">
           {busy ? "Checking…" : "Check for news"}
         </button>
       )}

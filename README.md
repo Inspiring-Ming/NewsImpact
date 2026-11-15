@@ -35,15 +35,17 @@ To watch the real outlets, copy `.env.example` to `.env` and set these values:
 
 ## The website
 
-What it tells a visitor: **when news about a company turns into a developing story, is it confirmed, and how did the stock react?**
+What it tells a visitor: **which companies have a market-moving event right now, how far the stock moved against its index, and how many sources back the news?**
 
 | Page | What it shows |
 |---|---|
-| **Companies** (home) | Every company we follow (US and Australia). **Developing stories** first: each card shows the latest headline, the story so far as dated events, and four plain answers — status, stock reaction against its index (S&P 500 or ASX 200), whether the news is confirmed, and the strength of the evidence. **Waiting for confirmation** lists possible stories from a single outlet. **Also in the news** gives the latest headline per company, and **No recent news** lists the rest. |
-| **Story** (opens from a card) | In short · What happened · How the stock reacted · Who was expected to react, and did they? · For analysts (statistics). |
-| **How it works** | Four tabs named after the industry or research method each follows: News sources (source credibility), Story tracking (event detection), Expected reactions (behavioural finance), Market reaction check (event study). Each tab gives what we do, the rule with its real numbers, and the live evidence. |
+| **Watchlist** (home) | Four key numbers (companies tracked, events, unusual stock moves, news sources), filters (market, GICS sector, with events / all, search) and one compact table, 12 rows per page: Company · Sector · Latest event · Stock vs index (e.g. "−18.5% vs S&P 500 · Unusual move") · Sources (count and average reliability). |
+| **Event** (opens from a row) | Key numbers, then tabs: **Overview** (share price vs index chart + suggested actions) · **Updates** (each dated update and its sources) · **Expected vs actual** (one grid: updates × share price / trading volume / price swings, each cell with the expected direction, the measured value and ✓ / ✗) · **Analyst data** (statistics and how to reproduce them). |
+| **How it works** | Three tabs: News sources, Event detection, Market reaction. Each gives *How we decide* (the rule with its real numbers) and *The data* (live evidence). |
 
-The plain-English answers are written once by the API (`/v1/companies`), so the website and any integration use the same words. Names come from the data files: company names and countries from `entities.json`, story and event titles from `playbooks.json`, outlet names from `sources.json`.
+Event types: Leadership change, Product safety, Takeover, Earnings beat, Earnings miss, Cyber incident, Job cuts, Supply disruption. Each event is a chain of dated **updates** (e.g. Leader under pressure → Leader steps down → New leader named).
+
+The plain-English answers are written once by the API (`/v1/companies`, `/v1/events/{id}/summary`), so the website and any integration use the same words. Names come from the data files: company names, countries and GICS sectors from `entities.json`, event and update titles from `playbooks.json`, source names from `sources.json`.
 
 ## How it works: seven modules, in the order news flows
 
