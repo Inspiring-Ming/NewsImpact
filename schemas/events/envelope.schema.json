@@ -1,0 +1,70 @@
+{
+  "properties": {
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "traces one article end-to-end",
+      "title": "Correlation Id"
+    },
+    "data": {
+      "additionalProperties": true,
+      "title": "Data",
+      "type": "object"
+    },
+    "datacontenttype": {
+      "default": "application/json",
+      "title": "Datacontenttype",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "source": {
+      "description": "publishing module, e.g. /sources",
+      "title": "Source",
+      "type": "string"
+    },
+    "specversion": {
+      "default": "1.0",
+      "title": "Specversion",
+      "type": "string"
+    },
+    "tenant_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "client tenant (multi-tenant ready)",
+      "title": "Tenant Id"
+    },
+    "time": {
+      "format": "date-time",
+      "title": "Time",
+      "type": "string"
+    },
+    "type": {
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source",
+    "type",
+    "data"
+  ],
+  "title": "EventEnvelope",
+  "type": "object"
+}

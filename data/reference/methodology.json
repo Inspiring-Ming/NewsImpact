@@ -1,0 +1,83 @@
+{
+  "_note": "Every number used to measure market reactions and to draw conclusions, with the reason for it. Change a value here (and bump version) rather than in code; each assessment records this file's hash. See docs/07-coverage-and-settings.md.",
+  "version": "methodology-v1",
+  "market": {
+    "estimation_days": 120,
+    "gap_days": 10,
+    "windows": {
+      "price": [
+        0,
+        1
+      ],
+      "volume": [
+        0,
+        2
+      ],
+      "volatility": [
+        0,
+        4
+      ]
+    },
+    "significance_z": 1.96,
+    "rationale": {
+      "estimation_days": "Normal behaviour (alpha, beta, residual noise) is estimated on 120 trading days (~6 months), within the 120-250 day range common in the event-study literature (MacKinlay 1997): long enough for a stable beta, short enough to reflect the current business.",
+      "gap_days": "10 trading days between the estimation window and the event keep pre-event leakage and drift out of 'normal' behaviour.",
+      "windows.price": "Day 0 and +1: most of the price response to firm-specific news happens within a day or two; +1 also catches news released late in the session.",
+      "windows.volume": "Days 0 to +2: trading activity stays elevated slightly longer than prices as investors rebalance.",
+      "windows.volatility": "Days 0 to +4 (one trading week): uncertainty takes longer to settle than the price level, and a variance estimate needs a few days.",
+      "significance_z": "|z| >= 1.96 is a two-sided 5% test: a move this large happens on about 1 normal day in 20.",
+      "exchanges": "Each company is measured on its home exchange. News published after that exchange's 16:00 close can only be traded on its next session, so the event day moves forward (New York for US listings, Sydney for ASX). Benchmarks: SPY (S&P 500 ETF) for US large caps; STW (SPDR S&P/ASX 200 ETF) for ASX companies - the market factor each stock is compared against.",
+      "ticker_suffixes": "Tickers carry their exchange: 'BHP.AX' is ASX, a bare ticker is US. vendor_suffix maps this to the price vendor's codes (EODHD: .US, .AU)."
+    },
+    "exchanges": {
+      "US": {
+        "timezone": "America/New_York",
+        "close": "16:00",
+        "benchmark": "SPY",
+        "vendor_suffix": ".US"
+      },
+      "ASX": {
+        "timezone": "Australia/Sydney",
+        "close": "16:00",
+        "benchmark": "STW.AX",
+        "vendor_suffix": ".AU"
+      }
+    },
+    "ticker_suffixes": {
+      ".AX": "ASX"
+    },
+    "default_exchange": "US"
+  },
+  "validation": {
+    "confirming_origins": 3,
+    "corroborating_origins": 2,
+    "high_support": 0.6,
+    "medium_support": 0.4,
+    "min_events_for_calibration": 20,
+    "rationale": {
+      "confirming_origins": "Three independent origins (not three copies) make a coordinated error unlikely; a filing or the company's own statement confirms on its own.",
+      "corroborating_origins": "Two independent origins is the classic journalistic standard for corroboration.",
+      "high_support": "'High' needs the market to confirm a clear majority (>= 60%) of the measurable expectations.",
+      "medium_support": "Below 40% the playbook's expectations are mostly not borne out, so confidence cannot be more than low.",
+      "min_events_for_calibration": "Brown & Warner (1985) study event-study tests on samples of 50 events; below ~20 a single outlier dominates the average, so results from fewer events are shown as 'indicative' only. The same minimum applies before a link window is replaced by a calibrated one.",
+      "window_quantile": "A storyline's link window should cover the time to the next stage in most observed cases: the 90th percentile of observed gaps between stages.",
+      "window_margin": "+25% on top of that percentile, because small samples underestimate the tail and a slightly long window costs little (a few extra searches).",
+      "significance_z": "Same two-sided 5% threshold as for single events, applied to the cross-sectional (BMP) statistic.",
+      "overlap_trading_days": "Stages closer than the longest measurement window (volatility, day 0 to +4) share trading days, so their separate reactions cannot be told apart. Example: a leader's misconduct story and resignation within a week. The assessment then also reports one combined reaction for the whole sequence."
+    },
+    "window_quantile": 0.9,
+    "window_margin": 1.25,
+    "significance_z": 1.96,
+    "overlap_trading_days": 4
+  },
+  "sources": {
+    "near_duplicate_jaccard": 0.8,
+    "near_duplicate_days": 3,
+    "copy_novelty": 0.2,
+    "rationale": {
+      "near_duplicate_jaccard": "Two articles sharing >= 80% of their 5-word shingles are treated as copies (syndication or light rewrites); the shingle-resemblance method is Broder (1997).",
+      "near_duplicate_days": "Copies of wire stories appear within hours to a few days; comparing against 3 days of articles keeps the check cheap.",
+      "copy_novelty": "Re-printed news is not new information (Tetlock 2011: investors over-react to stale news, which then reverses), so copies count at 20% of a fresh report in impact."
+    }
+  }
+}

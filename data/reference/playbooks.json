@@ -1,0 +1,326 @@
+{
+  "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md).",
+  "version": "playbooks-v0.4",
+  "late_report_days": 3,
+  "late_report_why": "Outlets publish the same events in a different order than they happened (e.g. 'interim CEO in charge' before the resignation story). A resolved story therefore still absorbs reports of its earlier stages published within 3 days of its latest stage; later ones start a new story. 3 days covers same-week reporting across time zones (US and Australian outlets) without merging a new crisis weeks later.",
+  "playbooks": [
+    {
+      "theme": "leadership_crisis",
+      "description": "Leader under pressure (misconduct report or public apology), then departure, then succession. Stages can follow within days (e.g. a conduct report and a resignation in the same week).",
+      "link_window_days": 60,
+      "window_basis": "judgment prior",
+      "window_why": "Interim leaders are usually named at or soon after a departure, while a permanent successor search can take months. 60 days links the departure to an interim or announced successor without merging unrelated leadership news months later. Fast sequences (pressure to resignation within a week, interim CEO the same day) are common; they stay in one story and their overlapping reactions are measured together (methodology.json overlap_trading_days).",
+      "triggers": [
+        "leadership_misconduct",
+        "leadership_apology",
+        "leadership_departure"
+      ],
+      "stages": [
+        {
+          "name": "public_pressure",
+          "event_types": [
+            "leadership_misconduct",
+            "leadership_apology"
+          ],
+          "follow_up_terms": [
+            "apology",
+            "apologizes",
+            "apologises",
+            "open letter",
+            "affair",
+            "misconduct",
+            "allegations"
+          ],
+          "decisions": [
+            {
+              "actor": "retail_investors",
+              "decision": "reassess trust in management; attention spikes",
+              "market_channel": "volume",
+              "expected_direction": "up",
+              "horizon": "days"
+            },
+            {
+              "actor": "institutional_investors",
+              "decision": "buy downside protection while facts are unclear",
+              "market_channel": "volatility",
+              "expected_direction": "up",
+              "horizon": "days"
+            },
+            {
+              "actor": "sell_side_analysts",
+              "decision": "flag governance risk, usually hold ratings pending facts",
+              "market_channel": "analyst_revisions",
+              "expected_direction": "uncertain",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "board",
+              "decision": "commission an internal review",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "board",
+              "decision": "open an investigation into the leader's conduct",
+              "market_channel": null,
+              "expected_direction": "uncertain",
+              "horizon": "days"
+            }
+          ]
+        },
+        {
+          "name": "leader_departure",
+          "event_types": [
+            "leadership_departure"
+          ],
+          "follow_up_terms": [
+            "steps down",
+            "step down",
+            "resigns",
+            "resignation"
+          ],
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "re-underwrite the investment case; some reduce exposure",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            },
+            {
+              "actor": "options_market",
+              "decision": "price higher event risk",
+              "market_channel": "volatility",
+              "expected_direction": "up",
+              "horizon": "days"
+            },
+            {
+              "actor": "sell_side_analysts",
+              "decision": "revise ratings and targets for key-person risk",
+              "market_channel": "analyst_revisions",
+              "expected_direction": "down",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "customers_partners",
+              "decision": "review strategic commitments and contracts",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "competitors",
+              "decision": "target talent and customers during the transition",
+              "market_channel": "peer_spillover",
+              "expected_direction": "uncertain",
+              "horizon": "weeks"
+            }
+          ]
+        },
+        {
+          "name": "succession",
+          "event_types": [
+            "leadership_appointment"
+          ],
+          "follow_up_terms": [
+            "new CEO",
+            "interim CEO",
+            "successor",
+            "appoints",
+            "new chief executive"
+          ],
+          "resolves": true,
+          "decisions": [
+            {
+              "actor": "all_investors",
+              "decision": "uncertainty resolves; reposition on successor quality",
+              "market_channel": "volatility",
+              "expected_direction": "down",
+              "horizon": "days"
+            },
+            {
+              "actor": "credit_investors",
+              "decision": "reassess governance premium",
+              "market_channel": "credit_spreads",
+              "expected_direction": "uncertain",
+              "horizon": "weeks"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "product_safety",
+      "description": "Product defect escalating from recall to regulatory action to litigation.",
+      "link_window_days": 90,
+      "window_basis": "judgment prior",
+      "window_why": "Regulator probes and lawsuits tend to follow a recall by weeks to months rather than days, so a shorter window would split one safety story into several.",
+      "triggers": [
+        "product_recall"
+      ],
+      "stages": [
+        {
+          "name": "recall",
+          "event_types": [
+            "product_recall"
+          ],
+          "follow_up_terms": [
+            "recall"
+          ],
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "estimate warranty and remediation costs",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            },
+            {
+              "actor": "sell_side_analysts",
+              "decision": "cut earnings estimates",
+              "market_channel": "analyst_revisions",
+              "expected_direction": "down",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "consumers",
+              "decision": "delay or switch purchases",
+              "horizon": "months"
+            },
+            {
+              "actor": "competitors",
+              "decision": "capture switching demand",
+              "market_channel": "peer_spillover",
+              "expected_direction": "up",
+              "horizon": "weeks"
+            }
+          ]
+        },
+        {
+          "name": "regulatory_action",
+          "event_types": [
+            "regulatory_action"
+          ],
+          "follow_up_terms": [
+            "regulator",
+            "investigation",
+            "probe"
+          ],
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "price in fines and remediation orders",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            },
+            {
+              "actor": "credit_investors",
+              "decision": "demand higher spread for legal tail risk",
+              "market_channel": "credit_spreads",
+              "expected_direction": "up",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "options_market",
+              "decision": "price outcome uncertainty",
+              "market_channel": "volatility",
+              "expected_direction": "up",
+              "horizon": "days"
+            }
+          ]
+        },
+        {
+          "name": "litigation",
+          "event_types": [
+            "litigation"
+          ],
+          "follow_up_terms": [
+            "lawsuit",
+            "class action",
+            "sued"
+          ],
+          "decisions": [
+            {
+              "actor": "institutional_investors",
+              "decision": "provision for liabilities",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "management",
+              "decision": "set legal provisions; may cut buybacks",
+              "horizon": "months"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "m_and_a",
+      "description": "Deal speculation to confirmed transaction.",
+      "link_window_days": 90,
+      "window_basis": "judgment prior",
+      "window_why": "Deal rumours that become deals are typically confirmed within about a quarter; after that we treat the rumour as faded and a new report starts a new story.",
+      "triggers": [
+        "m_and_a_rumor",
+        "m_and_a_announced"
+      ],
+      "stages": [
+        {
+          "name": "rumour",
+          "event_types": [
+            "m_and_a_rumor"
+          ],
+          "follow_up_terms": [
+            "reportedly",
+            "talks",
+            "considering"
+          ],
+          "decisions": [
+            {
+              "actor": "event_driven_funds",
+              "decision": "buy the potential target weighted by deal probability",
+              "market_channel": "price",
+              "expected_direction": "up",
+              "horizon": "days"
+            },
+            {
+              "actor": "options_market",
+              "decision": "bid up short-dated calls",
+              "market_channel": "volatility",
+              "expected_direction": "up",
+              "horizon": "days"
+            }
+          ]
+        },
+        {
+          "name": "announcement",
+          "event_types": [
+            "m_and_a_announced"
+          ],
+          "follow_up_terms": [
+            "agreed to acquire",
+            "definitive agreement",
+            "to buy"
+          ],
+          "resolves": true,
+          "decisions": [
+            {
+              "actor": "merger_arbitrageurs",
+              "decision": "long target / short acquirer",
+              "market_channel": "price",
+              "expected_direction": "uncertain",
+              "horizon": "weeks"
+            },
+            {
+              "actor": "acquirer_shareholders",
+              "decision": "judge overpayment risk",
+              "market_channel": "price",
+              "expected_direction": "down",
+              "horizon": "days"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

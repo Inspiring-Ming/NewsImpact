@@ -1,0 +1,25 @@
+{
+  "_note": "FICTIONAL companies, people, outlets, news and prices - demo/testing only. How many past claims of each outlet held up (supported) or were retracted (refuted).",
+  "track_record": [
+    {
+      "source_id": "wire-alpha",
+      "supported": 45,
+      "refuted": 2
+    },
+    {
+      "source_id": "daily-markets",
+      "supported": 30,
+      "refuted": 6
+    },
+    {
+      "source_id": "rumor-blog",
+      "supported": 4,
+      "refuted": 9
+    },
+    {
+      "source_id": "globex-ir",
+      "supported": 12,
+      "refuted": 2
+    }
+  ]
+}

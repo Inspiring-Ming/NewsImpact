@@ -1,0 +1,359 @@
+{
+  "$defs": {
+    "ExpectedDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "description": "e.g. institutional_investors, sell_side_analysts, board",
+          "title": "Actor",
+          "type": "string"
+        },
+        "decision": {
+          "title": "Decision",
+          "type": "string"
+        },
+        "expected_direction": {
+          "default": "uncertain",
+          "enum": [
+            "up",
+            "down",
+            "uncertain"
+          ],
+          "title": "Expected Direction",
+          "type": "string"
+        },
+        "horizon": {
+          "default": "days",
+          "enum": [
+            "intraday",
+            "days",
+            "weeks",
+            "months"
+          ],
+          "title": "Horizon",
+          "type": "string"
+        },
+        "market_channel": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarketChannel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None = real-economy decision, not directly a market metric"
+        }
+      },
+      "required": [
+        "actor",
+        "decision"
+      ],
+      "title": "ExpectedDecision",
+      "type": "object"
+    },
+    "FollowUpRequest": {
+      "additionalProperties": false,
+      "description": "Asks the sources module to search for the next stages of a storyline.",
+      "properties": {
+        "entity_name": {
+          "title": "Entity Name",
+          "type": "string"
+        },
+        "since": {
+          "format": "date-time",
+          "title": "Since",
+          "type": "string"
+        },
+        "terms": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Terms",
+          "type": "array"
+        },
+        "until": {
+          "format": "date-time",
+          "title": "Until",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity_name",
+        "terms",
+        "since",
+        "until"
+      ],
+      "title": "FollowUpRequest",
+      "type": "object"
+    },
+    "MarketChannel": {
+      "enum": [
+        "price",
+        "volatility",
+        "volume",
+        "liquidity",
+        "analyst_revisions",
+        "credit_spreads",
+        "peer_spillover",
+        "confidence"
+      ],
+      "title": "MarketChannel",
+      "type": "string"
+    },
+    "Report": {
+      "additionalProperties": false,
+      "description": "One outlet reporting a stage. Several reports = corroboration.",
+      "properties": {
+        "article_id": {
+          "title": "Article Id",
+          "type": "string"
+        },
+        "attribution_kind": {
+          "default": "own_reporting",
+          "title": "Attribution Kind",
+          "type": "string"
+        },
+        "claim_reliability": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Claim Reliability",
+          "type": "number"
+        },
+        "origin": {
+          "description": "independent origin: the outlet itself, a cited outlet, the company, a filing, or the outlet it copied",
+          "title": "Origin",
+          "type": "string"
+        },
+        "published_at": {
+          "format": "date-time",
+          "title": "Published At",
+          "type": "string"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceType"
+        }
+      },
+      "required": [
+        "source_id",
+        "source_type",
+        "article_id",
+        "published_at",
+        "claim_reliability",
+        "origin"
+      ],
+      "title": "Report",
+      "type": "object"
+    },
+    "SourceType": {
+      "description": "Kind of outlet. Sets the starting reliability before any track record exists.",
+      "enum": [
+        "wire",
+        "major_outlet",
+        "regulatory_filing",
+        "company_press_release",
+        "blog",
+        "social",
+        "unknown"
+      ],
+      "title": "SourceType",
+      "type": "string"
+    },
+    "Storyline": {
+      "additionalProperties": false,
+      "properties": {
+        "current_stage": {
+          "title": "Current Stage",
+          "type": "integer"
+        },
+        "entity_name": {
+          "title": "Entity Name",
+          "type": "string"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/StorylineEvent"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "max_stage": {
+          "title": "Max Stage",
+          "type": "integer"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "opened_at": {
+          "format": "date-time",
+          "title": "Opened At",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/StorylineStatus"
+        },
+        "storyline_id": {
+          "title": "Storyline Id",
+          "type": "string"
+        },
+        "theme": {
+          "title": "Theme",
+          "type": "string"
+        },
+        "ticker": {
+          "title": "Ticker",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "storyline_id",
+        "ticker",
+        "entity_name",
+        "theme",
+        "status",
+        "events",
+        "current_stage",
+        "max_stage",
+        "opened_at",
+        "updated_at",
+        "model_version"
+      ],
+      "title": "Storyline",
+      "type": "object"
+    },
+    "StorylineEvent": {
+      "additionalProperties": false,
+      "description": "One stage of a storyline, with every outlet that reported it.",
+      "properties": {
+        "article_id": {
+          "title": "Article Id",
+          "type": "string"
+        },
+        "claim_id": {
+          "description": "claim of the first report",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_reliability": {
+          "description": "best single report",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Claim Reliability",
+          "type": "number"
+        },
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "published_at": {
+          "description": "first report",
+          "format": "date-time",
+          "title": "Published At",
+          "type": "string"
+        },
+        "reports": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Report"
+          },
+          "title": "Reports",
+          "type": "array"
+        },
+        "stage": {
+          "title": "Stage",
+          "type": "integer"
+        },
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "article_id",
+        "event_type",
+        "stage",
+        "stage_name",
+        "published_at",
+        "claim_reliability",
+        "summary"
+      ],
+      "title": "StorylineEvent",
+      "type": "object"
+    },
+    "StorylineStatus": {
+      "enum": [
+        "developing",
+        "escalating",
+        "resolved"
+      ],
+      "title": "StorylineStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "corroborated": {
+      "default": false,
+      "description": "another outlet reported a known stage",
+      "title": "Corroborated",
+      "type": "boolean"
+    },
+    "escalated": {
+      "title": "Escalated",
+      "type": "boolean"
+    },
+    "expected_decisions": {
+      "items": {
+        "$ref": "#/$defs/ExpectedDecision"
+      },
+      "title": "Expected Decisions",
+      "type": "array"
+    },
+    "follow_up": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FollowUpRequest"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "is_new": {
+      "title": "Is New",
+      "type": "boolean"
+    },
+    "latest": {
+      "$ref": "#/$defs/StorylineEvent"
+    },
+    "storyline": {
+      "$ref": "#/$defs/Storyline"
+    }
+  },
+  "required": [
+    "storyline",
+    "latest",
+    "is_new",
+    "escalated",
+    "expected_decisions"
+  ],
+  "title": "StorylineUpdated",
+  "type": "object"
+}

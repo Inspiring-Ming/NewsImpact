@@ -1,0 +1,56 @@
+{
+  "_note": "FICTIONAL companies, people, outlets, news and prices - demo/testing only. Synthetic price model: beta to the market plus shocks on news days.",
+  "betas": {
+    "ACMX": 1.4,
+    "GLBX": 1.1,
+    "HLXC": 1.2,
+    "ORBT": 1.0
+  },
+  "shocks": [
+    {
+      "ticker": "ACMX",
+      "date": "2026-03-10",
+      "return": 0.045
+    },
+    {
+      "ticker": "ACMX",
+      "date": "2026-03-11",
+      "return": 0.02
+    },
+    {
+      "ticker": "ACMX",
+      "date": "2026-03-13",
+      "return": -0.018
+    },
+    {
+      "ticker": "GLBX",
+      "date": "2026-03-12",
+      "return": -0.05
+    },
+    {
+      "ticker": "GLBX",
+      "date": "2026-03-16",
+      "return": -0.015
+    },
+    {
+      "ticker": "GLBX",
+      "date": "2026-03-18",
+      "return": -0.02
+    },
+    {
+      "ticker": "GLBX",
+      "date": "2026-03-20",
+      "return": -0.065
+    },
+    {
+      "ticker": "GLBX",
+      "date": "2026-03-23",
+      "return": -0.01
+    },
+    {
+      "ticker": "GLBX",
+      "date": "2026-03-27",
+      "return": 0.025
+    }
+  ]
+}

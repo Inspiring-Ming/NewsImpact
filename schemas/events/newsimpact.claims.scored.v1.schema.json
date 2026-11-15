@@ -1,0 +1,318 @@
+{
+  "$defs": {
+    "Attribution": {
+      "additionalProperties": false,
+      "description": "Where a claim comes from. Decides what counts as *independent* confirmation:\nten outlets repeating one Bloomberg scoop are one origin, not ten.",
+      "properties": {
+        "cited_outlets": {
+          "default": [],
+          "description": "outlet ids named as the source",
+          "items": {
+            "type": "string"
+          },
+          "title": "Cited Outlets",
+          "type": "array"
+        },
+        "copy_of_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "the article is a (near-)copy of this outlet's earlier article",
+          "title": "Copy Of Source"
+        },
+        "kind": {
+          "default": "own_reporting",
+          "enum": [
+            "own_reporting",
+            "cites_outlet",
+            "company_statement",
+            "filing",
+            "anonymous"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "title": "Attribution",
+      "type": "object"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "description": "A single checkable statement extracted from an article.\n\nFixed fields are what every downstream module relies on; `signals` holds\nextra measurements (e.g. \"uncertainty\") that new analysis steps add\nwithout changing this schema.",
+      "properties": {
+        "article_id": {
+          "title": "Article Id",
+          "type": "string"
+        },
+        "aspect": {
+          "default": "other",
+          "description": "business aspect from the taxonomy",
+          "title": "Aspect",
+          "type": "string"
+        },
+        "attribution": {
+          "$ref": "#/$defs/Attribution"
+        },
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "entities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/EntityMention"
+          },
+          "title": "Entities",
+          "type": "array"
+        },
+        "event_type": {
+          "default": "other",
+          "description": "name from the taxonomy",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "is_speculative": {
+          "default": false,
+          "description": "rumour / 'sources say' / hedged",
+          "title": "Is Speculative",
+          "type": "boolean"
+        },
+        "model_version": {
+          "default": "",
+          "description": "every analysis step that produced it",
+          "title": "Model Version",
+          "type": "string"
+        },
+        "novelty": {
+          "default": 1.0,
+          "description": "1 = genuinely new info",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Novelty",
+          "type": "number"
+        },
+        "sentiment": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Sentiment",
+          "type": "number"
+        },
+        "signals": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Signals",
+          "type": "object"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "article_id",
+        "text"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "ClaimReliability": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "claim_id": {
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "source_reliability": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Source Reliability",
+          "type": "number"
+        }
+      },
+      "required": [
+        "claim_id",
+        "source_reliability",
+        "score",
+        "as_of",
+        "model_version"
+      ],
+      "title": "ClaimReliability",
+      "type": "object"
+    },
+    "EntityMention": {
+      "additionalProperties": false,
+      "properties": {
+        "entity_type": {
+          "description": "company | person | country | product | ...",
+          "title": "Entity Type",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "ticker": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ticker"
+        }
+      },
+      "required": [
+        "name",
+        "entity_type"
+      ],
+      "title": "EntityMention",
+      "type": "object"
+    },
+    "ReliabilityScore": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "ci_high": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Ci High",
+          "type": "number"
+        },
+        "ci_low": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Ci Low",
+          "type": "number"
+        },
+        "evidence_count": {
+          "minimum": 0.0,
+          "title": "Evidence Count",
+          "type": "number"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "score": {
+          "description": "posterior mean P(claim holds up)",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "topic": {
+          "default": "all",
+          "title": "Topic",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "score",
+        "ci_low",
+        "ci_high",
+        "evidence_count",
+        "as_of",
+        "model_version"
+      ],
+      "title": "ReliabilityScore",
+      "type": "object"
+    },
+    "SourceType": {
+      "description": "Kind of outlet. Sets the starting reliability before any track record exists.",
+      "enum": [
+        "wire",
+        "major_outlet",
+        "regulatory_filing",
+        "company_press_release",
+        "blog",
+        "social",
+        "unknown"
+      ],
+      "title": "SourceType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "article_id": {
+      "title": "Article Id",
+      "type": "string"
+    },
+    "claim_reliability": {
+      "items": {
+        "$ref": "#/$defs/ClaimReliability"
+      },
+      "title": "Claim Reliability",
+      "type": "array"
+    },
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "published_at": {
+      "format": "date-time",
+      "title": "Published At",
+      "type": "string"
+    },
+    "source_id": {
+      "title": "Source Id",
+      "type": "string"
+    },
+    "source_reliability": {
+      "$ref": "#/$defs/ReliabilityScore"
+    },
+    "source_type": {
+      "$ref": "#/$defs/SourceType",
+      "default": "unknown"
+    }
+  },
+  "required": [
+    "article_id",
+    "source_id",
+    "published_at",
+    "source_reliability",
+    "claims",
+    "claim_reliability"
+  ],
+  "title": "ClaimsScored",
+  "type": "object"
+}

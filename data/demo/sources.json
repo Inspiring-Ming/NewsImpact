@@ -1,0 +1,57 @@
+{
+  "_note": "FICTIONAL companies, people, outlets, news and prices - demo/testing only. Same format as data/reference/sources.json.",
+  "sources": [
+    {
+      "source_id": "wire-alpha",
+      "name": "Alpha Newswire",
+      "source_type": "wire",
+      "domains": [
+        "alphawire.example"
+      ],
+      "feeds": [
+        {
+          "kind": "fixture"
+        }
+      ]
+    },
+    {
+      "source_id": "daily-markets",
+      "name": "Daily Markets",
+      "source_type": "major_outlet",
+      "domains": [
+        "dailymarkets.example"
+      ],
+      "feeds": [
+        {
+          "kind": "fixture"
+        }
+      ]
+    },
+    {
+      "source_id": "rumor-blog",
+      "name": "Street Whispers Blog",
+      "source_type": "blog",
+      "domains": [
+        "streetwhispers.example"
+      ],
+      "feeds": [
+        {
+          "kind": "fixture"
+        }
+      ]
+    },
+    {
+      "source_id": "globex-ir",
+      "name": "Globex Motors Investor Relations",
+      "source_type": "company_press_release",
+      "domains": [
+        "ir.globexmotors.example"
+      ],
+      "feeds": [
+        {
+          "kind": "fixture"
+        }
+      ]
+    }
+  ]
+}
