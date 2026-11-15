@@ -155,6 +155,7 @@
       "enum": [
         "wire",
         "major_outlet",
+        "aggregator",
         "regulatory_filing",
         "company_press_release",
         "blog",
@@ -256,6 +257,12 @@
           "title": "Event Type",
           "type": "string"
         },
+        "is_rumour": {
+          "default": false,
+          "description": "hedged or 'sources say' wording",
+          "title": "Is Rumour",
+          "type": "boolean"
+        },
         "published_at": {
           "description": "first report",
           "format": "date-time",
@@ -281,6 +288,14 @@
         "summary": {
           "title": "Summary",
           "type": "string"
+        },
+        "tone": {
+          "default": 0.0,
+          "description": "sentiment of the first report",
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Tone",
+          "type": "number"
         }
       },
       "required": [

@@ -56,6 +56,7 @@
       "enum": [
         "wire",
         "major_outlet",
+        "aggregator",
         "regulatory_filing",
         "company_press_release",
         "blog",
