@@ -4,8 +4,10 @@ import type { components } from "./schema";
 
 export type S = components["schemas"];
 
-async function request<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string): Promise<T> {
-  const res = await fetch(path, { method, headers: { Accept: "application/json" } });
+async function request<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail ?? `${res.status} ${res.statusText}`);
@@ -29,8 +31,9 @@ export const api = {
   prices: (id: string) => request<S["PricePath"] | null>("GET", `/v1/storylines/${id}/prices`),
   sources: () => request<S["SourceWithReliability"][]>("GET", "/v1/sources"),
   coverage: () => request<S["OutletCoverage"][]>("GET", "/v1/coverage"),
-  companyCoverage: () => request<S["CoverageReport"]>("GET", "/v1/companies/coverage"),
   calibration: () => request<S["Calibration"]>("GET", "/v1/calibration"),
-  evaluation: () => request<S["Evaluation"]>("GET", "/v1/evaluation"),
   method: () => request<S["Method"]>("GET", "/v1/method"),
+  assistant: () => request<S["AssistantStatus"]>("GET", "/v1/assistant"),
+  ask: (question: string, eventId?: string) =>
+    request<S["Answer"]>("POST", "/v1/assistant/ask", { question, event_id: eventId ?? null }),
 };

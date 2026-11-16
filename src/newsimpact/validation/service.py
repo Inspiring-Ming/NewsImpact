@@ -80,7 +80,11 @@ class ValidationService:
             )
             for i, e in enumerate(events)
         )
-        combined = self._combined(storyline.ticker, events, close)
+        combined_pending = False
+        try:
+            combined = self._combined(storyline.ticker, events, close)
+        except WindowNotComplete:  # measured in a later round, once those days have traded
+            combined, combined_pending = None, True
         support = market_support(stages)
         text, suggestions = conclude(storyline, playbook, stages, support, combined)
         return Assessment(
@@ -90,6 +94,7 @@ class ValidationService:
             status=storyline.status.value,
             stages=stages,
             combined_reaction=combined,
+            combined_pending=combined_pending,
             market_support=support,
             confidence=confidence(stages, support, self._policy),
             conclusion=text,
@@ -152,7 +157,9 @@ class ValidationService:
         try:
             return self._market.observe_span(ticker, events[start].published_at,
                                              events[end].published_at)  # fmt: skip
-        except ValueError:  # incl. WindowNotComplete: measured in a later round
+        except WindowNotComplete:
+            raise
+        except ValueError:  # e.g. not enough price history before the event
             return None
 
     def _check(self, ticker: str, decision: ExpectedDecision, at: datetime) -> DecisionCheck:

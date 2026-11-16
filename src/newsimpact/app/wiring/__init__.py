@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +22,7 @@ from newsimpact.alerts.adapters.shared import SharedChannels
 from newsimpact.alerts.service import AlertsService
 from newsimpact.app.config import Settings
 from newsimpact.app.views.briefs import BriefStore
+from newsimpact.app.views.news_data import SnapshotNewsData
 from newsimpact.app.views.snapshot import SnapshotStore
 from newsimpact.app.wiring.plugins import (
     AUTH,
@@ -36,6 +37,8 @@ from newsimpact.app.wiring.plugins import (
     Stores,
     pick,
 )
+from newsimpact.assistant.models import AssistantPolicy
+from newsimpact.assistant.service import AssistantService
 from newsimpact.identity.ports import Authenticator
 from newsimpact.llm.adapters.json_file import load_models
 from newsimpact.llm.adapters.memory import InMemoryResponseCache, InMemorySpendLedger
@@ -96,6 +99,7 @@ class Services:
     auth: Authenticator  # who is signed in (identity module)
     briefs: BriefStore  # three-line event briefs (app/views/briefs.py)
     snapshots: SnapshotStore  # what pages read, computed once per round (app/views/snapshot.py)
+    assistant: AssistantService | None = None  # answers questions from our data (set below)
 
 
 def http_client(s: Settings) -> httpx.Client:
@@ -248,4 +252,8 @@ def build_services(settings: Settings | None = None) -> Services:
         snapshots=stores.snapshots,
     )
     services.sources.register_listed()  # every listed source is tracked from the start
-    return services
+    # The assistant reads through the finished services (latest snapshot, article store).
+    tool_model = llm if llm is not None and llm.can_use_tools else None
+    assistant = AssistantService(tool_model, SnapshotNewsData(services), stores.questions,
+                                 AssistantPolicy.model_validate(method["assistant"]))  # fmt: skip
+    return replace(services, assistant=assistant)

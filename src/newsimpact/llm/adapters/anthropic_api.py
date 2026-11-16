@@ -9,17 +9,23 @@ Request choices and why:
   * server-side refusal fallback ("default"): a declined request is retried on
     a fallback model; if the whole chain refuses we return data=None and the
     caller keeps the free baseline result
+  * tool use (run_tools): the SDK's tool runner drives the call-a-tool loop, capped
+    at request.max_steps; each step's token usage is returned so the gateway
+    prices and records it. A tool that fails comes back to the model as an error
+    result (the runner does this), never as a crash.
 """
 
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from typing import Any, Literal
 
 import anthropic
+from anthropic import beta_tool
 from anthropic.types.beta import BetaTextBlock
 
-from newsimpact.llm.models import LlmReply, LlmRequest
+from newsimpact.llm.models import LlmReply, LlmRequest, ToolRequest, ToolSpec
 
 Effort = Literal["low", "medium", "high", "xhigh", "max"]
 
@@ -67,6 +73,52 @@ class AnthropicProvider:
             cache_write_tokens=usage.cache_creation_input_tokens or 0,
             refused=refused,
         )
+
+    def run_tools(
+        self, request: ToolRequest, tools: Sequence[ToolSpec]
+    ) -> tuple[str, Sequence[LlmReply], Sequence[str]]:
+        calls: list[str] = []
+
+        def runnable(spec: ToolSpec) -> Any:
+            def call(**kwargs: Any) -> str:
+                calls.append(spec.name)
+                return spec.run(**kwargs)
+
+            return beta_tool(call, name=spec.name, description=spec.description,
+                             input_schema=spec.input_schema)  # fmt: skip
+
+        runner = self._client.beta.messages.tool_runner(
+            model=self._model,
+            max_tokens=request.max_output_tokens,
+            betas=["server-side-fallback-2026-07-01"],
+            fallbacks="default",
+            output_config={"effort": self._effort},
+            system=[
+                {"type": "text", "text": request.system, "cache_control": {"type": "ephemeral"}}
+            ],
+            tools=[runnable(t) for t in tools],
+            messages=[{"role": "user", "content": request.prompt}],
+            max_iterations=request.max_steps,
+        )
+        steps: list[LlmReply] = []
+        last: Any = None
+        for message in runner:
+            usage = message.usage
+            steps.append(LlmReply(data=None, model=message.model,
+                                  input_tokens=usage.input_tokens or 0,
+                                  output_tokens=usage.output_tokens or 0,
+                                  cache_read_tokens=usage.cache_read_input_tokens or 0,
+                                  cache_write_tokens=usage.cache_creation_input_tokens or 0,
+                                  refused=message.stop_reason == "refusal"))  # fmt: skip
+            last = message
+        # Only a finished answer counts: not a refusal, a cut-off, or a step limit hit mid-tools.
+        finished = last is not None and last.stop_reason == "end_turn"
+        text = (
+            "".join(b.text for b in last.content if isinstance(b, BetaTextBlock))
+            if finished
+            else ""
+        )
+        return text.strip(), steps, calls
 
 
 def _first_text(blocks: list[Any]) -> str | None:

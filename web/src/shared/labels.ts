@@ -17,6 +17,11 @@ export function label(code: string): string {
   return NAMES[code] ?? humanize(code);
 }
 
+// An event's kind, with its reading when it can go either way: "Results · worse than expected".
+export function eventLabel(e: { event_type: string; reading?: string | null }): string {
+  return e.reading ? `${e.event_type} · ${e.reading}` : e.event_type;
+}
+
 export function humanize(code: string): string {
   const s = code.replace(/[_-]+/g, " ").trim();
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -48,7 +53,6 @@ export const TERMS = {
   reliability: { label: "Reliability", tip: "Chance a report from this source is right. = (starting estimate × 10 + reports confirmed) ÷ (10 + reports judged), where a report nobody else confirmed within 7 days counts as half a miss. So a source starts at its type's estimate and moves with its own record." },
   prior: { label: "Starting estimate", tip: "Set by the kind of source, ordered by how content is checked before publishing: official filing 95% (legal liability), news agency 80% and newspaper 75% (editors, corrections policy), company press release 67% (accurate about itself but selective), news aggregator 67% (mixes reporting and opinion). It counts as much as 10 reports, then the track record takes over." },
   trackRecord: { label: "Track record", tip: "Of this source's reports old enough to judge (7+ days), how many another independent source also reported. Sources whose news others confirm are more trustworthy (truth-discovery research: Yin, Han & Yu 2008)." },
-  accuracy: { label: "How often we read the news right", tip: "A fixed test: example sentences about made-up companies, each labelled by a person (which event, who said it, rumour or fact, new or old news). Our reading must agree; a change that lowers these counts is not released." },
   provisional: { label: "Provisional", tip: "The measurement window has not closed yet, so this is the stock's move against its index up to the latest close. It can still change; the final number replaces it once the window closes." },
   eventsWeek: { label: "Events this week", tip: "Events with a new update in the last 7 days." },
   biggest: { label: "Biggest move", tip: "The largest stock move against its market among all events." },
@@ -64,7 +68,6 @@ export const TERMS = {
   measured: { label: "Events measured", tip: "Events of this type with a completed stock measurement." },
   avgMove: { label: "Average move", tip: "Average stock move against its market across those events." },
   asExpected: { label: "Moved as expected", tip: "Events where the share price went the expected way (for 'big move either way': an unusual move). This is how we check that the expectation holds in real data." },
-  companyCoverage: { label: "Does the news reach every company?", tip: "Articles naming each company we follow in the last days. A company with none is a gap: our sources or the names we look for miss it, so its events could be missed too. Checked after every update round." },
   sourcesTab: { label: "Which news sources we read", tip: "We read a short list of trusted sources automatically. Each keeps its place only if it covers our companies and leads to events." },
   eventsTab: { label: "Which events we detect", tip: "Each sentence naming a company is checked for an event type. Related news about the same company within the time window is joined into one event, update by update." },
   marketTab: { label: "Does this news move the stock?", tip: "For each event type: what we expect the share price to do, and what really happened in the events measured so far." },

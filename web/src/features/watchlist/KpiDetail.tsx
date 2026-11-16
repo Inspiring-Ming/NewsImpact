@@ -3,7 +3,7 @@
 // to its event.
 import { api, type S } from "../../api/client";
 import { useApi } from "../../shared/useApi";
-import { date, pct, vsWords } from "../../shared/labels";
+import { date, eventLabel, pct, vsWords } from "../../shared/labels";
 import { MoveBar } from "../../shared/viz";
 
 export type Kpi = "events" | "unusual" | "biggest" | "news";
@@ -17,7 +17,7 @@ function MoveRows({ rows }: { rows: Ev[] }) {
     <div className="rank moves">
       {rows.map(({ c, e }) => (
         <a key={e.event_id} className="rank-row" href={`#/event/${e.event_id}`}>
-          <span className="rank-label"><b>{c.name}</b><span className="muted small"> · {e.event_type}</span></span>
+          <span className="rank-label"><b>{c.name}</b><span className="muted small"> · {eventLabel(e)}</span></span>
           <MoveBar value={e.stock_move!} unusual={e.stock_move_unusual} span={span} />
           <span className="rank-value"><b>{pct(e.stock_move!)}</b><span className="muted small"> {vsWords(e.stock_move!, c.index_name)}</span></span>
         </a>
@@ -108,7 +108,7 @@ export function KpiDetail({ kpi, companies, newsCompanies, overview }: {
         <div className="chips-list">
           {week.map(({ c, e }) => (
             <a key={e.event_id} href={`#/event/${e.event_id}`} className="event-chip">
-              <b>{c.name}</b> <span className="tag">{e.event_type}</span> <span className="muted small">{date(lastUpdate(e))}</span>
+              <b>{c.name}</b> <span className="tag">{eventLabel(e)}</span> <span className="muted small">{date(lastUpdate(e))}</span>
             </a>
           ))}
         </div>

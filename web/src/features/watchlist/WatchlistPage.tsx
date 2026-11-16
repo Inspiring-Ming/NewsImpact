@@ -3,7 +3,7 @@
 // also finds companies without an event, so any company can be found and followed.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, type S } from "../../api/client";
-import { pct, SECTORS, type Tone } from "../../shared/labels";
+import { eventLabel, pct, SECTORS, type Tone } from "../../shared/labels";
 import { useStarred } from "../../shared/starred";
 import { Term } from "../../shared/Term";
 import { State, Tabs } from "../../shared/ui";
@@ -80,7 +80,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           ["events", <Term id="eventsWeek" />, thisWeek.length, `${verifiedWeek} confirmed · ${thisWeek.length - verifiedWeek} not yet confirmed`, undefined],
           ["unusual", <Term id="unusual">Unusual stock moves</Term>, unusual, `of ${events.filter((e) => e.stock_move != null).length} events with price data`, unusual ? "warn" : undefined],
           ["biggest", <Term id="biggest" />, biggest ? pct(biggest.e.stock_move!) : "–",
-            biggest ? `${biggest.c.name} vs ${biggest.c.index_name} · ${biggest.e.event_type}` : "no measured move in this view",
+            biggest ? `${biggest.c.name} vs ${biggest.c.index_name} · ${eventLabel(biggest.e)}` : "no measured move in this view",
             biggest ? (biggest.e.stock_move! < 0 ? "bad" : "good") : undefined],
           ["news", <Term id="news24h">{view === "mine" ? "News on my companies, 24 h" : "News in 24 hours"}</Term>, news24h ?? "–",
             view === "mine" ? `${inNews} of your ${scope.length} companies in the news` : `about ${inNews} companies · from ${overview.data?.outlets_enabled ?? "–"} sources`, undefined],

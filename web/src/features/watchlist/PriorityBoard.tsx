@@ -3,7 +3,7 @@
 // how many sources and whether it is confirmed, and the single most useful next step.
 import type { S } from "../../api/client";
 import { Signals } from "../../shared/badges";
-import { pct } from "../../shared/labels";
+import { eventLabel, pct } from "../../shared/labels";
 import { byPriority, LEVELS } from "../../shared/priority";
 import { Dots, MoveBar } from "../../shared/viz";
 
@@ -13,7 +13,7 @@ function PriorityCard({ c, e }: { c: S["CompanyCard"]; e: S["EventCard"] }) {
     <a className="pcard" href={`#/event/${e.event_id}`}>
       <div className="pcard-head">
         <b>{c.name}</b>
-        <span className="tag">{e.event_type}</span>
+        <span className="tag">{eventLabel(e)}</span>
       </div>
       <p className="pcard-reason small">{e.priority_reason}</p>
       <div className="pcard-facts">

@@ -3,12 +3,22 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
+from typing import cast
 
 from newsimpact.llm.logic import cache_key, cost_usd, worst_case_usd
-from newsimpact.llm.models import BudgetExceededError, LlmPolicy, LlmRequest, LlmResult, ModelPrice
-from newsimpact.llm.ports import LlmProvider, ResponseCache, SpendLedger
+from newsimpact.llm.models import (
+    BudgetExceededError,
+    LlmPolicy,
+    LlmRequest,
+    LlmResult,
+    ModelPrice,
+    ToolRequest,
+    ToolRunResult,
+    ToolSpec,
+)
+from newsimpact.llm.ports import LlmProvider, ResponseCache, SpendLedger, ToolUsingProvider
 
 log = logging.getLogger(__name__)
 
@@ -71,6 +81,36 @@ class LlmGateway:
         result = LlmResult(data=reply.data, model=reply.model, cost_usd=cost, cached=False)
         self._cache.put(key, result)
         return result
+
+    @property
+    def can_use_tools(self) -> bool:
+        return callable(getattr(self._provider, "run_tools", None))
+
+    def run_tools(self, request: ToolRequest, tools: Sequence[ToolSpec]) -> ToolRunResult | None:
+        """Let the model answer by calling `tools`; every step is priced and recorded.
+        None if the provider cannot call tools. Not cached: the data behind the tools changes.
+
+        Raises BudgetExceededError before starting if the worst case (every step using its
+        full output allowance) would cross the monthly budget."""
+        if not self.can_use_tools:
+            return None
+        provider = cast(ToolUsingProvider, self._provider)
+        price = self._price(self._provider.name.split(":", 1)[-1])
+        one_step = LlmRequest(purpose=request.purpose, system=request.system,
+                              prompt=request.prompt, schema={},
+                              max_output_tokens=request.max_output_tokens)  # fmt: skip
+        worst = worst_case_usd(one_step, price) * request.max_steps
+        if self.spent_this_month() + worst > self._policy.monthly_budget_usd:
+            raise BudgetExceededError("monthly LLM budget would be exceeded")
+        text, steps, calls = provider.run_tools(request, tools)
+        cost = 0.0
+        for reply in steps:
+            step_cost = cost_usd(reply, self._price(reply.model))
+            self._ledger.record(self._month(), request.purpose, reply.model, step_cost)
+            cost += step_cost
+        model = steps[-1].model if steps else self._provider.name
+        return ToolRunResult(text=text, model=model, cost_usd=round(cost, 6), steps=len(steps),
+                             tool_calls=tuple(calls))  # fmt: skip
 
     def _price(self, model: str) -> ModelPrice:
         if self._provider.name.startswith("ollama:"):

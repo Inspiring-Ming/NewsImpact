@@ -2,8 +2,9 @@
 
 from datetime import UTC, date, datetime, timedelta
 
-from newsimpact.app.views.briefs import FORBIDDEN, _safe, rules_brief
+from newsimpact.app.views.briefs import _safe, rules_brief
 from newsimpact.app.views.guidance import checks, close_after, priority
+from newsimpact.shared.guardrails import ADVICE
 
 NOW = datetime(2026, 11, 16, 12, tzinfo=UTC)
 
@@ -33,7 +34,7 @@ def test_checks_never_give_advice() -> None:
         window_days=60,
     )
     assert items[0].url == "https://x.test"
-    assert not any(FORBIDDEN.search(c.text) for c in items)
+    assert not any(ADVICE.search(c.text) for c in items)
 
 
 def test_brief_checks_reject_advice_and_invented_numbers() -> None:

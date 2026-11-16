@@ -2,12 +2,13 @@
 // To show something new, add one entry to TABS.
 import { useState, type ComponentType } from "react";
 import { api } from "../../api/client";
-import { COUNTRY, date, NO_MOVE, pct, vsWords } from "../../shared/labels";
+import { COUNTRY, date, eventLabel, NO_MOVE, pct, vsWords } from "../../shared/labels";
 import { Dots, Meter, MoveBar, RatioBar } from "../../shared/viz";
 import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
 import type { EventData } from "./context";
+import { Ask } from "./Ask";
 import { Overview } from "./Overview";
 import { Scorecard } from "./Scorecard";
 import { Updates } from "./Updates";
@@ -17,6 +18,7 @@ const TABS: { id: string; label: string; component: ComponentType<EventData> }[]
   { id: "overview", label: "Overview", component: Overview },
   { id: "updates", label: "Updates", component: Updates },
   { id: "reaction", label: "Expected vs actual", component: Scorecard },
+  { id: "ask", label: "Ask", component: Ask },
 ];
 
 export function EventPage({ id }: { id: string }) {
@@ -39,7 +41,7 @@ export function EventPage({ id }: { id: string }) {
             <header className="event-head">
               <div className="event-top">
                 <PriorityBadge e={card} />
-                <span className="tag">{card.event_type}</span>
+                <span className="tag">{eventLabel(card)}</span>
                 <Dots n={card.updates.length} of={Math.max(card.stages_total, card.updates.length)} />
                 <span className="small muted">
                   {card.updates.length} of {card.stages_total} usual updates

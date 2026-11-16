@@ -11,7 +11,7 @@ be traced back to the exact settings that produced it.
 |---|---|---|
 | `data/reference/sources.json` | which outlets | How it works → News sources (reliability, track record, coverage) |
 | `data/reference/entities.json` | which companies (US + ASX) | How it works → News sources ("About our companies") |
-| `data/reference/taxonomy.json` | which events, attribution and background wording | How it works → Events we detect (accuracy check on the labelled set) |
+| `data/reference/taxonomy.json` | which events, attribution and background wording | How it works → Events we detect; accuracy on the labelled set: `GET /v1/evaluation` |
 | `data/reference/playbooks.json` | event updates, expected reactions, time windows, research findings | How it works → Events we detect, Does it move the stock? |
 | `data/reference/methodology.json` | measurement windows, significance, thresholds for conclusions and copies, exchanges (sessions, benchmarks) | How it works → Does it move the stock? |
 | `data/reference/llm_models.json` | LLM presets (with reasons) and prices (dated, with source) | the spend ledger (`/v1/overview`) |
@@ -98,8 +98,7 @@ Each playbook has a **link window**:
 | leadership_crisis | 60 days | Interim leaders are named at or soon after a departure; a permanent search can take months. 60 days captures the interim or announced successor without merging unrelated leadership news. |
 | product_safety | 90 days | Probes and lawsuits follow a recall by weeks to months. |
 | m_and_a | 90 days | Rumours that become deals are typically confirmed within about a quarter; after that the rumour is treated as faded. |
-| earnings_beat | 30 days | Forecast revisions and guidance updates land within weeks of a results release, inside one reporting cycle. |
-| earnings_miss | 30 days | Forecast cuts and follow-up guidance come within weeks of a results release. |
+| results | 30 days | Forecast revisions and guidance updates land within weeks of a results release, inside one reporting cycle. One event per release, read as better, worse or mixed. |
 | cyber_incident | 90 days | Regulator inquiries and class actions typically follow a breach disclosure by weeks to months. |
 | job_cuts | 30 days | Details (numbers, sites, costs) usually emerge within weeks of the first report. |
 | supply_disruption | 60 days | Supply problems tend to resolve or escalate (lost sales, guidance cuts) over one to two months. |
@@ -195,12 +194,12 @@ Why scope `all` rather than `candidates`: the candidates filter only sends sente
 
 **Re-measured on 2026-11-16 (56 sentences)** after the subject check (classifier v2: the model also names the company the event happens to, and says that share-price comparisons, previews, forecasts, partnerships and licensing deals are not events): event type 0.95 (v1 on the same set and day: 0.93), attribution 0.93 (v1: 0.93), rumour 1.00 (v1: 0.98), background 0.96 (v1: 0.96). No loss on the labelled set, and on the live feed it removed events that belonged to another company or were not events at all. Example: Cerebras's results had been shown as a Microsoft earnings beat because Microsoft was mentioned.
 
-With only 56 sentences, a difference of one or two sentences is noise. Re-measure on the Quality page when the labelled set grows to 200–500 real sentences.
+With only 56 sentences, a difference of one or two sentences is noise. Re-measure with `GET /v1/evaluation` when the labelled set grows to 200–500 real sentences.
 
 ## 6. Changing a number
 
 1. **Edit the value and its reason** in the reference file, and bump the file's `version`.
-2. **Run the checks:** `make check`; the Quality page for semantics changes; the Calibration page for windows and thresholds.
+2. **Run the checks:** `make check`; `GET /v1/evaluation` for semantics changes; `GET /v1/calibration` for windows and thresholds.
 3. **Write an ADR** if the rule itself changes, not just the value.
 4. **Trace it later:** new assessments carry the new file hash, so before and after are always distinguishable.
 

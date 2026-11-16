@@ -1,4 +1,4 @@
-.PHONY: help install fmt lint typecheck arch test contracts contracts-check check dev api web-build docker tf-check
+.PHONY: help install fmt lint typecheck arch test contracts contracts-check check dev api web-build docker mcp tf-check
 
 help:           ## list every command
 	@grep -E '^[a-z-]+:.*## ' Makefile | sed 's/:.*## /\t/' | expand -t 18
@@ -45,6 +45,9 @@ docker:         ## build and run the production image on :8000, with .env and va
 	docker build -t newsimpact:local . && docker run --rm -p 8000:8000 \
 	  $$([ -f .env ] && echo --env-file .env) -e NI_DB_PATH=/app/var/newsimpact.db \
 	  -v "$$PWD/var":/app/var newsimpact:local
+
+mcp:            ## MCP server for AI assistants (stdio), reading the same database as the website
+	uv run --extra mcp python -m newsimpact.app.mcp
 
 tf-check:       ## validate the Terraform files
 	cd infra/terraform/bootstrap && terraform fmt -check && terraform init -backend=false -input=false >/dev/null && terraform validate

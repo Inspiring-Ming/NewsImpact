@@ -1,7 +1,7 @@
 # Evaluation data
 
 `semantics_gold.jsonl` holds hand-labelled sentences about **fictional** companies.
-`newsimpact evaluate` runs the configured analysis chain on them and reports
+`GET /v1/evaluation` (with the server running: `curl localhost:8000/v1/evaluation`) runs the configured analysis chain on them and reports
 accuracy, macro-F1 and per-label precision/recall. Any change to the taxonomy, a
 new step or an LLM must be compared here before it is used in the product.
 

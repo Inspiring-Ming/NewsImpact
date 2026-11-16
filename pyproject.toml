@@ -21,6 +21,7 @@ Repository = "https://github.com/Inspiring-Ming/NewsImpact"
 
 [project.optional-dependencies]
 anthropic = ["anthropic>=2.8"]  # only for NI_LLM_PRESET=quality or economy
+mcp = ["mcp>=2.3"]  # only for the MCP server (app/mcp.py): AI assistants query NewsImpact
 
 [dependency-groups]
 dev = [
@@ -31,6 +32,7 @@ dev = [
     "import-linter>=2.0",
     "types-defusedxml>=0.7",
     "anthropic>=2.8",  # type-check and test the optional Claude adapter
+    "mcp>=2.3",  # type-check and test the optional MCP server
 ]
 
 [build-system]
@@ -75,7 +77,7 @@ source_modules = ["newsimpact.shared"]
 forbidden_modules = [
     "newsimpact.app", "newsimpact.sources", "newsimpact.semantics", "newsimpact.reliability",
     "newsimpact.storylines", "newsimpact.market", "newsimpact.validation",
-    "newsimpact.llm", "newsimpact.alerts", "newsimpact.identity",
+    "newsimpact.llm", "newsimpact.alerts", "newsimpact.identity", "newsimpact.assistant",
 ]
 
 [[tool.importlinter.contracts]]
@@ -84,7 +86,7 @@ type = "independence"
 modules = [
     "newsimpact.sources", "newsimpact.semantics", "newsimpact.reliability",
     "newsimpact.storylines", "newsimpact.market", "newsimpact.validation",
-    "newsimpact.llm", "newsimpact.alerts", "newsimpact.identity",
+    "newsimpact.llm", "newsimpact.alerts", "newsimpact.identity", "newsimpact.assistant",
 ]
 ignore_imports = ["newsimpact.** -> newsimpact.*.models"]
 

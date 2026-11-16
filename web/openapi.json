@@ -1,6 +1,65 @@
 {
   "components": {
     "schemas": {
+      "Answer": {
+        "additionalProperties": false,
+        "properties": {
+          "cost_usd": {
+            "default": 0.0,
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "model": {
+            "default": "",
+            "title": "Model",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "sources": {
+            "default": [],
+            "description": "links a tool returned",
+            "items": {
+              "$ref": "#/components/schemas/SourceLink"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "answered",
+              "not_in_our_data",
+              "checks_failed",
+              "limit_reached",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "description": "the answer shown to the person (or why there is none)",
+            "title": "Text",
+            "type": "string"
+          },
+          "tools_used": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tools Used",
+            "type": "array"
+          }
+        },
+        "required": [
+          "question",
+          "text",
+          "status"
+        ],
+        "title": "Answer",
+        "type": "object"
+      },
       "Article": {
         "additionalProperties": false,
         "properties": {
@@ -104,6 +163,12 @@
             "title": "As Of",
             "type": "string"
           },
+          "combined_pending": {
+            "default": false,
+            "description": "that combined move waits for trading days still to come",
+            "title": "Combined Pending",
+            "type": "boolean"
+          },
           "combined_reaction": {
             "anyOf": [
               {
@@ -198,6 +263,21 @@
           "provenance"
         ],
         "title": "Assessment",
+        "type": "object"
+      },
+      "AssistantStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "description": "False without a language model that can call tools",
+            "title": "Available",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "title": "AssistantStatus",
         "type": "object"
       },
       "Calibration": {
@@ -685,7 +765,7 @@
             "type": "string"
           },
           "event_type": {
-            "description": "e.g. Leadership change, Earnings miss",
+            "description": "e.g. Leadership change, Results",
             "title": "Event Type",
             "type": "string"
           },
@@ -778,6 +858,18 @@
             "default": "",
             "title": "Priority Reason",
             "type": "string"
+          },
+          "reading": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "for events that can read either way (results): 'better than expected', 'worse than expected', or 'mixed' when the reports disagree",
+            "title": "Reading"
           },
           "record": {
             "anyOf": [
@@ -1467,6 +1559,14 @@
             "title": "Name",
             "type": "string"
           },
+          "readings": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "event type -> what it says, for a stage that can read either way",
+            "title": "Readings",
+            "type": "object"
+          },
           "resolves": {
             "default": false,
             "title": "Resolves",
@@ -1568,6 +1668,34 @@
         "title": "Provenance",
         "type": "object"
       },
+      "Question": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the event the person is looking at",
+            "title": "Event Id"
+          },
+          "question": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "Question",
+        "type": "object"
+      },
       "ReliabilityScore": {
         "additionalProperties": false,
         "properties": {
@@ -1667,6 +1795,12 @@
             "title": "Claim Reliability",
             "type": "number"
           },
+          "event_type": {
+            "default": "",
+            "description": "what this report claimed, when a stage accepts several event types (results: better or worse)",
+            "title": "Event Type",
+            "type": "string"
+          },
           "origin": {
             "description": "independent origin: the outlet itself, a cited outlet, the company, a filing, or the outlet it copied",
             "title": "Origin",
@@ -1765,6 +1899,31 @@
           "domains"
         ],
         "title": "Source",
+        "type": "object"
+      },
+      "SourceLink": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "description": "the outlet, e.g. Reuters",
+            "title": "Source",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "source"
+        ],
+        "title": "SourceLink",
         "type": "object"
       },
       "SourceType": {
@@ -2387,6 +2546,63 @@
           }
         },
         "summary": "Recent Articles"
+      }
+    },
+    "/v1/assistant": {
+      "get": {
+        "operationId": "status_v1_assistant_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Status"
+      }
+    },
+    "/v1/assistant/ask": {
+      "post": {
+        "description": "Answered only from our events, sources and stock moves; checked before it is\nreturned (no advice, no number that is not in our data); links a tool returned.",
+        "operationId": "ask_v1_assistant_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Question"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Answer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask"
       }
     },
     "/v1/calibration": {

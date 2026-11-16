@@ -121,6 +121,12 @@
           "title": "Claim Reliability",
           "type": "number"
         },
+        "event_type": {
+          "default": "",
+          "description": "what this report claimed, when a stage accepts several event types (results: better or worse)",
+          "title": "Event Type",
+          "type": "string"
+        },
         "origin": {
           "description": "independent origin: the outlet itself, a cited outlet, the company, a filing, or the outlet it copied",
           "title": "Origin",

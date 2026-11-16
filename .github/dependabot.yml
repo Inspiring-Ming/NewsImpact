@@ -22,6 +22,11 @@ updates:
         patterns: ["vite", "@vitejs/*"]
       web-minor:
         update-types: [minor, patch]
+    ignore:
+      # openapi-typescript (generates the website's API types) supports TypeScript 5 only;
+      # TypeScript 7 crashes it (checked 2026-11-16). Remove when it supports 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }

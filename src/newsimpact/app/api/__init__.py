@@ -20,13 +20,21 @@ from fastapi.staticfiles import StaticFiles
 from newsimpact import __version__
 from newsimpact.app.api.auth import current_user
 from newsimpact.app.api.context import ApiContext
-from newsimpact.app.api.routes import alerts, companies, monitor, sources, storylines, system
+from newsimpact.app.api.routes import (
+    alerts,
+    assistant,
+    companies,
+    monitor,
+    sources,
+    storylines,
+    system,
+)
 from newsimpact.app.config import Settings
 from newsimpact.app.logs import configure_logging
 from newsimpact.app.monitor import BackgroundMonitor
 from newsimpact.app.wiring import Services, build_services
 
-ROUTES = (system, companies, storylines, sources, alerts, monitor)
+ROUTES = (system, companies, storylines, sources, alerts, monitor, assistant)
 
 
 def create_app(services: Services | None = None) -> FastAPI:

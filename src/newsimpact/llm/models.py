@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any, Literal
 
 from pydantic import Field
@@ -57,6 +59,35 @@ class LlmPreset(Model):
 class LlmPolicy(Model):
     monthly_budget_usd: float = Field(ge=0)
     max_calls_per_round: int = Field(ge=0)
+
+
+@dataclass(frozen=True)
+class ToolSpec:
+    """A function the model may call, described in plain JSON schema (provider-neutral).
+    `run` gets the model's arguments as keywords and returns text (usually JSON)."""
+
+    name: str
+    description: str
+    input_schema: dict[str, Any]
+    run: Callable[..., str]
+
+
+class ToolRequest(Model):
+    """A question the model answers by calling tools, step by step."""
+
+    purpose: str = Field(description="what the run is for, e.g. 'assistant.ask' (ledger)")
+    system: str
+    prompt: str
+    max_output_tokens: int = Field(default=2048, gt=0, description="per step")
+    max_steps: int = Field(default=6, gt=0, description="model replies at most (tool rounds + 1)")
+
+
+class ToolRunResult(Model):
+    text: str = Field(description="the final answer; empty if the model gave none")
+    model: str
+    cost_usd: float
+    steps: int
+    tool_calls: tuple[str, ...] = Field(description="tool names, in the order they were called")
 
 
 class BudgetExceededError(RuntimeError):

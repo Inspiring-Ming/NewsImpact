@@ -14,7 +14,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import re
 from typing import Literal, Protocol
 
 from pydantic import Field
@@ -22,14 +21,10 @@ from pydantic import Field
 from newsimpact.llm.models import BudgetExceededError, LlmRequest
 from newsimpact.llm.service import LlmGateway
 from newsimpact.shared.events import Model
+from newsimpact.shared.guardrails import grounded
 from newsimpact.shared.sqlite import Database
 
 log = logging.getLogger(__name__)
-
-# Advice words: we state facts and what to check, never what to do with the stock.
-FORBIDDEN = re.compile(r"\b(buy|sell|hold|recommend\w*|should|must|price target|undervalued|"
-                       r"overvalued|opportunit\w*)\b", re.IGNORECASE)  # fmt: skip
-NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 
 SYSTEM = (
     "You write a three-line brief about one company news event for professional investors. "
@@ -71,9 +66,8 @@ def rules_brief(facts: dict[str, object]) -> Brief:
 
 
 def _safe(text: str, facts: dict[str, object]) -> bool:
-    """No advice words, and no number that is not in the facts."""
-    known = set(NUMBER.findall(json.dumps(facts, default=str)))
-    return not FORBIDDEN.search(text) and all(n in known for n in NUMBER.findall(text))
+    """No advice words, and no number that is not in the facts (shared/guardrails.py)."""
+    return grounded(text, json.dumps(facts, default=str))
 
 
 def ai_brief(llm: LlmGateway, facts: dict[str, object]) -> Brief | None:

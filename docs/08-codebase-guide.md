@@ -102,8 +102,9 @@ Every module has the same files, so each reads the same way:
 | `validation/` | Is each update confirmed, did the market react as expected, what do sources' records say? | `logic.py` (claim check, verdicts, track records, calibration), `service.py` | – (asked by the round and the API) |
 | `alerts/` | What changed for each user's companies, and telling them | `logic.py` (which changes matter), `service.py` (per user), `adapters/discord.py`, `adapters/shared.py` | – (sends messages) |
 | `identity/` | Who is signed in, and are they an admin? | `models.py` (User), `ports.py` (Authenticator), `adapters/local.py` | – (asked on every request) |
-| `llm/` | One budgeted, cached gateway to language models | `service.py` (cache → budget → call → ledger), `adapters/anthropic_api.py`, `adapters/ollama.py` | – |
-| `shared/` | The toolkit every module uses | `events.py` (event envelope), `bus.py` (event bus), `sqlite.py` (storage helper), `text.py` (ids) | – |
+| `llm/` | One budgeted, cached gateway to language models | `service.py` (cache → budget → call → ledger; `run_tools`: a tool-calling loop, every step priced and recorded), `adapters/anthropic_api.py` (structured output; the SDK's tool runner), `adapters/ollama.py` | – |
+| `assistant/` | Answer a person's question from our own data | `logic.py` (the read-only tools, the instructions, the Notebook every answer must rely on), `service.py` (daily limit → tools → checks), `adapters/` (question counts) | – (asked by the API; its tools are also served over MCP) |
+| `shared/` | The toolkit every module uses | `events.py` (event envelope), `bus.py` (event bus), `sqlite.py` (storage helper), `text.py` (ids), `guardrails.py` (no advice words, every number from our data) | – |
 
 ### `src/newsimpact/app/` – composition
 
@@ -116,12 +117,14 @@ Every module has the same files, so each reads the same way:
 | `api/__init__.py` | `create_app()`: the routers in `ROUTES`, sign-in on every `/v1` route, the website at `/` | adding an area of endpoints |
 | `api/auth.py` | `current_user`, `admin_user`: who is calling, are they allowed | changing access rules |
 | `api/context.py` | what every router may use (services, monitor, per-process cache) | rarely |
-| `api/routes/*.py` | one file per area: `system`, `companies`, `storylines`, `sources`, `alerts`, `monitor` | adding or changing endpoints |
+| `api/routes/*.py` | one file per area: `system`, `companies`, `storylines`, `sources`, `alerts`, `monitor`, `assistant` | adding or changing endpoints |
+| `mcp.py` | MCP server: the assistant's tools for AI assistants (Claude Desktop, Claude Code), over stdio; `make mcp` | offering a new tool to outside AIs (add it to the toolbox instead) |
 | `views/companies.py` | companies and their events for the website (cards, measures, facts for briefs) | showing new data about events |
 | `views/guidance.py` | priority (Act now / Check / Background) and "what to check now" rules | changing urgency or the checklist |
 | `views/briefs.py` | three-line briefs: AI prompt, safety checks, rules fallback, brief store | changing the brief |
 | `views/system.py` | overview counts, source coverage, reading accuracy | changing status numbers |
 | `views/snapshot.py` | what pages read, computed once per round: company cards, coverage per company and source, with time and reading method; its store | adding a page that reads many articles or events |
+| `views/news_data.py` | what the assistant's tools may read (snapshot + stored articles), formatted as on the website | giving the AI more facts to look up |
 | `demo.py` | runs the fictional demo data through the real pipeline | changing the demo |
 | `logs.py` | JSON logs, with keys and webhook links blanked out | rarely |
 
@@ -169,6 +172,7 @@ the design is being stretched: write an ADR first.
 | add API endpoints | `app/api/routes/<area>.py` + one entry in `ROUTES`; `make contracts` | `tests/app/test_api.py` |
 | show new data on the website | the view in `app/views/`, the page in `web/src/features/`, words in `shared/labels.ts`; `make contracts` | `tests/app/test_views.py` |
 | add a website page | `web/src/features/<page>/` + one entry in `routes.tsx` + a style group | build (`make web-build`) |
+| give the AI (website "Ask" and MCP) a new lookup | one `tool(...)` entry in `assistant/logic.py` `toolbox`, its data in `views/news_data.py` (NewsData port) | `tests/assistant/`, `tests/app/test_assistant_api.py` |
 | add a business module | copy `alerts/` (smallest), add it to the two lists in `pyproject.toml` (import rules), build it in `app/wiring/__init__.py` | `tests/<module>/` |
 | change a rule or threshold | `logic.py` of the module, or `methodology.json` with its reason; bump `MODEL_VERSION` | the module's `test_logic.py` |
 | **remove** a technology | delete its adapter and its table entry | `test_plugins.py` |

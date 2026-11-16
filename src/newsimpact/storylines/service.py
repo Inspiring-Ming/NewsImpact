@@ -65,6 +65,7 @@ class StorylinesService:
                 claim_reliability=reliability.get(claim.claim_id, 0.0),
                 origin=claim.attribution.origin(event.source_id),
                 attribution_kind=claim.attribution.kind,
+                event_type=claim.event_type,
             )
             self._apply(claim, entity, report, envelope)
 

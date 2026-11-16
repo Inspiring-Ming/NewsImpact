@@ -16,11 +16,12 @@ It states facts and what to check, never what to buy or sell.
 | Page | What it shows |
 |---|---|
 | **Watchlist** (home) | Key numbers (click for detail); two tabs: **All** and **Priorities** (a board of what to act on and check); an impact map of stock moves by sector; every company with an event: priority, the news, the stock vs its market, and its sources (confirmed or not). Star (★) companies to follow them. |
-| **Event** | A three-line brief, what to check now, the price chart, a timeline of updates, and expected vs actual market reactions. |
-| **How it works** | Whether the news reaches every company, the news sources and their track records, the event types, and whether each type really moves stocks. |
+| **Event** | A three-line brief, what to check now, the price chart, a timeline of updates, expected vs actual market reactions, and **Ask**: questions answered by AI from our own data only, checked, with the links it used. |
+| **How it works** | The news sources and their track records, the event types, and whether each type really moves stocks. |
 
 Every underlined word explains itself on hover. Followed companies can get
-**Discord alerts** when something changes.
+**Discord alerts** when something changes. AI assistants (Claude Desktop, Claude
+Code...) can query the same data through our **MCP server** (`make mcp`).
 
 ## Run it
 
@@ -65,6 +66,7 @@ src/newsimpact/
   sources/ semantics/ reliability/ storylines/ market/ validation/   the pipeline
   alerts/       tell each follower what changed (Discord now, email later)
   identity/     who is signed in and what they may do (local now, Cognito next)
+  assistant/    answers questions from our data with read-only tools (website "Ask" + MCP)
   llm/          one budgeted, cached gateway to language models
      every module: __init__.py (what it is) · models.py · logic.py · ports.py · service.py · adapters/
   shared/       event base classes, event bus, text ids, SQLite helper

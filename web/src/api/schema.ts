@@ -78,6 +78,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/assistant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_v1_assistant_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/assistant/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask
+         * @description Answered only from our events, sources and stock moves; checked before it is
+         *     returned (no advice, no number that is not in our data); links a tool returned.
+         */
+        post: operations["ask_v1_assistant_ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/calibration": {
         parameters: {
             query?: never;
@@ -439,6 +477,42 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Answer */
+        Answer: {
+            /**
+             * Cost Usd
+             * @default 0
+             */
+            cost_usd: number;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /** Question */
+            question: string;
+            /**
+             * Sources
+             * @description links a tool returned
+             * @default []
+             */
+            sources: components["schemas"]["SourceLink"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "answered" | "not_in_our_data" | "checks_failed" | "limit_reached" | "unavailable";
+            /**
+             * Text
+             * @description the answer shown to the person (or why there is none)
+             */
+            text: string;
+            /**
+             * Tools Used
+             * @default []
+             */
+            tools_used: string[];
+        };
         /** Article */
         Article: {
             /**
@@ -498,6 +572,12 @@ export interface components {
              * Format: date-time
              */
             as_of: string;
+            /**
+             * Combined Pending
+             * @description that combined move waits for trading days still to come
+             * @default false
+             */
+            combined_pending: boolean;
             /** @description price move over overlapping stages, measured as one event */
             combined_reaction?: components["schemas"]["ChannelObservation"] | null;
             /** Conclusion */
@@ -532,6 +612,14 @@ export interface components {
             theme: string;
             /** Ticker */
             ticker: string;
+        };
+        /** AssistantStatus */
+        AssistantStatus: {
+            /**
+             * Available
+             * @description False without a language model that can call tools
+             */
+            available: boolean;
         };
         /** Calibration */
         Calibration: {
@@ -758,7 +846,7 @@ export interface components {
             event_id: string;
             /**
              * Event Type
-             * @description e.g. Leadership change, Earnings miss
+             * @description e.g. Leadership change, Results
              */
             event_type: string;
             /**
@@ -811,6 +899,11 @@ export interface components {
              * @default
              */
             priority_reason: string;
+            /**
+             * Reading
+             * @description for events that can read either way (results): 'better than expected', 'worse than expected', or 'mixed' when the reports disagree
+             */
+            reading?: string | null;
             /** @description this event type's track record */
             record?: components["schemas"]["TypeRecord"] | null;
             /**
@@ -1135,6 +1228,13 @@ export interface components {
             /** Name */
             name: string;
             /**
+             * Readings
+             * @description event type -> what it says, for a stage that can read either way
+             */
+            readings?: {
+                [key: string]: string;
+            };
+            /**
              * Resolves
              * @default false
              */
@@ -1192,6 +1292,16 @@ export interface components {
             reference_data: {
                 [key: string]: string;
             };
+        };
+        /** Question */
+        Question: {
+            /**
+             * Event Id
+             * @description the event the person is looking at
+             */
+            event_id?: string | null;
+            /** Question */
+            question: string;
         };
         /** ReliabilityScore */
         ReliabilityScore: {
@@ -1254,6 +1364,12 @@ export interface components {
             /** Claim Reliability */
             claim_reliability: number;
             /**
+             * Event Type
+             * @description what this report claimed, when a stage accepts several event types (results: better or worse)
+             * @default
+             */
+            event_type: string;
+            /**
              * Origin
              * @description independent origin: the outlet itself, a cited outlet, the company, a filing, or the outlet it copied
              */
@@ -1304,6 +1420,18 @@ export interface components {
             source_id: string;
             /** @default unknown */
             source_type: components["schemas"]["SourceType"];
+        };
+        /** SourceLink */
+        SourceLink: {
+            /**
+             * Source
+             * @description the outlet, e.g. Reuters
+             */
+            source: string;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
         };
         /**
          * SourceType
@@ -1620,6 +1748,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Article"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_v1_assistant_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantStatus"];
+                };
+            };
+        };
+    };
+    ask_v1_assistant_ask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Question"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Answer"];
                 };
             };
             /** @description Validation Error */

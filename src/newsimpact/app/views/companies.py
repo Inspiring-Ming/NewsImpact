@@ -27,7 +27,7 @@ from newsimpact.market.models import ChannelObservation
 from newsimpact.semantics.models import Company
 from newsimpact.shared.events import Model
 from newsimpact.sources.models import Article, SourceType
-from newsimpact.storylines.models import ResearchFinding, Storyline
+from newsimpact.storylines.models import Playbook, ResearchFinding, Storyline
 from newsimpact.validation.models import Assessment
 
 if TYPE_CHECKING:  # type hints only: the wiring builds the stores these views use
@@ -49,7 +49,12 @@ class UpdateItem(Model):
 
 class EventCard(Model):
     event_id: str
-    event_type: str = Field(description="e.g. Leadership change, Earnings miss")
+    event_type: str = Field(description="e.g. Leadership change, Results")
+    reading: str | None = Field(
+        default=None,
+        description="for events that can read either way (results): 'better than expected', "
+        "'worse than expected', or 'mixed' when the reports disagree",
+    )
     updates: tuple[UpdateItem, ...]
     latest_headline: str
     latest_source: str
@@ -155,6 +160,7 @@ def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:
     r = e.record
     return {
         "company": c.name, "ticker": c.ticker, "sector": c.sector, "event_type": e.event_type,
+        "reading": e.reading,
         "updates": [f"{u.published_at:%-d %b}: {u.title}" for u in e.updates],
         "latest_update": e.updates[-1].title if e.updates else e.event_type,
         "headline": e.latest_headline, "confirmed": e.verified,
@@ -282,6 +288,21 @@ def _so_far(svc: Services, storyline: Storyline) -> tuple[float, date] | None:
     return (last.stock / base.stock) - (last.benchmark / base.benchmark), last.day
 
 
+def _reading(storyline: Storyline, playbook: Playbook | None) -> str | None:
+    """What the reports say, for stages that can read either way (playbook "readings"):
+    one reading, or "mixed" when the sources disagree."""
+    if playbook is None:
+        return None
+    found = set()
+    for e in storyline.events:
+        readings = playbook.stages[e.stage].readings if e.stage < len(playbook.stages) else {}
+        found |= {readings[t] for t in (e.event_type, *(r.event_type for r in e.reports))
+                  if t in readings}  # fmt: skip
+    if not found:
+        return None
+    return found.pop() if len(found) == 1 else "mixed"
+
+
 def _event_card(
     svc: Services, storyline: Storyline, names: dict[str, str], articles: dict[str, Article]
 ) -> EventCard:
@@ -299,7 +320,13 @@ def _event_card(
     reports = {(e.stage, e.published_at): e.reports for e in storyline.events}
     prices = [d.evidence for st in a.stages for d in st.decisions
               if d.evidence is not None and d.evidence.channel == "price"]  # fmt: skip
-    move = a.combined_reaction or max(prices, key=lambda o: abs(o.statistic or 0), default=None)
+    pending = a.combined_pending or any(d.channel == "price" and d.verdict == "pending"
+                                        for st in a.stages for d in st.decisions)  # fmt: skip
+    # While any update's window is still open, one update's move is not the event's move:
+    # show the provisional move so far over the whole event instead (status "pending").
+    move = a.combined_reaction or (
+        None if pending else max(prices, key=lambda o: abs(o.statistic or 0), default=None)
+    )
     first, last = a.stages[0].published_at, a.stages[-1].published_at
     period = (f"{first:%-d %b}" if first.date() == last.date()
               else f"{first:%-d %b}-{last:%-d %b}")  # fmt: skip
@@ -308,14 +335,13 @@ def _event_card(
         (st.claim.outlets for st in a.stages if st.published_at == latest.published_at), ()
     )
     first_at = min(e.published_at for e in storyline.events)
-    if move is None:  # this event type expects no price reaction: measure it anyway
+    if move is None and not pending:  # this type expects no price reaction: measure anyway
         move = _observe(svc, storyline, "price", first_at)
-    pending = any(d.channel == "price" and d.verdict == "pending"
-                  for st in a.stages for d in st.decisions)  # fmt: skip
     status = "measured" if move else "pending" if pending else "no_data"
     so_far = _so_far(svc, storyline) if status == "pending" else None
     return EventCard(
         event_id=storyline.storyline_id,
+        reading=_reading(storyline, playbook),
         event_type=(playbook.title if playbook and playbook.title else storyline.theme),
         updates=tuple(
             UpdateItem(title=title(st.stage_name), published_at=st.published_at,

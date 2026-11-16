@@ -55,6 +55,8 @@ class Report(Model):
     origin: str = Field(description="independent origin: the outlet itself, a cited outlet, "
                         "the company, a filing, or the outlet it copied")  # fmt: skip
     attribution_kind: str = "own_reporting"
+    event_type: str = Field(default="", description="what this report claimed, when a stage "
+                            "accepts several event types (results: better or worse)")  # fmt: skip
 
 
 class StorylineEvent(Model):
@@ -112,6 +114,10 @@ class PlaybookStage(Model):
     name: str
     title: str = Field(default="", description="plain-English name shown to people")
     event_types: tuple[str, ...]
+    readings: dict[str, str] = Field(
+        default_factory=dict,
+        description="event type -> what it says, for a stage that can read either way",
+    )
     follow_up_terms: tuple[str, ...] = ()
     resolves: bool = False
     decisions: tuple[ExpectedDecision, ...] = ()

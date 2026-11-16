@@ -4,7 +4,7 @@
 // cue); faded = no update for RECENT_DAYS, so what is happening now stands out.
 import { useState } from "react";
 import type { S } from "../../api/client";
-import { pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
+import { eventLabel, pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
 import { Term } from "../../shared/Term";
 
 const W = 1000, ROW = 30, PAD = { l: 96, r: 24, t: 10, b: 34 };
@@ -85,7 +85,7 @@ export function ImpactMap({ companies }: { companies: S["CompanyCard"][] }) {
         </svg>
         {hover && (
           <div className="map-tip" style={{ left: `${(hover.x / W) * 100}%`, top: `${(hover.y / H) * 100}%` }}>
-            <b>{hover.d.c.name}</b> ({hover.d.c.ticker}) · {hover.d.e.event_type}
+            <b>{hover.d.c.name}</b> ({hover.d.c.ticker}) · {eventLabel(hover.d.e)}
             <div>{pct(hover.d.e.stock_move!)} · {vsWords(hover.d.e.stock_move!, hover.d.c.index_name)}</div>
             <div className="muted">{hover.d.e.stock_move_period} · {hover.d.e.stock_move_unusual ? "unusual move" : "normal range"} · {hover.d.e.sources} {hover.d.e.sources === 1 ? "source" : "sources"} · last update {new Date(lastUpdate(hover.d.e)).toLocaleDateString()}</div>
           </div>

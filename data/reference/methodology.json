@@ -1,6 +1,6 @@
 {
   "_note": "Every number used to measure market reactions and to draw conclusions, with the reason for it. Change a value here (and bump version) rather than in code; each assessment records this file's hash. See docs/07-coverage-and-settings.md.",
-  "version": "methodology-v2",
+  "version": "methodology-v3",
   "market": {
     "estimation_days": 120,
     "gap_days": 10,
@@ -86,10 +86,20 @@
       "copy_novelty": "Re-printed news is not new information (Tetlock 2011: investors over-react to stale news, which then reverses), so copies count at 20% of a fresh report in impact."
     }
   },
+  "assistant": {
+    "questions_per_user_per_day": 20,
+    "max_steps": 6,
+    "max_output_tokens": 1024,
+    "rationale": {
+      "questions_per_user_per_day": "Enough for a working session on a few events; with the economy model a question costs about US$0.001, so 20 a day keeps one person far below the monthly LLM budget and stops one person from using it all.",
+      "max_steps": "A question usually needs 2-4 lookups (find the company, list its events, open one, search articles) plus the answer; 6 allows that with room, and stops a model that keeps calling tools.",
+      "max_output_tokens": "Answers are at most about 120 words plus links; 1,024 tokens per reply leaves room for the model's tool calls without paying for long essays."
+    }
+  },
   "coverage": {
     "window_days": 7,
     "rationale": {
-      "window_days": "Every company we follow is large and covered weekly by the financial press, so a week with no article naming it means our sources or our name matching miss it (as with Apple before exact_case_aliases: 1 article in a year). Checked after every round; shown on How it works."
+      "window_days": "Every company we follow is large and covered weekly by the financial press, so a week with no article naming it means our sources or our name matching miss it (as with Apple before exact_case_aliases: 1 article in a year). Checked after every round: gaps are logged and listed at GET /v1/companies/coverage."
     }
   }
 }

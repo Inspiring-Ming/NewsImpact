@@ -1,10 +1,10 @@
 {
   "_note": "What semantics looks for. Edit this file to add event types, aspects or word lists; no code change. Event types are checked in order, first match wins (put specific ones first). 'speculative': true/false restricts a type to hedged/unhedged sentences. Every playbook trigger must be an event type here (checked at start-up). The same file can drive an LLM analyzer's labels. 'background' words mark a sentence as history, not news (no trigger). 'attribution' says where a claim comes from, so copies and re-reports are not counted as independent confirmation. 'commentary' = headline wording of opinion, explainer and feature pieces (\"Should you buy...\", \"Here's why...\", interviews). An article whose headline or opening sentence matches is commentary about news, not a new event, so none of its sentences open or extend an event. Checked against the live feed on 2026-11-16, where such pieces had been read as events.",
-  "version": "taxonomy-v5",
+  "version": "taxonomy-v7",
   "event_types": [
     {
       "name": "m_and_a_rumor",
-      "description": "Unconfirmed talk of a deal",
+      "description": "Unconfirmed talk of a deal (reported talks, approaches or bids), even if denied",
       "patterns": [
         "acquire",
         "acquisition",
@@ -16,7 +16,7 @@
     },
     {
       "name": "m_and_a_announced",
-      "description": "A deal is agreed or announced",
+      "description": "A deal is agreed or announced: ownership of a company, a business unit or a stake changes hands. An investor or fund buying or selling shares on the market is not a deal",
       "patterns": [
         "acquire",
         "acquisition",
@@ -65,7 +65,7 @@
     },
     {
       "name": "leadership_departure",
-      "description": "A top executive leaves",
+      "description": "The company's chief executive, chair or chief financial officer leaves or is pushed out. Not other executives",
       "patterns": [
         "step down",
         "steps down",
@@ -75,7 +75,7 @@
     },
     {
       "name": "leadership_appointment",
-      "description": "A new top executive is named",
+      "description": "The company names a new chief executive, chair or chief financial officer (interim or permanent). Not other executives, and not a former employee joining another company",
       "patterns": [
         "named",
         "names ",
@@ -136,7 +136,7 @@
     },
     {
       "name": "earnings_positive",
-      "description": "Results or guidance above expectations",
+      "description": "Reported results or guidance for a period (revenue, profit, outlook) better than expected or than before. Not operating statistics, cost savings or usage trends",
       "patterns": [
         "beat",
         "raised its full-year",
@@ -145,7 +145,7 @@
     },
     {
       "name": "earnings_negative",
-      "description": "Results or guidance below expectations",
+      "description": "Reported results or guidance for a period (revenue, profit, outlook) worse than expected or than before. Not operating statistics, cost savings or usage trends",
       "patterns": [
         "missed",
         "cut guidance",
@@ -340,6 +340,10 @@
       "once again"
     ],
     "commentary": [
+      "why i bought",
+      "i bought more",
+      "i'm buying",
+      "i'm selling",
       "should you buy",
       "should you sell",
       "is it too late",

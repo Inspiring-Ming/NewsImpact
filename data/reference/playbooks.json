@@ -1,20 +1,21 @@
 {
   "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions). 'research' = published findings on how markets usually react to this kind of event (shown with their source); 'watch' = what investors typically check next, from common analyst practice.",
-  "version": "playbooks-v0.7",
+  "version": "playbooks-v0.8",
   "late_report_days": 3,
   "late_report_why": "Outlets publish the same events in a different order than they happened (e.g. 'interim CEO in charge' before the resignation story). A resolved story therefore still absorbs reports of its earlier stages published within 3 days of its latest stage; later ones start a new story. 3 days covers same-week reporting across time zones (US and Australian outlets) without merging a new crisis weeks later.",
   "playbooks": [
     {
       "theme": "leadership_crisis",
       "title": "Leadership change",
-      "description": "Leader under pressure (misconduct report or public apology), then departure, then succession. Stages can follow within days (e.g. a conduct report and a resignation in the same week).",
+      "description": "Leader under pressure (misconduct report or public apology), then departure, then succession. Stages can follow within days (e.g. a conduct report and a resignation in the same week). A new leader named on its own (a planned succession) also starts one: a new chief executive at a large company is market-moving news (e.g. CSL named Deborah Waterhouse CEO on 21 Oct 2026, which no event caught before).",
       "link_window_days": 60,
       "window_basis": "judgment prior",
       "window_why": "Interim leaders are usually named at or soon after a departure, while a permanent successor search can take months. 60 days links the departure to an interim or announced successor without merging unrelated leadership news months later. Fast sequences (pressure to resignation within a week, interim CEO the same day) are common; they stay in one story and their overlapping reactions are measured together (methodology.json overlap_trading_days).",
       "triggers": [
         "leadership_misconduct",
         "leadership_apology",
-        "leadership_departure"
+        "leadership_departure",
+        "leadership_appointment"
       ],
       "stages": [
         {
@@ -378,41 +379,49 @@
       ]
     },
     {
-      "theme": "earnings_beat",
-      "title": "Earnings beat",
-      "description": "Results or guidance better than expected.",
+      "theme": "results",
+      "title": "Results",
+      "description": "A results or guidance release. One event per release: its reports say whether it was better or worse than expected, or both ('beat estimates, yet the outlook disappointed'), so a mixed release is one event, not two contradicting ones (seen on the live feed: Atlassian, AGL, Telstra, Nov 2026).",
       "link_window_days": 30,
       "window_basis": "judgment prior",
       "window_why": "Analysts revise forecasts and guidance updates land within weeks of a results release, inside one reporting cycle.",
       "triggers": [
-        "earnings_positive"
+        "earnings_positive",
+        "earnings_negative"
       ],
       "stages": [
         {
-          "name": "results_beat",
-          "title": "Results beat expectations",
+          "name": "results_out",
+          "title": "Results released",
           "event_types": [
-            "earnings_positive"
+            "earnings_positive",
+            "earnings_negative"
           ],
+          "readings": {
+            "earnings_positive": "better than expected",
+            "earnings_negative": "worse than expected"
+          },
           "follow_up_terms": [
             "raises guidance",
+            "cuts guidance",
             "upgrade",
+            "downgrade",
             "price target"
           ],
           "resolves": false,
           "decisions": [
             {
               "actor": "institutional_investors",
-              "decision": "buy more shares",
+              "decision": "re-price the shares on the news",
               "market_channel": "price",
-              "expected_direction": "up",
+              "expected_direction": "uncertain",
               "horizon": "days"
             },
             {
               "actor": "sell_side_analysts",
-              "decision": "raise their profit forecasts",
+              "decision": "revise their profit forecasts",
               "market_channel": "analyst_revisions",
-              "expected_direction": "up",
+              "expected_direction": "uncertain",
               "horizon": "weeks"
             },
             {
@@ -426,6 +435,10 @@
         }
       ],
       "research": [
+        {
+          "finding": "Trading volume and the size of price moves rise sharply in the week of an earnings announcement.",
+          "source": "Beaver (1968), Journal of Accounting Research"
+        },
         {
           "finding": "After an earnings surprise, share prices tend to keep drifting in the direction of the surprise for weeks.",
           "source": "Bernard & Thomas (1989), Journal of Accounting Research"
@@ -434,67 +447,7 @@
       "watch": [
         "Guidance for the next period: a beat with weaker guidance can still fall.",
         "Analyst forecast revisions over the next one to two weeks.",
-        "Whether revenue, not only profit, beat expectations."
-      ]
-    },
-    {
-      "theme": "earnings_miss",
-      "title": "Earnings miss",
-      "description": "Results or guidance worse than expected.",
-      "link_window_days": 30,
-      "window_basis": "judgment prior",
-      "window_why": "Forecast cuts and follow-up guidance come within weeks of a results release, inside one reporting cycle.",
-      "triggers": [
-        "earnings_negative"
-      ],
-      "stages": [
-        {
-          "name": "results_miss",
-          "title": "Results miss expectations",
-          "event_types": [
-            "earnings_negative"
-          ],
-          "follow_up_terms": [
-            "cuts guidance",
-            "downgrade",
-            "price target"
-          ],
-          "resolves": false,
-          "decisions": [
-            {
-              "actor": "institutional_investors",
-              "decision": "sell shares",
-              "market_channel": "price",
-              "expected_direction": "down",
-              "horizon": "days"
-            },
-            {
-              "actor": "sell_side_analysts",
-              "decision": "cut their profit forecasts",
-              "market_channel": "analyst_revisions",
-              "expected_direction": "down",
-              "horizon": "weeks"
-            },
-            {
-              "actor": "retail_investors",
-              "decision": "pay closer attention",
-              "market_channel": "volume",
-              "expected_direction": "up",
-              "horizon": "days"
-            }
-          ]
-        }
-      ],
-      "research": [
-        {
-          "finding": "After an earnings surprise, share prices tend to keep drifting in the direction of the surprise for weeks.",
-          "source": "Bernard & Thomas (1989), Journal of Accounting Research"
-        }
-      ],
-      "watch": [
-        "Guidance for the next period and any cut to targets.",
-        "Analyst forecast cuts over the next one to two weeks.",
-        "Whether the miss is one-off (costs) or lasting (demand)."
+        "Whether revenue, not only profit, beat expectations, and whether a miss is one-off (costs) or lasting (demand)."
       ]
     },
     {

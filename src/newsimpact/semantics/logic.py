@@ -1,6 +1,6 @@
 """Measuring analysis quality - pure functions, no I/O.
 
-Used by `newsimpact evaluate` against the hand-labelled set in data/eval/, so
+Used by `GET /v1/evaluation` against the hand-labelled set in data/eval/, so
 every analysis chain (word lists, LLM, mixes) is judged on the same examples
 before it is trusted in the product.
 """

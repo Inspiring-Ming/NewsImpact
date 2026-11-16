@@ -3,6 +3,9 @@
 Where LLMs are used (and only there):
   * semantics: the optional "llm" analysis step (event type, background,
     speculation, attribution) - see semantics/adapters/llm_classifier.py.
+  * event briefs (app/views/briefs.py).
+  * the assistant: questions answered by calling read-only tools over our data
+    (`run_tools`, assistant module).
 Everything else in the pipeline is deterministic and free.
 
 How cost and change are controlled:
@@ -15,6 +18,6 @@ How cost and change are controlled:
   * prices live in the same file (dated, with source)
   * any new provider = one adapter implementing LlmProvider
 
-Publishes / consumes: nothing (called through the TextModel port of semantics, and by the
-event briefs in app/views/briefs.py).
+Publishes / consumes: nothing (called through the TextModel port of semantics, the
+ToolModel port of the assistant, and by the event briefs).
 """

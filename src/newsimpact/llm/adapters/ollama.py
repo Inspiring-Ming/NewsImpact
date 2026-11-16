@@ -2,7 +2,7 @@
 
 Runs on your own machine or server: no per-token cost, no data leaves the
 machine. Ollama constrains the answer to our JSON schema ("format").
-Quality depends on the model you pull - compare it with `newsimpact evaluate`.
+Quality depends on the model you pull - compare it with `GET /v1/evaluation`.
 """
 
 from __future__ import annotations

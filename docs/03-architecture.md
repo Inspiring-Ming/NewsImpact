@@ -125,7 +125,7 @@ Reading order for a newcomer: `__init__.py` → `models.py` → `service.py`.
 | Add a storyline type | Add a playbook to `data/reference/playbooks.json` (its event types must exist in the taxonomy – checked at start-up) | None |
 | **Validate with a new kind of evidence** (credit spreads, analyst revisions, peers) | Data port + adapter in `market/`, one branch in `MarketService.observe()`; validation picks it up through the decision's `market_channel` | 1 adapter + 1 branch |
 | Change how conclusions are drawn | Thresholds: `methodology.json` (with reason). Rules: `validation/logic.py` (pure, unit-tested); bump `MODEL_VERSION` | data / rules only |
-| **Use an LLM** for analysis | `NI_LLM_PRESET=quality` (Claude Opus 5.5), `economy` (Claude Haiku 5.5) or `local` (Ollama, $0); presets and reasons in `llm_models.json`; set `NI_LLM_MONTHLY_BUDGET_USD`; compare with the accuracy check on How it works first | settings only |
+| **Use an LLM** for analysis | `NI_LLM_PRESET=quality` (Claude Opus 5.5), `economy` (Claude Haiku 5.5) or `local` (Ollama, $0); presets and reasons in `llm_models.json`; set `NI_LLM_MONTHLY_BUDGET_USD`; compare with `GET /v1/evaluation` first | settings only |
 | Add an LLM provider | One adapter implementing `LlmProvider` in `llm/adapters/`, one entry in `LLM_PROVIDERS` (`app/wiring/plugins.py`) | 1 file + 1 line |
 | Connect market data | `NI_MARKET_DATA=eodhd` + `NI_EODHD_API_KEY` (US + ASX), or `csv` (vendor exports); a new vendor = one `MarketData` adapter + one entry in `MARKET_DATA` (`app/wiring/plugins.py`) | settings / 1 file + 1 line |
 | **Watch another market** | Add an exchange (time zone, close, benchmark, vendor code) and its ticker suffix to `methodology.json` → market; add companies to `entities.json` | data only |
@@ -199,7 +199,7 @@ Every result can be traced to exactly what produced it:
 | Code and dependencies | `uv.lock` pins every package; the same Docker image runs locally and in the cloud |
 | Analysis method | every claim carries `model_version` = the extractor and each step in order, incl. taxonomy version |
 | Reference data | each assessment's `provenance.reference_data` holds content hashes of sources, entities, taxonomy, playbooks, methodology and LLM prices |
-| Analysis quality | the accuracy check on How it works (`/v1/evaluation`) scores any chain on `data/eval/`; a test gate stops regressions |
+| Analysis quality | `GET /v1/evaluation` scores any chain on `data/eval/`; a test gate stops regressions |
 | Market data | CSV snapshots or cached vendor bars; provider version in provenance |
 | Models and rules | reliability, storylines, market and validation each stamp a `MODEL_VERSION`, collected in `provenance.components` |
 | Time | point-in-time fields (`published_at`, `ingested_at`, `as_of`); articles processed in publication order |

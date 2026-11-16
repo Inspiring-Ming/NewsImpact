@@ -16,6 +16,8 @@ from newsimpact.llm.models import (
     LlmReply,
     LlmRequest,
     ModelPrice,
+    ToolRequest,
+    ToolSpec,
 )
 from newsimpact.llm.service import LlmGateway
 
@@ -119,3 +121,77 @@ def test_anthropic_refusal_gives_no_data() -> None:
     fake = FakeAnthropic(_anthropic_response("refusal", ""))
     reply = AnthropicProvider("claude-opus-5-5", client=fake).complete(REQ)
     assert reply.refused and reply.data is None
+
+
+# ------------------------------------------------------------ tool use
+TOOL_REQ = ToolRequest(purpose="assistant.ask", system="Answer from tools.", prompt="Why?",
+                       max_output_tokens=500, max_steps=3)  # fmt: skip
+LOOKUP = ToolSpec(name="lookup", description="d", input_schema={"type": "object"},
+                  run=lambda **kw: "x")  # fmt: skip
+
+
+class FakeToolProvider(FakeProvider):
+    def run_tools(self, request: ToolRequest, tools: Any) -> tuple[str, list[LlmReply], list[str]]:
+        steps = [LlmReply(data=None, model="m", input_tokens=1_000, output_tokens=100)] * 2
+        return "the answer", steps, ["lookup"]
+
+
+def test_every_tool_step_is_priced_and_recorded() -> None:
+    gw = _gateway(FakeToolProvider())
+    result = gw.run_tools(TOOL_REQ, [LOOKUP])
+    # each step: 1000*4 + 100*20 per million = 0.006; two steps
+    assert result and result.cost_usd == pytest.approx(0.012) and result.steps == 2
+    assert result.tool_calls == ("lookup",) and gw.spent_this_month() == pytest.approx(0.012)
+
+
+def test_tool_runs_respect_the_budget_and_need_a_capable_provider() -> None:
+    with pytest.raises(BudgetExceededError):
+        _gateway(FakeToolProvider(), budget=0.001).run_tools(TOOL_REQ, [LOOKUP])
+    assert _gateway(FakeProvider()).run_tools(TOOL_REQ, [LOOKUP]) is None
+    assert not _gateway(FakeProvider()).can_use_tools
+
+
+class FakeRunner:
+    """Stands in for client.beta.messages.tool_runner: yields one message per step."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+        self.tools = kwargs["tools"]
+
+    def __iter__(self) -> Any:
+        self.tools[0].func(query="acme")  # the model calls the tool once
+        yield _anthropic_response("tool_use", "")
+        yield _anthropic_response("end_turn", "Acme moved. Sources:\nhttps://x.test/a")
+
+
+def test_anthropic_tool_runner_wraps_tools_and_returns_each_steps_usage() -> None:
+    runners: list[FakeRunner] = []
+
+    def tool_runner(**kwargs: Any) -> FakeRunner:
+        runners.append(FakeRunner(**kwargs))
+        return runners[-1]
+
+    fake = SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(tool_runner=tool_runner)))
+    seen: list[dict[str, Any]] = []
+    spec = ToolSpec(name="lookup", description="Look up.",
+                    input_schema={"type": "object", "properties": {"query": {"type": "string"}}},
+                    run=lambda **kw: seen.append(kw) or "found")  # fmt: skip
+    text, steps, calls = AnthropicProvider("claude-opus-5-5", client=fake).run_tools(
+        TOOL_REQ, [spec]
+    )
+    assert text.startswith("Acme moved.") and len(steps) == 2 and calls == ["lookup"]
+    assert seen == [{"query": "acme"}] and steps[0].cache_read_tokens == 900
+    kw = runners[0].kwargs
+    assert kw["max_iterations"] == 3 and kw["fallbacks"] == "default"
+    assert runners[0].tools[0].name == "lookup"
+
+
+def test_anthropic_tool_run_that_stops_mid_tools_gives_no_answer() -> None:
+    class Unfinished(FakeRunner):
+        def __iter__(self) -> Any:
+            yield _anthropic_response("tool_use", "")
+
+    fake = SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(
+        tool_runner=lambda **kw: Unfinished(**kw))))  # fmt: skip
+    text, steps, _ = AnthropicProvider("m", client=fake).run_tools(TOOL_REQ, [LOOKUP])
+    assert text == "" and len(steps) == 1

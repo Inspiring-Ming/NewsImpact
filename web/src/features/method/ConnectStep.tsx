@@ -1,7 +1,6 @@
 // Tab 2 - how news becomes an event made of updates, with the event types and observed timing.
 import type { S } from "../../api/client";
 import { label } from "../../shared/labels";
-import { AccuracyCheck } from "./AccuracyCheck";
 import { Term } from "../../shared/Term";
 import { StepBlock } from "./StepBlock";
 
@@ -27,7 +26,6 @@ export function ConnectStep({ method, calibration }: { method: S["Method"]; cali
           </tbody>
         </table>
       </div>
-      <AccuracyCheck llmPreset={method.llm_preset_in_use} />
     </StepBlock>
   );
 }

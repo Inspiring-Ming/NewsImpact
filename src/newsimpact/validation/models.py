@@ -97,6 +97,9 @@ class Assessment(Model):
     combined_reaction: ChannelObservation | None = Field(
         default=None, description="price move over overlapping stages, measured as one event"
     )
+    combined_pending: bool = Field(
+        default=False, description="that combined move waits for trading days still to come"
+    )
     market_support: float | None = Field(
         description="share of measured expectations the market confirmed; None = nothing measured"
     )

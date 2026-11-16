@@ -2,7 +2,7 @@
 // question: who, what happened, how did the stock react, how well is it sourced.
 // On phones every row becomes a card (see styles.css "watchlist cards").
 import type { S } from "../../api/client";
-import { COUNTRY, date, NO_MOVE, pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
+import { COUNTRY, date, eventLabel, NO_MOVE, pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
 import { Term } from "../../shared/Term";
 import { Dots, MoveBar } from "../../shared/viz";
 import { PriorityBadge, Signals, SourceBadge } from "../../shared/badges";
@@ -43,7 +43,7 @@ export function WatchlistTable({ rows, starred, onStar }: {
                     <td className="c-event">
                       <div className="event-top">
                         <PriorityBadge e={e} />
-                        <span className="tag">{e.event_type}</span>
+                        <span className="tag">{eventLabel(e)}</span>
                         <span className="progress" title={`${e.updates.length} of ${e.stages_total} usual updates`}>
                           <Dots n={e.updates.length} of={Math.max(e.stages_total, e.updates.length)} />
                         </span>

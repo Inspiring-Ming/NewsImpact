@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from newsimpact.app.views.companies import _reading
 from newsimpact.reliability.models import ClaimReliability, ClaimsScored, ReliabilityScore
 from newsimpact.semantics.models import Claim, EntityMention
 from newsimpact.shared.bus import InMemoryEventBus
@@ -10,6 +11,7 @@ from newsimpact.storylines.models import StorylineStatus, StorylineUpdated
 from newsimpact.storylines.service import StorylinesService
 
 PLAYBOOKS = Path(__file__).resolve().parents[2] / "data" / "reference" / "playbooks.json"
+CATALOG = JsonPlaybookCatalog.from_file(PLAYBOOKS)
 T0 = datetime(2026, 3, 16, tzinfo=UTC)
 
 
@@ -121,3 +123,23 @@ def test_out_of_order_reports_join_the_resolved_story_without_reopening_it() -> 
     assert sorted(e.stage_name for e in late.storyline.events) == [
         "leader_departure", "public_pressure", "succession",
     ]  # fmt: skip
+
+
+def test_a_new_leader_named_on_its_own_starts_an_event() -> None:
+    named = Harness().news("leadership_appointment")  # a planned succession, no departure first
+    assert named and named.is_new and named.storyline.theme == "leadership_crisis"
+
+
+def test_a_results_release_is_one_event_even_when_reports_disagree() -> None:
+    h = Harness()
+    beat = h.news("earnings_positive", source="outlet-a")
+    miss = h.news(
+        "earnings_negative", days=1, source="outlet-b"
+    )  # "...yet the outlook disappointed"
+    assert beat and miss and beat.storyline.theme == "results"
+    assert miss.storyline.storyline_id == beat.storyline.storyline_id
+    reports = miss.storyline.events[0].reports
+    assert [r.event_type for r in reports] == ["earnings_positive", "earnings_negative"]
+    results = next(p for p in CATALOG.playbooks() if p.theme == "results")
+    assert _reading(beat.storyline, results) == "better than expected"
+    assert _reading(miss.storyline, results) == "mixed"  # shown as "Results · mixed"
