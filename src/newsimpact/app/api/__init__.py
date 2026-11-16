@@ -16,6 +16,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import Response
+from starlette.types import Scope
 
 from newsimpact import __version__
 from newsimpact.app.api.auth import current_user
@@ -58,8 +60,21 @@ def create_app(services: Services | None = None) -> FastAPI:
     for module in ROUTES:
         app.include_router(module.router(api), dependencies=[signed_in])
     if svc.settings.web_dir.is_dir():  # the website, last so /v1 routes win
-        app.mount("/", StaticFiles(directory=svc.settings.web_dir, html=True), name="web")
+        app.mount("/", WebFiles(directory=svc.settings.web_dir, html=True), name="web")
     return app
+
+
+class WebFiles(StaticFiles):
+    """The website. The page itself is re-checked on every visit, so a new release shows at
+    once; the built files under assets/ have the content hash in their name, so browsers
+    may keep them for a year."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = (
+            "public, max-age=31536000, immutable" if path.startswith("assets/") else "no-cache"
+        )
+        return response
 
 
 def _default_app() -> FastAPI:

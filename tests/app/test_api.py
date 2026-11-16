@@ -67,3 +67,13 @@ def test_api_contract_for_the_website() -> None:
     method = client.get("/v1/method").json()
     assert method["llm_presets"]["quality"]["model"] == "claude-opus-5-5"
     assert "rationale" in method["methodology"]["market"]
+
+
+def test_a_new_release_shows_at_once(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<html></html>")
+    (tmp_path / "assets" / "index-abc123.js").write_text("")
+    settings = Settings(env="test", profile="demo", web_dir=tmp_path)
+    client = TestClient(create_app(build_services(settings)))
+    assert client.get("/").headers["cache-control"] == "no-cache"  # the page is re-checked
+    assert "immutable" in client.get("/assets/index-abc123.js").headers["cache-control"]
