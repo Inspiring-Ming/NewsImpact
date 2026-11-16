@@ -6,6 +6,7 @@ import { State } from "../../shared/ui";
 import { Term } from "../../shared/Term";
 import { useApi } from "../../shared/useApi";
 import { Meter, reliabilityTone } from "../../shared/viz";
+import { CompanyCoverage } from "./CompanyCoverage";
 import { StepBlock } from "./StepBlock";
 
 const pct = (x?: number) => (x == null ? "–" : `${Math.round(x * 100)}%`);
@@ -19,6 +20,7 @@ export function MonitorStep({ method }: { method: S["Method"] }) {
   const active = (sources.data ?? []).filter((s) => s.enabled).sort((a, b) => b.reliability.score - a.reliability.score);
   return (
     <StepBlock term="sourcesTab">
+      <CompanyCoverage />
       <State error={sources.error} loading={sources.loading}>
         <div className="table-wrap">
           <table className="sources-table">

@@ -17,7 +17,7 @@ It states facts and what to check, never what to buy or sell.
 |---|---|
 | **Watchlist** (home) | Key numbers (click for detail); two tabs: **All** and **Priorities** (a board of what to act on and check); an impact map of stock moves by sector; every company with an event: priority, the news, the stock vs its market, and its sources (confirmed or not). Star (★) companies to follow them. |
 | **Event** | A three-line brief, what to check now, the price chart, a timeline of updates, and expected vs actual market reactions. |
-| **How it works** | The news sources and their track records, the event types, and whether each type really moves stocks. |
+| **How it works** | Whether the news reaches every company, the news sources and their track records, the event types, and whether each type really moves stocks. |
 
 Every underlined word explains itself on hover. Followed companies can get
 **Discord alerts** when something changes.

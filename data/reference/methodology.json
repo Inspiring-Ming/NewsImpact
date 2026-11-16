@@ -1,6 +1,6 @@
 {
   "_note": "Every number used to measure market reactions and to draw conclusions, with the reason for it. Change a value here (and bump version) rather than in code; each assessment records this file's hash. See docs/07-coverage-and-settings.md.",
-  "version": "methodology-v1",
+  "version": "methodology-v2",
   "market": {
     "estimation_days": 120,
     "gap_days": 10,
@@ -84,6 +84,12 @@
       "near_duplicate_jaccard": "Two articles sharing >= 80% of their 5-word shingles are treated as copies (syndication or light rewrites); the shingle-resemblance method is Broder (1997).",
       "near_duplicate_days": "Copies of wire stories appear within hours to a few days; comparing against 3 days of articles keeps the check cheap.",
       "copy_novelty": "Re-printed news is not new information (Tetlock 2011: investors over-react to stale news, which then reverses), so copies count at 20% of a fresh report in impact."
+    }
+  },
+  "coverage": {
+    "window_days": 7,
+    "rationale": {
+      "window_days": "Every company we follow is large and covered weekly by the financial press, so a week with no article naming it means our sources or our name matching miss it (as with Apple before exact_case_aliases: 1 article in a year). Checked after every round; shown on How it works."
     }
   }
 }

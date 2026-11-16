@@ -1,5 +1,5 @@
 {
- "_note": "Companies we follow. ticker: bare = US listing, '.AX' = ASX (measured on its home exchange). name/country/sector are shown to people (sector = GICS, the classification investors use); aliases are how news writes the name - only unambiguous ones (e.g. 'Ford Motor', not 'Ford'; 'Santos Ltd', not 'Santos'). Selection: the largest, most-covered companies in each market, because media coverage concentrates there (docs/07). Phase 1 replaces this with exchange listings + OpenFIGI/GLEIF.",
+ "_note": "Companies we follow. ticker: bare = US listing, '.AX' = ASX (measured on its home exchange). name/country/sector are shown to people (sector = GICS, the classification investors use); aliases are how news writes the name - only unambiguous ones (e.g. 'Ford Motor', not 'Ford'). exact_case_aliases match only with these exact capitals, for names that are also ordinary words ('Apple' the company, not 'apple'; 'Visa', not a travel 'visa'); without them, Apple was found in 1 article in a year (checked 2026-11-16). An event still needs the AI to confirm the company is its subject. Selection: the largest, most-covered companies in each market, because media coverage concentrates there (docs/07). Phase 1 replaces this with exchange listings + OpenFIGI/GLEIF.",
  "companies": [
   {
    "ticker": "NVDA",
@@ -26,7 +26,10 @@
    "aliases": [
     "Apple Inc"
    ],
-   "sector": "Information Technology"
+   "sector": "Information Technology",
+   "exact_case_aliases": [
+    "Apple"
+   ]
   },
   {
    "ticker": "GOOGL",
@@ -54,7 +57,10 @@
    "aliases": [
     "Meta Platforms"
    ],
-   "sector": "Communication Services"
+   "sector": "Communication Services",
+   "exact_case_aliases": [
+    "Meta"
+   ]
   },
   {
    "ticker": "TSLA",
@@ -190,7 +196,9 @@
    "name": "JPMorgan Chase",
    "country": "US",
    "aliases": [
-    "JPMorgan"
+    "JPMorgan",
+    "JP Morgan",
+    "J.P. Morgan"
    ],
    "sector": "Financials"
   },
@@ -228,7 +236,10 @@
    "aliases": [
     "Visa Inc"
    ],
-   "sector": "Financials"
+   "sector": "Financials",
+   "exact_case_aliases": [
+    "Visa"
+   ]
   },
   {
    "ticker": "MA",
@@ -413,7 +424,10 @@
    "aliases": [
     "CSL Limited"
    ],
-   "sector": "Health Care"
+   "sector": "Health Care",
+   "exact_case_aliases": [
+    "CSL"
+   ]
   },
   {
    "ticker": "WBC.AX",
@@ -448,7 +462,8 @@
    "name": "Macquarie Group",
    "country": "AU",
    "aliases": [
-    "Macquarie Group"
+    "Macquarie Group",
+    "Macquarie Bank"
    ],
    "sector": "Financials"
   },
@@ -524,7 +539,10 @@
    "aliases": [
     "Santos Ltd"
    ],
-   "sector": "Energy"
+   "sector": "Energy",
+   "exact_case_aliases": [
+    "Santos"
+   ]
   },
   {
    "ticker": "ORG.AX",
@@ -542,7 +560,10 @@
    "aliases": [
     "AGL Energy"
    ],
-   "sector": "Utilities"
+   "sector": "Utilities",
+   "exact_case_aliases": [
+    "AGL"
+   ]
   },
   {
    "ticker": "QAN.AX",
@@ -632,7 +653,10 @@
    "aliases": [
     "Aristocrat Leisure"
    ],
-   "sector": "Consumer Discretionary"
+   "sector": "Consumer Discretionary",
+   "exact_case_aliases": [
+    "Aristocrat"
+   ]
   },
   {
    "ticker": "JBH.AX",

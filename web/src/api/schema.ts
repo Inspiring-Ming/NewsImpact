@@ -108,8 +108,30 @@ export interface paths {
         /**
          * Companies
          * @description Every company we follow: sector, latest news, and its events with stock moves.
+         *     From the latest snapshot (computed once per round; see /v1/companies/coverage).
          */
         get: operations["companies_v1_companies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Coverage
+         * @description News found per company in the coverage window; a gap = none found (check the
+         *     sources or the names we match). Also when the pages were computed, and how.
+         */
+        get: operations["coverage_v1_companies_coverage_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -127,7 +149,7 @@ export interface paths {
         };
         /**
          * Coverage
-         * @description Evidence for which sources to keep, add or drop (docs/07).
+         * @description Evidence for which sources to keep, add or drop (docs/07). From the snapshot.
          */
         get: operations["coverage_v1_coverage_get"];
         put?: never;
@@ -636,6 +658,43 @@ export interface components {
             sector: string;
             /** Ticker */
             ticker: string;
+        };
+        /** CompanyCoverage */
+        CompanyCoverage: {
+            /**
+             * Articles
+             * @description articles naming the company in the coverage window
+             */
+            articles: number;
+            /** Name */
+            name: string;
+            /**
+             * Sources
+             * @description sources of those articles
+             */
+            sources: string[];
+            /**
+             * Status
+             * @description gap = no article in the window
+             * @enum {string}
+             */
+            status: "ok" | "gap";
+            /** Ticker */
+            ticker: string;
+        };
+        /** CoverageReport */
+        CoverageReport: {
+            /** Analysis */
+            analysis: string;
+            /** Companies */
+            companies: components["schemas"]["CompanyCoverage"][];
+            /**
+             * Computed At
+             * Format: date-time
+             */
+            computed_at: string;
+            /** Window Days */
+            window_days: number;
         };
         /**
          * DecisionCheck
@@ -1610,6 +1669,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyCard"][];
+                };
+            };
+        };
+    };
+    coverage_v1_companies_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoverageReport"];
                 };
             };
         };

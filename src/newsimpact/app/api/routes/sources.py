@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from newsimpact.app.api.context import ApiContext
-from newsimpact.app.views import system as views
+from newsimpact.app.views import snapshot
 from newsimpact.reliability.models import ReliabilityScore
 from newsimpact.shared.events import Model
 from newsimpact.sources.models import Article, OutletCoverage, Source
@@ -41,8 +41,8 @@ def router(api: ApiContext) -> APIRouter:
 
     @r.get("/v1/coverage", response_model=list[OutletCoverage])
     def coverage() -> list[OutletCoverage]:
-        """Evidence for which sources to keep, add or drop (docs/07)."""
-        return views.outlet_coverage(svc)
+        """Evidence for which sources to keep, add or drop (docs/07). From the snapshot."""
+        return list(snapshot.latest(svc).outlets)
 
     @r.get("/v1/articles", response_model=list[Article])
     def recent_articles(limit: int = 50) -> list[Article]:

@@ -7,8 +7,9 @@ beside this file); this file gathers and shapes them per company and event.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field
 
@@ -22,13 +23,15 @@ from newsimpact.app.views.guidance import (
     priority,
     type_record,
 )
-from newsimpact.app.wiring import Services
 from newsimpact.market.models import ChannelObservation
 from newsimpact.semantics.models import Company
 from newsimpact.shared.events import Model
 from newsimpact.sources.models import Article, SourceType
 from newsimpact.storylines.models import ResearchFinding, Storyline
 from newsimpact.validation.models import Assessment
+
+if TYPE_CHECKING:  # type hints only: the wiring builds the stores these views use
+    from newsimpact.app.wiring import Services
 
 
 class NewsItem(Model):
@@ -99,18 +102,27 @@ class CompanyCard(Model):
     events: tuple[EventCard, ...]
 
 
-def companies(svc: Services) -> list[CompanyCard]:
-    """Every company we follow, with its events (most recent first) and latest news."""
-    names = source_names(svc)
-    mentions: dict[str, list[Article]] = defaultdict(list)
-    articles = {a.article_id: a for a in svc.articles.recent(10**6)}
-    for article in articles.values():
+def mentions(svc: Services, articles: Sequence[Article] | None = None) -> dict[str, list[Article]]:
+    """Ticker -> stored articles that name the company (name matching only, no AI)."""
+    by_ticker: dict[str, list[Article]] = defaultdict(list)
+    for article in svc.articles.recent(10**6) if articles is None else articles:
         for ticker in svc.semantics.mentioned_tickers(article):
-            mentions[ticker].append(article)
+            by_ticker[ticker].append(article)
+    return by_ticker
+
+
+def companies(
+    svc: Services, by_ticker: dict[str, list[Article]] | None = None
+) -> list[CompanyCard]:
+    """Every company we follow, with its events (most recent first) and latest news.
+    Pages read these from the snapshot (views/snapshot.py), computed once per round."""
+    names = source_names(svc)
+    by_ticker = mentions(svc) if by_ticker is None else by_ticker
+    articles = {a.article_id: a for news in by_ticker.values() for a in news}
     events: dict[str, list[EventCard]] = defaultdict(list)
     for storyline in svc.storyline_store.all():
         events[storyline.ticker].append(_event_card(svc, storyline, names, articles))
-    cards = [_company_card(svc, c, mentions.get(c.ticker, []), events.get(c.ticker, []), names)
+    cards = [_company_card(svc, c, by_ticker.get(c.ticker, []), events.get(c.ticker, []), names)
              for c in svc.companies]  # fmt: skip
     cards = _with_guidance(svc, cards)
 
@@ -120,16 +132,6 @@ def companies(svc: Services) -> list[CompanyCard]:
         return c.latest_news.published_at.timestamp() if c.latest_news else 0.0
 
     return sorted(cards, key=lambda c: (not c.events, -latest(c), c.name))
-
-
-def event_summary(svc: Services, event_id: str) -> CompanyCard | None:
-    """The company card for one event (the event page). Built from the full list, because
-    the event's priority and track record compare it with every other event."""
-    for card in companies(svc):
-        for e in card.events:
-            if e.event_id == event_id:
-                return card.model_copy(update={"events": (e,)})
-    return None
 
 
 def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:

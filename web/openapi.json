@@ -456,6 +456,83 @@
         "title": "CompanyCard",
         "type": "object"
       },
+      "CompanyCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "articles": {
+            "description": "articles naming the company in the coverage window",
+            "title": "Articles",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sources": {
+            "description": "sources of those articles",
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "description": "gap = no article in the window",
+            "enum": [
+              "ok",
+              "gap"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "name",
+          "articles",
+          "sources",
+          "status"
+        ],
+        "title": "CompanyCoverage",
+        "type": "object"
+      },
+      "CoverageReport": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis": {
+            "title": "Analysis",
+            "type": "string"
+          },
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyCoverage"
+            },
+            "title": "Companies",
+            "type": "array"
+          },
+          "computed_at": {
+            "format": "date-time",
+            "title": "Computed At",
+            "type": "string"
+          },
+          "window_days": {
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "computed_at",
+          "analysis",
+          "window_days",
+          "companies"
+        ],
+        "title": "CoverageReport",
+        "type": "object"
+      },
       "DecisionCheck": {
         "additionalProperties": false,
         "description": "Did an expected decision show up where the playbook says it would?",
@@ -2333,7 +2410,7 @@
     },
     "/v1/companies": {
       "get": {
-        "description": "Every company we follow: sector, latest news, and its events with stock moves.",
+        "description": "Every company we follow: sector, latest news, and its events with stock moves.\nFrom the latest snapshot (computed once per round; see /v1/companies/coverage).",
         "operationId": "companies_v1_companies_get",
         "responses": {
           "200": {
@@ -2354,9 +2431,28 @@
         "summary": "Companies"
       }
     },
+    "/v1/companies/coverage": {
+      "get": {
+        "description": "News found per company in the coverage window; a gap = none found (check the\nsources or the names we match). Also when the pages were computed, and how.",
+        "operationId": "coverage_v1_companies_coverage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Coverage"
+      }
+    },
     "/v1/coverage": {
       "get": {
-        "description": "Evidence for which sources to keep, add or drop (docs/07).",
+        "description": "Evidence for which sources to keep, add or drop (docs/07). From the snapshot.",
         "operationId": "coverage_v1_coverage_get",
         "responses": {
           "200": {

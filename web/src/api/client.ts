@@ -29,6 +29,7 @@ export const api = {
   prices: (id: string) => request<S["PricePath"] | null>("GET", `/v1/storylines/${id}/prices`),
   sources: () => request<S["SourceWithReliability"][]>("GET", "/v1/sources"),
   coverage: () => request<S["OutletCoverage"][]>("GET", "/v1/coverage"),
+  companyCoverage: () => request<S["CoverageReport"]>("GET", "/v1/companies/coverage"),
   calibration: () => request<S["Calibration"]>("GET", "/v1/calibration"),
   evaluation: () => request<S["Evaluation"]>("GET", "/v1/evaluation"),
   method: () => request<S["Method"]>("GET", "/v1/method"),

@@ -193,7 +193,9 @@ Above a limit, the free result is kept. **Measured on 2026-11-15** against the l
 
 Why scope `all` rather than `candidates`: the candidates filter only sends sentences where the word lists already saw something. The paraphrases that the word lists miss ("hand over the CEO role", "pulled from pharmacies") therefore never reached the model. That held `economy` to 0.85 on event type.
 
-With only 52 sentences, a difference of one or two sentences is noise. Re-measure on the Quality page when the labelled set grows to 200–500 real sentences.
+**Re-measured on 2026-11-16 (56 sentences)** after the subject check (classifier v2: the model also names the company the event happens to, and says that share-price comparisons, previews, forecasts, partnerships and licensing deals are not events): event type 0.95 (v1 on the same set and day: 0.93), attribution 0.93 (v1: 0.93), rumour 1.00 (v1: 0.98), background 0.96 (v1: 0.96). No loss on the labelled set, and on the live feed it removed events that belonged to another company or were not events at all. Example: Cerebras's results had been shown as a Microsoft earnings beat because Microsoft was mentioned.
+
+With only 56 sentences, a difference of one or two sentences is noise. Re-measure on the Quality page when the labelled set grows to 200–500 real sentences.
 
 ## 6. Changing a number
 

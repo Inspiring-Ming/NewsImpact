@@ -31,11 +31,19 @@ _TOKEN = re.compile(r"[a-z']+")
 
 
 class SentenceExtractor:
-    version = "sentence-extractor-v1"
+    """Splits an article into sentences and keeps those naming a company we follow.
 
-    def __init__(self, known_entities: Iterable[str]) -> None:
-        names = sorted({e.lower() for e in known_entities}, key=len, reverse=True)
-        self._patterns = [(n, re.compile(rf"\b{re.escape(n)}\b")) for n in names]
+    Names match regardless of capitals, except `exact_case` names, which are also
+    ordinary words ("Apple", "Visa") and match only as written.
+    """
+
+    version = "sentence-extractor-v2"
+
+    def __init__(self, known_entities: Iterable[str], exact_case: Iterable[str] = ()) -> None:
+        names = {e.lower(): re.IGNORECASE for e in known_entities}
+        names |= {e: re.NOFLAG for e in exact_case if e.lower() not in names}
+        longest_first = sorted(names.items(), key=lambda f: -len(f[0]))
+        self._patterns = [re.compile(rf"\b{re.escape(n)}\b", flags) for n, flags in longest_first]
 
     def extract(self, article: Article) -> Sequence[Claim]:
         text = article.translated_body or article.body  # English pivot for non-English news
@@ -55,16 +63,20 @@ class SentenceExtractor:
 
     def entities(self, sentence: str) -> tuple[EntityMention, ...]:
         """Known entities in order of appearance (longest alias wins on overlap)."""
-        low = sentence.lower()
+        rest = sentence  # matched names are blanked out, so a shorter alias cannot match again
         found: list[tuple[int, EntityMention]] = []
-        for name, pattern in self._patterns:
-            match = pattern.search(low)
+        for pattern in self._patterns:
+            match = pattern.search(rest)
             if match:
                 mention = EntityMention(
                     name=sentence[match.start() : match.end()], entity_type="company"
                 )
                 found.append((match.start(), mention))
-                low = low[: match.start()] + " " * len(name) + low[match.end() :]
+                rest = (
+                    rest[: match.start()]
+                    + " " * (match.end() - match.start())
+                    + rest[match.end() :]
+                )
         return tuple(m for _, m in sorted(found, key=lambda f: f[0]))
 
 

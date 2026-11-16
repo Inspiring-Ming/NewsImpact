@@ -22,6 +22,7 @@ from newsimpact.alerts.adapters.shared import SharedChannels
 from newsimpact.alerts.service import AlertsService
 from newsimpact.app.config import Settings
 from newsimpact.app.views.briefs import BriefStore
+from newsimpact.app.views.snapshot import SnapshotStore
 from newsimpact.app.wiring.plugins import (
     AUTH,
     EVENT_BUSES,
@@ -94,6 +95,7 @@ class Services:
     alerts: AlertsService
     auth: Authenticator  # who is signed in (identity module)
     briefs: BriefStore  # three-line event briefs (app/views/briefs.py)
+    snapshots: SnapshotStore  # what pages read, computed once per round (app/views/snapshot.py)
 
 
 def http_client(s: Settings) -> httpx.Client:
@@ -191,7 +193,8 @@ def build_services(settings: Settings | None = None) -> Services:
                              duplicates=duplicates)  # fmt: skip
 
     llm = _llm(s, stores)
-    semantics = SemanticsService(bus, SentenceExtractor(resolver.known_names()),
+    extractor = SentenceExtractor(resolver.known_names(), resolver.exact_case_names())
+    semantics = SemanticsService(bus, extractor,
                                  _semantic_steps(s, taxonomy, llm), resolver,
                                  copy_novelty=duplicates.copy_novelty,
                                  commentary_cues=taxonomy.words("commentary"))  # fmt: skip
@@ -242,6 +245,7 @@ def build_services(settings: Settings | None = None) -> Services:
         alerts=AlertsService(stores.alerts, SharedChannels(notifiers), s.site_url),
         auth=pick(AUTH, s.auth, "sign-in provider")(s),
         briefs=stores.briefs,
+        snapshots=stores.snapshots,
     )
     services.sources.register_listed()  # every listed source is tracked from the start
     return services

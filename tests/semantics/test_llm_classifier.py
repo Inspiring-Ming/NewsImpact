@@ -3,7 +3,7 @@ from pathlib import Path
 from newsimpact.llm.models import BudgetExceededError, LlmRequest, LlmResult
 from newsimpact.semantics.adapters.json_file import load_taxonomy
 from newsimpact.semantics.adapters.llm_classifier import LlmClassifierStep
-from newsimpact.semantics.models import Attribution, Claim
+from newsimpact.semantics.models import Attribution, Claim, EntityMention
 
 TAXONOMY = load_taxonomy(Path(__file__).resolve().parents[2] / "data/reference/taxonomy.json")
 
@@ -63,3 +63,30 @@ def test_background_answer_clears_the_event() -> None:
     model = FakeModel({**ANSWER, "is_background": True})
     out = LlmClassifierStep(model, TAXONOMY, scope="all").apply(_claim())
     assert out.event_type == "other" and out.signals["background"] == 1.0
+
+
+def _two_companies() -> Claim:
+    return Claim(
+        claim_id="c",
+        article_id="a",
+        text="Cerebras beat estimates, helped by a new Microsoft and Nvidia deal.",
+        entities=(EntityMention(name="Microsoft", entity_type="company", ticker="MSFT"),
+                  EntityMention(name="Nvidia", entity_type="company", ticker="NVDA")),
+        event_type="earnings_positive",
+    )  # fmt: skip
+
+
+def test_the_model_picks_the_subject_from_the_sentences_companies() -> None:
+    model = FakeModel({**ANSWER, "event_type": "earnings_positive", "subject": "Nvidia"})
+    out = LlmClassifierStep(model, TAXONOMY).apply(_two_companies())
+    enum = model.requests[0].schema_["properties"]["subject"]["enum"]  # type: ignore[index]
+    assert enum == ["Microsoft", "Nvidia", "none"]
+    assert out.entities[0].ticker == "NVDA"  # storylines attach the event to the subject
+    assert out.event_type == "earnings_positive"
+
+
+def test_an_event_of_another_company_is_not_ours() -> None:
+    model = FakeModel({**ANSWER, "event_type": "earnings_positive", "subject": "none"})
+    out = LlmClassifierStep(model, TAXONOMY).apply(_two_companies())
+    assert out.event_type == "other" and out.signals["off_subject"] == 1.0
+    assert out.signals["background"] == 0.0

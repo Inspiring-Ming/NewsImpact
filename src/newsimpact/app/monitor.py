@@ -10,6 +10,8 @@ write the function and add one line to ROUND. Each step can also run alone
   assess         re-check every event against evidence; market checks that were
                  "pending" mature as trading days pass
   briefs         three-line AI briefs for events whose facts changed
+  publish        compute what the pages show once, store it with its time and analysis
+                 version, and log companies with no news in the coverage window
   alerts         tell followers what changed (Discord, ...)
 
 Where rounds come from is a deployment choice, not business logic: the web
@@ -27,6 +29,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from newsimpact.alerts.models import EventSnapshot
+from newsimpact.app.views import snapshot
 from newsimpact.app.views.briefs import ai_brief, facts_key
 from newsimpact.app.views.companies import brief_facts, companies
 from newsimpact.app.wiring import Services
@@ -83,7 +86,7 @@ def send_alerts(svc: Services) -> None:
                       stock_move=e.stock_move, unusual=e.stock_move_unusual,
                       index_name=c.index_name, brief=e.brief,
                       next_step=e.checks[1].text if len(e.checks) > 1 else "")
-        for c in companies(svc) for e in c.events
+        for c in snapshot.latest(svc).companies for e in c.events
     ]  # fmt: skip
     sent = svc.alerts.check(snapshots)
     if sent:
@@ -119,6 +122,14 @@ def _briefs(svc: Services, r: RoundState) -> None:
     write_briefs(svc)
 
 
+def _publish(svc: Services, r: RoundState) -> None:
+    snap = snapshot.publish(svc)
+    gaps = [c.ticker for c in snap.coverage if c.status == "gap"]
+    if gaps:
+        log.warning("companies with no news", extra={"days": snap.coverage_window_days,
+                                                      "tickers": ",".join(gaps)})  # fmt: skip
+
+
 def _alerts(svc: Services, r: RoundState) -> None:
     send_alerts(svc)
 
@@ -129,6 +140,7 @@ ROUND: tuple[tuple[str, Callable[[Services, RoundState], None]], ...] = (
     ("track_records", _track_records),
     ("assess", _assess),
     ("briefs", _briefs),
+    ("publish", _publish),
     ("alerts", _alerts),
 )
 

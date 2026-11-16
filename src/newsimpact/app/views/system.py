@@ -4,17 +4,21 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from pydantic import Field
 
 from newsimpact.app.views.companies import source_names
-from newsimpact.app.wiring import Services
 from newsimpact.semantics.logic import FieldScore, score_field
 from newsimpact.semantics.models import Claim, EntityMention
 from newsimpact.shared.events import Model
 from newsimpact.sources.logic import coverage
-from newsimpact.sources.models import OutletCoverage
+from newsimpact.sources.models import Article, OutletCoverage
+
+if TYPE_CHECKING:  # type hints only: the wiring imports the views' stores
+    from newsimpact.app.wiring import Services
 
 
 class Overview(Model):
@@ -79,10 +83,11 @@ def overview(svc: Services) -> Overview:
     )
 
 
-def outlet_coverage(svc: Services) -> list[OutletCoverage]:
-    """Per outlet: volume, relevance, part in storylines, speed. Free: no analysis or LLM calls."""
-    articles = list(svc.articles.recent(10**6))
-    with_company = {a.article_id for a in articles if svc.semantics.mentioned_tickers(a)}
+def outlet_coverage(
+    svc: Services, articles: Sequence[Article], with_company: set[str]
+) -> list[OutletCoverage]:
+    """Per outlet: volume, relevance, part in storylines, speed. Free: no analysis or LLM calls.
+    `with_company`: ids of the articles that name a company we follow."""
     storylines = svc.storyline_store.all()
     in_stories = {r.article_id for s in storylines for e in s.events for r in e.reports}
     stage_reports = [[(r.source_id, r.published_at) for r in e.reports]

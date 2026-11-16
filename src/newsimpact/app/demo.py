@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
+from newsimpact.app.views import snapshot
 from newsimpact.app.wiring import Services
 
 
@@ -32,4 +33,5 @@ def run_demo(svc: Services) -> DemoRun:
     from_feeds = sum(svc.sources.collect().values())
     run = DemoRun(from_feeds=from_feeds, from_follow_up=svc.sources.follow_up())
     svc.validation.assess_and_store(svc.storyline_store.all())  # as a monitoring round does
+    snapshot.publish(svc)  # pages read this, as after a round
     return run

@@ -94,6 +94,9 @@ class Company(Model):
     country: str = Field(description="ISO country code, e.g. US, AU")
     sector: str = Field(default="", description="GICS sector, e.g. Information Technology")
     aliases: tuple[str, ...]
+    exact_case_aliases: tuple[str, ...] = Field(
+        default=(), description="names that are also ordinary words: matched only as written"
+    )
 
 
 class EntityMention(Model):

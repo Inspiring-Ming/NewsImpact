@@ -31,6 +31,13 @@ def test_extractor_keeps_sentences_naming_known_entities_in_text_order() -> None
     assert [e.name for e in claims[0].entities] == ["Helix Cloud", "Acme Semiconductors"]
 
 
+def test_names_that_are_ordinary_words_match_only_with_their_capitals() -> None:
+    extractor = SentenceExtractor(["Apple Inc"], exact_case=["Apple"])
+    text = "Apple cut its forecast. An apple a day. Apple Inc said so."
+    names = [c.entities[0].name for c in extractor.extract(_article(text))]
+    assert names == ["Apple", "Apple Inc"]  # not the fruit; the longer name wins
+
+
 def test_classifier_sets_speculation_event_type_and_aspect() -> None:
     claim = CLASSIFY.apply(Claim(claim_id="c", article_id="a",
                                  text="Acme beat revenue guidance on record demand."))  # fmt: skip

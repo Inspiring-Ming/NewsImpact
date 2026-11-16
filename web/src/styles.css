@@ -307,6 +307,8 @@ a.headline-1:hover { color: var(--accent); }
 .impact-map .hit { fill: transparent; }
 .impact-map .dot-g { cursor: pointer; }
 .impact-map .dot-g:hover .dot { stroke: var(--text); }
+.impact-map .dot-g.old { opacity: 0.35; }
+.impact-map .dot-g.old:hover { opacity: 1; }
 .impact-map .dot-label { fill: var(--text); font-size: 11px; font-weight: 600; pointer-events: none; }
 .map-tip { position: absolute; transform: translate(-50%, calc(-100% - 14px)); background: var(--text); color: var(--bg);
   padding: 8px 10px; border-radius: 8px; font-size: .8rem; white-space: nowrap; pointer-events: none; z-index: 5; }
@@ -407,11 +409,14 @@ blockquote { margin: 10px 0; padding-left: 12px; border-left: 3px solid var(--bo
 .rules { margin: 0; padding-left: 1.1rem; }
 .rules li { margin-bottom: 6px; }
 .accuracy { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
+.coverage-block { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.coverage-block p { margin: 4px 0; }
+.trace code { font-size: .75rem; word-break: break-all; }
 .all-settings { margin-top: 20px; }
 
 /* how it works */
 .accuracy-rows { display: grid; gap: 8px; max-width: 520px; }
-.accuracy-row { display: grid; grid-template-columns: 1fr 140px 44px; gap: 10px; align-items: center; }
+.accuracy-row { display: grid; grid-template-columns: 1fr 140px 96px; gap: 10px; align-items: center; }
 .accuracy-row .meter { width: 100%; }
 .expect { font-weight: 600; }
 .expect.good { color: var(--good); } .expect.bad { color: var(--bad); } .expect.warn { color: var(--warn); }
@@ -429,7 +434,7 @@ blockquote { margin: 10px 0; padding-left: 12px; border-left: 3px solid var(--bo
   .watchlist .c-move .move-top { justify-content: flex-end; }
   .watchlist .c-event { grid-column: 1 / -1; max-width: none; }
   .watchlist .c-sources { grid-column: 1 / -1; min-width: 0; }
-  .accuracy-row { grid-template-columns: 1fr 90px 40px; }
+  .accuracy-row { grid-template-columns: 1fr 70px 90px; }
   .map-body { overflow-x: auto; }
   .impact-map svg { min-width: 640px; }
   .toolbar > * { flex: 1 1 100%; }

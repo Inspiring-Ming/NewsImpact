@@ -34,7 +34,7 @@ of **events on the bus**: each module reacts to the event before it.
 ```mermaid
 flowchart LR
   subgraph round[app/monitor.py ROUND]
-    s1[collect] --> s2[follow_up] --> s3[track_records] --> s4[assess] --> s5[briefs] --> s6[alerts]
+    s1[collect] --> s2[follow_up] --> s3[track_records] --> s4[assess] --> s5[briefs] --> s7[publish] --> s6[alerts]
   end
   s1 -->|ArticleIngested| sem[semantics]
   sem -->|ClaimsExtracted| rel[reliability]
@@ -43,6 +43,7 @@ flowchart LR
   s3 --> rel
   s4 --> val[validation] --> mkt[market]
   s5 --> views[app/views/briefs] --> llm[llm gateway]
+  s7 --> snap[(snapshot: what pages read)]
   s6 --> alr[alerts] --> discord([Discord])
 ```
 
@@ -57,7 +58,8 @@ flowchart LR
 | track_records | `validation.track_records()` → `reliability.set_corroboration()` | each source's reliability learns from how often others confirmed its reports |
 | assess | `validation.assess_and_store()` | checks every event: confirmed by independent sources? did the market react as expected? (asks `market`) |
 | briefs | `app/views/briefs.ai_brief()` | writes three-line briefs for events whose facts changed (language model, checked) |
-| alerts | `alerts.check()` | tells each user what changed for the companies they follow |
+| publish | `app/views/snapshot.publish()` | computes what the pages show once (companies, events, coverage per company and per source), stores it with its time and reading method, and logs companies with no news for 7 days |
+| alerts | `alerts.check()` | tells each user what changed for the companies they follow (from the snapshot) |
 
 ### A page request: how the website gets its data
 
@@ -68,9 +70,12 @@ browser ─▶ web/src/routes.tsx ─▶ features/<page>/ ─▶ shared/useApi +
 ```
 
 Example, the watchlist: `WatchlistPage.tsx` calls `api.companies()` →
-`GET /v1/companies` → `routes/companies.py` → `views/companies.companies()`,
-which reads stored events, assessments, prices and briefs, and adds each
-event's priority and checklist (`views/guidance.py`).
+`GET /v1/companies` → `routes/companies.py` → `views/snapshot.latest()`, the
+snapshot the last round published. It was built by `views/companies.companies()`,
+which reads stored events, assessments, prices and briefs, and adds each event's
+priority and checklist (`views/guidance.py`). Pages never re-read every article,
+so they stay fast as companies and history grow; a snapshot older than the
+server start is rebuilt on first read.
 
 ## 3. Every folder and file
 
@@ -116,6 +121,7 @@ Every module has the same files, so each reads the same way:
 | `views/guidance.py` | priority (Act now / Check / Background) and "what to check now" rules | changing urgency or the checklist |
 | `views/briefs.py` | three-line briefs: AI prompt, safety checks, rules fallback, brief store | changing the brief |
 | `views/system.py` | overview counts, source coverage, reading accuracy | changing status numbers |
+| `views/snapshot.py` | what pages read, computed once per round: company cards, coverage per company and source, with time and reading method; its store | adding a page that reads many articles or events |
 | `demo.py` | runs the fictional demo data through the real pipeline | changing the demo |
 | `logs.py` | JSON logs, with keys and webhook links blanked out | rarely |
 

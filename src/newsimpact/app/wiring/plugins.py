@@ -27,6 +27,7 @@ from newsimpact.alerts.adapters.sqlite import SqliteAlertState
 from newsimpact.alerts.ports import AlertState, Notifier
 from newsimpact.app.config import Settings
 from newsimpact.app.views.briefs import BriefStore, InMemoryBriefs, SqliteBriefs
+from newsimpact.app.views.snapshot import InMemorySnapshots, SnapshotStore, SqliteSnapshots
 from newsimpact.identity.adapters.local import LocalSingleUser
 from newsimpact.identity.ports import Authenticator
 from newsimpact.llm.adapters.ollama import OllamaProvider
@@ -83,6 +84,7 @@ class Stores:
     assessments: AssessmentStore
     alerts: AlertState
     briefs: BriefStore
+    snapshots: SnapshotStore
 
 
 @dataclass(frozen=True)
@@ -112,13 +114,15 @@ def _sqlite_stores(s: Settings) -> Stores:
     db = Database(s.db_path)
     return Stores(db, SqliteArticleStore(db), SqliteSeenSources(db), SqliteWatchStore(db),
                   SqliteTrackedSources(db), SqliteEvidenceStore(db), SqliteStorylineStore(db),
-                  SqliteAssessmentStore(db), SqliteAlertState(db), SqliteBriefs(db))  # fmt: skip
+                  SqliteAssessmentStore(db), SqliteAlertState(db), SqliteBriefs(db),
+                  SqliteSnapshots(db))  # fmt: skip
 
 
 def _memory_stores(s: Settings) -> Stores:
     return Stores(None, InMemoryArticleStore(), InMemorySeenSources(), InMemoryWatchStore(),
                   InMemoryTrackedSources(), InMemoryEvidenceStore(), InMemoryStorylineStore(),
-                  InMemoryAssessmentStore(), InMemoryAlertState(), InMemoryBriefs())  # fmt: skip
+                  InMemoryAssessmentStore(), InMemoryAlertState(), InMemoryBriefs(),
+                  InMemorySnapshots())  # fmt: skip
 
 
 STORES: dict[str, Callable[[Settings], Stores]] = {

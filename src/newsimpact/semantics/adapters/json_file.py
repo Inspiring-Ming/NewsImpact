@@ -14,8 +14,10 @@ class JsonEntityResolver:
 
     def __init__(self, companies: Sequence[Company]) -> None:
         self._companies = tuple(companies)
-        self._aliases = {a.lower(): c.ticker for c in companies for a in c.aliases}
+        self._aliases = {a.lower(): c.ticker for c in companies
+                         for a in (*c.aliases, *c.exact_case_aliases)}  # fmt: skip
         self._names = [a for c in companies for a in c.aliases]
+        self._exact = [a for c in companies for a in c.exact_case_aliases]
 
     @classmethod
     def from_file(cls, path: Path) -> JsonEntityResolver:
@@ -27,6 +29,9 @@ class JsonEntityResolver:
 
     def known_names(self) -> Sequence[str]:
         return list(self._names)
+
+    def exact_case_names(self) -> Sequence[str]:
+        return list(self._exact)
 
     def companies(self) -> Sequence[Company]:
         return self._companies
