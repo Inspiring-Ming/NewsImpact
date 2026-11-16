@@ -16,8 +16,9 @@ It states facts and what to check, never what to buy or sell.
 | Page | What it shows |
 |---|---|
 | **Watchlist** (home) | Key numbers (click for detail); two tabs: **All** and **Priorities** (a board of what to act on and check); an impact map of stock moves by sector; every company with an event: priority, the news, the stock vs its market, and its sources (confirmed or not). Star (★) companies to follow them. |
-| **Event** | A three-line brief, what to check now, the price chart, a timeline of updates, expected vs actual market reactions, and **Ask**: questions answered by AI from our own data only, checked, with the links it used. |
+| **Event** | A three-line brief, what to check now, the price chart, a timeline of updates, expected vs actual market reactions. |
 | **How it works** | The news sources and their track records, the event types, and whether each type really moves stocks. |
+| **Ask NewsImpact** (button on every page) | A chat assistant: questions answered by AI from our own data only, checked, with the links it used. On an event page it knows the event; suggested questions come from live data. |
 
 Every underlined word explains itself on hover. Followed companies can get
 **Discord alerts** when something changes. AI assistants (Claude Desktop, Claude

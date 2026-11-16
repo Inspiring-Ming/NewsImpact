@@ -1,7 +1,8 @@
-// Layout: header (brand, navigation, live status) and the current page.
+// Layout: header (brand, navigation, live status), the current page, and the Ask NewsImpact assistant.
 // Hash routes need no server routing, so the site works from any static host.
 import { useEffect, useState } from "react";
 import { match, ROUTES } from "./routes";
+import { AskBot } from "./shared/AskBot";
 import { StatusBar } from "./shared/StatusBar";
 
 function useHash(): string {
@@ -32,6 +33,7 @@ export function App() {
       </header>
       <main>{route.render(params, refreshKey)}</main>
       <footer>Research evidence for analysis, not investment advice · © Inspiring Ming</footer>
+      <AskBot eventId={hash.startsWith("#/event/") ? params[0] : undefined} />
     </div>
   );
 }

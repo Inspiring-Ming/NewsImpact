@@ -8,7 +8,6 @@ import { Term } from "../../shared/Term";
 import { Fact, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
 import type { EventData } from "./context";
-import { Ask } from "./Ask";
 import { Overview } from "./Overview";
 import { Scorecard } from "./Scorecard";
 import { Updates } from "./Updates";
@@ -18,7 +17,6 @@ const TABS: { id: string; label: string; component: ComponentType<EventData> }[]
   { id: "overview", label: "Overview", component: Overview },
   { id: "updates", label: "Updates", component: Updates },
   { id: "reaction", label: "Expected vs actual", component: Scorecard },
-  { id: "ask", label: "Ask", component: Ask },
 ];
 
 export function EventPage({ id }: { id: string }) {

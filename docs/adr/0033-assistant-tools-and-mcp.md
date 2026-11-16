@@ -27,8 +27,9 @@ no advice, no invented numbers, and a known cost.
   capped at `max_steps`; other providers can implement `run_tools` later.
 * **Data**: `app/views/news_data.py` reads the latest snapshot and the stored
   articles, formatted as on the website. Nothing hand-written.
-* **Two entry points, one toolbox**: `POST /v1/assistant/ask` (website "Ask"
-  tab on the event page; signed-in users; per-person daily limit) and
+* **Two entry points, one toolbox**: `POST /v1/assistant/ask` (website "Ask
+  NewsImpact" chat on every page, aware of the open event; signed-in users;
+  per-person daily limit) and
   **`app/mcp.py`**, an MCP server (official `mcp` SDK, low-level server with
   explicit schemas) over stdio (`make mcp`). The connected assistant does the
   thinking and pays for it.
