@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { match, ROUTES } from "./routes";
 import { AskBot } from "./shared/AskBot";
 import { StatusBar } from "./shared/StatusBar";
+import { ThemeToggle } from "./shared/ui";
 import { Ticker } from "./shared/Ticker";
 
 function useHash(): string {
@@ -30,7 +31,10 @@ export function App() {
             <a key={r.href} href={r.href} className={navActive(r.href) ? "active" : ""}>{r.nav}</a>
           ))}
         </nav>
-        <StatusBar onChanged={() => setRefreshKey((k) => k + 1)} />
+        <div className="topbar-end">
+          <StatusBar onChanged={() => setRefreshKey((k) => k + 1)} />
+          <ThemeToggle />
+        </div>
       </header>
       <Ticker refreshKey={refreshKey} />
       <main>{route.render(params, refreshKey)}</main>

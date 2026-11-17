@@ -4,7 +4,7 @@
 import type { S } from "../../api/client";
 import { COUNTRY, date, eventLabel, NO_MOVE, pct, SECTOR_SHORT, SECTORS, vsWords } from "../../shared/labels";
 import { Term } from "../../shared/Term";
-import { Dots, MoveBar } from "../../shared/viz";
+import { Dots, MoveBar, Sparkline } from "../../shared/viz";
 import { PriorityBadge, Signals, SourceBadge } from "../../shared/badges";
 
 export function WatchlistTable({ rows, starred, onStar }: {
@@ -67,14 +67,19 @@ export function WatchlistTable({ rows, starred, onStar }: {
                         <>
                           <div className="move-top">
                             <b className={e.stock_move_unusual ? (e.stock_move < 0 ? "bad" : "good") : ""}>{pct(e.stock_move)}</b>
-                            <MoveBar value={e.stock_move} unusual={e.stock_move_unusual} />
+                            {e.spark.length > 1
+                              ? <Sparkline values={e.spark} eventAt={e.spark_event_at} label={`${c.name} vs ${c.index_name}, each close from just before the event (dashed line = no difference)`} />
+                              : <MoveBar value={e.stock_move} unusual={e.stock_move_unusual} />}
                           </div>
                           <div className="muted small">{vsWords(e.stock_move, c.index_name)} · {e.stock_move_period}</div>
                           <div className={`small ${e.stock_move_unusual ? "warn" : "muted"}`}>{e.stock_move_unusual ? "⚠ Unusual move" : "Normal range"}</div>
                         </>
                       ) : e.move_so_far != null ? (
                         <>
-                          <div className="move-top"><b className="muted">{pct(e.move_so_far)}</b><MoveBar value={e.move_so_far} unusual={false} /></div>
+                          <div className="move-top"><b className="muted">{pct(e.move_so_far)}</b>
+                            {e.spark.length > 1
+                              ? <Sparkline values={e.spark} eventAt={e.spark_event_at} label={`${c.name} vs ${c.index_name} so far, each close from just before the event`} />
+                              : <MoveBar value={e.move_so_far} unusual={false} />}</div>
                           <div className="muted small">so far, to {date(e.so_far_through!)} close</div>
                           <div className="small muted"><Term id="provisional">Provisional</Term></div>
                         </>

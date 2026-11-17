@@ -45,3 +45,24 @@ export function Dots({ n, of, max = 6 }: { n: number; of?: number; max?: number 
 
 /** Source reliability: a newspaper's 75% starting estimate is already good evidence. */
 export const reliabilityTone = (x: number): Tone => (x >= 0.75 ? "good" : x >= 0.6 ? "warn" : "bad");
+
+/** Stock minus its index at each close, as a small line: 0 = the close before the event
+ *  (dashed), the event day marked. Drawn in on first view. */
+export function Sparkline({ values, eventAt, label }: { values: readonly number[]; eventAt?: number | null; label: string }) {
+  if (values.length < 2) return null;
+  const W = 96, H = 30, P = 3;
+  const span = Math.max(0.02, ...values.map(Math.abs));
+  const x = (i: number) => P + (i / (values.length - 1)) * (W - 2 * P);
+  const y = (v: number) => H / 2 - (v / span) * (H / 2 - P);
+  const d = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const last = values[values.length - 1];
+  return (
+    <svg className={`spark ${last < 0 ? "bad" : "good"}`} viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={label}>
+      <title>{label}</title>
+      <line className="spark-zero" x1={P} x2={W - P} y1={H / 2} y2={H / 2} />
+      {eventAt != null && <line className="spark-event" x1={x(eventAt)} x2={x(eventAt)} y1={P} y2={H - P} />}
+      <path className="spark-line" d={d} pathLength={1} />
+      <circle className="spark-end" cx={x(values.length - 1)} cy={y(last)} r={2.5} />
+    </svg>
+  );
+}

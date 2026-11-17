@@ -3,6 +3,7 @@
 // blue = unusual move (also labelled with the company name, so colour is never the only
 // cue); faded = no update for RECENT_DAYS, so what is happening now stands out; a gentle
 // pulse marks events updated in the last 24 hours. Hover or keyboard focus shows a card.
+// Filters fade out the events that do not match (the axes stay put, so positions compare).
 import { useState } from "react";
 import type { S } from "../../api/client";
 import { eventLabel, pct, SECTOR_SHORT, SECTORS, vsWords } from "../../shared/labels";
@@ -17,8 +18,17 @@ const lastUpdate = (e: S["EventCard"]) => Math.max(...e.updates.map((u) => Date.
 
 interface Dot { c: S["CompanyCard"]; e: S["EventCard"] }
 
+const SHOW: { id: string; label: string; test: (d: Dot, now: number) => boolean }[] = [
+  { id: "all", label: "All", test: () => true },
+  { id: "confirmed", label: "Confirmed", test: (d) => d.e.verified },
+  { id: "unusual", label: "Unusual moves", test: (d) => d.e.stock_move_unusual },
+  { id: "recent", label: `Updated in ${RECENT_DAYS} days`, test: (d, now) => now - lastUpdate(d.e) < RECENT_DAYS * DAY },
+];
+
 export function ImpactMap({ companies }: { companies: S["CompanyCard"][] }) {
   const [hover, setHover] = useState<{ d: Dot; x: number; y: number } | null>(null);
+  const [show, setShow] = useState("all");
+  const [type, setType] = useState("");
   const dots: Dot[] = companies.flatMap((c) => c.events.filter((e) => e.stock_move != null).map((e) => ({ c, e })));
   if (!dots.length) return null;
   const sectors = [...new Set(dots.map((d) => d.c.sector))].sort();
@@ -42,6 +52,10 @@ export function ImpactMap({ companies }: { companies: S["CompanyCard"][] }) {
     if (near) below.add(d.e.event_id); else placed.push({ sector: d.c.sector, x: cx, len: shortName(d.c.name).length });
   }
   const now = Date.now();
+  const test = SHOW.find((f) => f.id === show)!.test;
+  const shown = (d: Dot) => test(d, now) && (!type || d.e.event_type === type);
+  const types = [...new Set(dots.map((d) => d.e.event_type))].sort();
+  const nShown = dots.filter(shown).length;
   const recent = (d: Dot) => now - lastUpdate(d.e) < RECENT_DAYS * DAY;
   const fresh = (d: Dot) => now - lastUpdate(d.e) < DAY;
   const nRecent = dots.filter(recent).length;
@@ -59,6 +73,17 @@ export function ImpactMap({ companies }: { companies: S["CompanyCard"][] }) {
           {nFresh > 0 && <> · <span className="swatch fresh" /> pulsing = updated in the last 24 h ({nFresh})</>}
         </span>
       </figcaption>
+      <div className="map-filters" role="group" aria-label="Show on the map">
+        {SHOW.map((f) => (
+          <button key={f.id} type="button" className={`chip${show === f.id ? " on" : ""}`} aria-pressed={show === f.id}
+                  onClick={() => setShow(f.id)}>{f.label}</button>
+        ))}
+        <select value={type} onChange={(ev) => setType(ev.target.value)} aria-label="Event type">
+          <option value="">Every event type</option>
+          {types.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <span className="small muted" aria-live="polite">showing {nShown} of {dots.length}</span>
+      </div>
       <div className="map-body">
         <div className="map-canvas">
         <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label="Impact map: stock moves against the market for each event, by sector. Each dot is a link to its event">
@@ -80,8 +105,8 @@ export function ImpactMap({ companies }: { companies: S["CompanyCard"][] }) {
           {[...dots].sort((a, b) => b.e.sources - a.e.sources).map((d) => {
             const cx = x(d.e.stock_move!), cy = y(d.c.sector);
             return (
-              <g key={d.e.event_id} className={`dot-g${recent(d) ? "" : " old"}${fresh(d) ? " fresh" : ""}`} onClick={() => open(d)}
-                 role="link" tabIndex={0} aria-label={describe(d)}
+              <g key={d.e.event_id} className={`dot-g${recent(d) ? "" : " old"}${fresh(d) ? " fresh" : ""}${shown(d) ? "" : " out"}`} onClick={() => open(d)}
+                 role="link" tabIndex={shown(d) ? 0 : -1} aria-hidden={!shown(d)} aria-label={describe(d)}
                  onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); open(d); } }}
                  onMouseEnter={() => setHover({ d, x: cx, y: cy })} onMouseLeave={() => setHover(null)}
                  onFocus={() => setHover({ d, x: cx, y: cy })} onBlur={() => setHover(null)}>

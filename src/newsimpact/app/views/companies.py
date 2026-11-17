@@ -84,6 +84,12 @@ class EventCard(Model):
     role: Literal["buyer", "target", "seller"] | None = Field(
         default=None, description="the company's part in a deal, read from the reports"
     )
+    spark: tuple[float, ...] = Field(
+        default=(),
+        description="stock minus its index at each close, 0 = the close before the "
+        "event; starts a few days before it (for a small line chart)",
+    )
+    spark_event_at: int | None = Field(default=None, description="index in spark of the event day")
     expectation: Expectation | None = Field(
         default=None, description="the usual share price move for this case, with its source"
     )
@@ -324,22 +330,27 @@ def _measure(svc: Services, storyline: Storyline, channel: str, at: datetime) ->
     return o.value if o else None
 
 
-def _so_far(svc: Services, storyline: Storyline) -> tuple[float, date] | None:
-    """Stock return minus its index from the close before the first update to the latest
-    close: what the market has done so far while the measured window is still open."""
+SPARK_DAYS_BEFORE = 5  # trading days shown before the event, so the line shows its reaction
+
+
+def _vs_index(svc: Services, storyline: Storyline) -> list[tuple[date, float]]:
+    """Stock return minus its index, each close from a few days before the first update to the
+    latest close, relative to the close before the first update (0 = no difference)."""
     if svc.market is None:
-        return None
+        return []
     first = min(e.published_at for e in storyline.events)
     day = svc.market.event_day(storyline.ticker, first)
     try:
-        path = svc.market.price_path(storyline.ticker, day - timedelta(days=10), date.today())
+        path = svc.market.price_path(storyline.ticker, day - timedelta(days=14), date.today())
     except ValueError:
-        return None
+        return []
     before = [p for p in path.points if p.day < day]
     if not before or path.points[-1].day < day:
-        return None
-    base, last = before[-1], path.points[-1]
-    return (last.stock / base.stock) - (last.benchmark / base.benchmark), last.day
+        return []
+    base = before[-1]
+    shown = path.points[max(0, len(before) - SPARK_DAYS_BEFORE) :]
+    return [(p.day, round((p.stock / base.stock) - (p.benchmark / base.benchmark), 5))
+            for p in shown]  # fmt: skip
 
 
 def _reading(storyline: Storyline, playbook: Playbook | None) -> str | None:
@@ -394,12 +405,17 @@ def _event_card(
     status = "measured" if move else "pending" if pending else "no_data"
     reading = _reading(storyline, playbook)
     role, expected = expectation(svc, storyline, playbook, reading)
-    so_far = _so_far(svc, storyline) if status == "pending" else None
+    vs_index = _vs_index(svc, storyline)
+    so_far = (vs_index[-1][1], vs_index[-1][0]) if status == "pending" and vs_index else None
     return EventCard(
         event_id=storyline.storyline_id,
         reading=reading,
         role=role,
         expectation=expected,
+        spark=tuple(v for _, v in vs_index),
+        spark_event_at=next((i for i, (d, _) in enumerate(vs_index)
+                             if d >= svc.market.event_day(storyline.ticker, first_at)), None)
+        if vs_index and svc.market else None,
         event_type=(playbook.title if playbook and playbook.title else storyline.theme),
         updates=tuple(
             UpdateItem(title=title(st.stage_name), published_at=st.published_at,

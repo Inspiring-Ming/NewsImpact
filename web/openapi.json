@@ -943,6 +943,27 @@
             "title": "Sources",
             "type": "integer"
           },
+          "spark": {
+            "default": [],
+            "description": "stock minus its index at each close, 0 = the close before the event; starts a few days before it (for a small line chart)",
+            "items": {
+              "type": "number"
+            },
+            "title": "Spark",
+            "type": "array"
+          },
+          "spark_event_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "index in spark of the event day",
+            "title": "Spark Event At"
+          },
           "stock_move": {
             "anyOf": [
               {

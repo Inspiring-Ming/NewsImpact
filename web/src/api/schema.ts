@@ -952,6 +952,17 @@ export interface components {
              */
             sources: number;
             /**
+             * Spark
+             * @description stock minus its index at each close, 0 = the close before the event; starts a few days before it (for a small line chart)
+             * @default []
+             */
+            spark: number[];
+            /**
+             * Spark Event At
+             * @description index in spark of the event day
+             */
+            spark_event_at?: number | null;
+            /**
              * Stock Move
              * @description stock return minus its index, e.g. -0.185
              */

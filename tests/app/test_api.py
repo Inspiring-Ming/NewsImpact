@@ -92,3 +92,14 @@ def test_how_it_works_explains_its_numbers() -> None:
     takeover = types["m_and_a"]
     assert [c["label"] for c in takeover["cases"][:2]] == ["company is the target",
                                                            "company is the buyer"]  # fmt: skip
+
+
+def test_events_carry_a_small_price_line_from_before_the_event() -> None:
+    client = TestClient(create_app(build_services(Settings(env="test", profile="demo"))))
+    client.post("/v1/demo/load")
+    events = [e for c in client.get("/v1/companies").json() for e in c["events"]]
+    lines = [e for e in events if len(e["spark"]) > 1]
+    assert lines, "the demo has prices, so measured events get a line"
+    e = lines[0]
+    assert 0 < e["spark_event_at"] < len(e["spark"])  # a few closes before the event day
+    assert e["spark"][e["spark_event_at"] - 1] == 0  # the close before the event is the zero line

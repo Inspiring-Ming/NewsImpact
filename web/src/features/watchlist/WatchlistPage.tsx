@@ -88,8 +88,10 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           <button key={id} className={`fact kpi-btn ${open === id ? "open" : ""}`} aria-expanded={open === id}
                   onClick={() => setOpen(open === id ? null : id)}>
             <div className="fact-label">{label}</div>
-            <div className={`fact-value ${tone ?? ""}`}><CountUp value={value} /></div>
-            <div className="fact-sub">{sub}</div>
+            {data ? <>
+              <div className={`fact-value ${tone ?? ""}`}><CountUp value={value} /></div>
+              <div className="fact-sub">{sub}</div>
+            </> : <><span className="sk-line sk-num" /><span className="sk-line" /></>}
             <div className="kpi-more">{open === id ? "Hide detail ▴" : "Show detail ▾"}</div>
           </button>
         ))}
