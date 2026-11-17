@@ -2,6 +2,7 @@
 // in words next to it. To explain a new part, add one entry to TABS.
 import { useState, type ReactNode } from "react";
 import { api, type S } from "../../api/client";
+import { Term } from "../../shared/Term";
 import { State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
 import { AllSettings } from "./AllSettings";
@@ -25,7 +26,7 @@ export function MethodPage() {
     <>
       <section className="hero compact">
         <h1>How it works</h1>
-        <p className="lead">From news to measured stock moves, in three steps. Every number here is live and says where it comes from.</p>
+        <p className="lead">From news to measured stock moves, in three steps. Live numbers; point at any underlined word for the detail.</p>
       </section>
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       <State error={method.error ?? types.error} loading={method.loading || types.loading}>
@@ -40,12 +41,16 @@ export function MethodPage() {
   );
 }
 
-/** A numbered row of steps: how a part of the method works, in order. */
-export function Flow({ steps }: { steps: { title: string; text: ReactNode }[] }) {
+/** A row of steps: an icon, a short title and one line; the full explanation on hover. */
+export function Flow({ steps }: { steps: { icon: string; title: string; line: string; tip: string }[] }) {
   return (
     <ol className="flow">
-      {steps.map((s, i) => (
-        <li key={s.title}><span className="flow-num">{i + 1}</span><b>{s.title}</b><p>{s.text}</p></li>
+      {steps.map((s) => (
+        <li key={s.title}>
+          <span className="flow-icon" aria-hidden="true">{s.icon}</span>
+          <Term tip={s.tip}><b>{s.title}</b></Term>
+          <span className="flow-line">{s.line}</span>
+        </li>
       ))}
     </ol>
   );
