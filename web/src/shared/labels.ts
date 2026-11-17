@@ -10,7 +10,7 @@ const NAMES: Record<string, string> = {
   institutional_investors: "Large investors", retail_investors: "Individual investors",
   sell_side_analysts: "Analysts", options_market: "Options traders", credit_investors: "Bond investors",
   event_driven_funds: "Event-driven funds", customers_partners: "Customers and partners",
-  all_investors: "Investors",
+  all_investors: "Investors", income_investors: "Income investors",
 };
 
 export function label(code: string): string {

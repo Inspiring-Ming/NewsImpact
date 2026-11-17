@@ -1,6 +1,6 @@
 {
-  "_note": "What semantics looks for. Edit this file to add event types, aspects or word lists; no code change. Event types are checked in order, first match wins (put specific ones first). 'speculative': true/false restricts a type to hedged/unhedged sentences. Every playbook trigger must be an event type here (checked at start-up). The same file can drive an LLM analyzer's labels. 'background' words mark a sentence as history, not news (no trigger). 'attribution' says where a claim comes from, so copies and re-reports are not counted as independent confirmation. 'commentary' = headline wording of opinion, explainer and feature pieces (\"Should you buy...\", \"Here's why...\", interviews). An article whose headline or opening sentence matches is commentary about news, not a new event, so none of its sentences open or extend an event. Checked against the live feed on 2026-11-16, where such pieces had been read as events. 'deal_*' = where a company's name stands in deal wording, giving its part: buyer, target or seller (semantics/logic.py deal_role). The two sides react differently (Andrade, Mitchell & Stafford 2001), so the expected share price move depends on it; checked on the 25 takeover events of 2026-11-17.",
-  "version": "taxonomy-v8",
+  "_note": "What semantics looks for. Edit this file to add event types, aspects or word lists; no code change. Event types are checked in order, first match wins (put specific ones first). 'speculative': true/false restricts a type to hedged/unhedged sentences. Every playbook trigger must be an event type here (checked at start-up). The same file can drive an LLM analyzer's labels. 'background' words mark a sentence as history, not news (no trigger). 'attribution' says where a claim comes from, so copies and re-reports are not counted as independent confirmation. 'commentary' = headline wording of opinion, explainer and feature pieces (\"Should you buy...\", \"Here's why...\", interviews). An article whose headline or opening sentence matches is commentary about news, not a new event, so none of its sentences open or extend an event. Checked against the live feed on 2026-11-16, where such pieces had been read as events. 'deal_*' = where a company's name stands in deal wording, giving its part: buyer, target or seller (semantics/logic.py deal_role). The two sides react differently (Andrade, Mitchell & Stafford 2001), so the expected share price move depends on it; checked on the 25 takeover events of 2026-11-17. Legal and dividend types (v9): a standalone regulator action or lawsuit, its outcome, and dividend or buyback changes, added after 41 legal and 11 capital return articles about our companies opened no event (2026-11-17). Law-firm adverts for class actions are commentary.",
+  "version": "taxonomy-v9",
   "event_types": [
     {
       "name": "m_and_a_rumor",
@@ -107,22 +107,74 @@
       ]
     },
     {
+      "name": "legal_resolution",
+      "description": "A legal or regulatory case against the company ends: a settlement, a fine agreed, a ruling in its favour, or charges or action dropped",
+      "patterns": [
+        "settles",
+        "settled",
+        "settlement",
+        "agreed to pay",
+        "dropped the case",
+        "drops action",
+        "drops its action",
+        "dismissed the"
+      ]
+    },
+    {
       "name": "regulatory_action",
-      "description": "Regulator probe, fine or order",
+      "description": "A regulator or government agency opens a probe into, sues, fines or orders the company (e.g. SEC, DOJ, FTC, EU Commission, ASIC, ACCC). Not routine approvals, lobbying or rules for a whole industry",
       "patterns": [
         "regulator",
         "investigation",
         "probe",
-        "subpoena"
+        "subpoena",
+        "fined",
+        "fines",
+        "penalty",
+        "antitrust",
+        "enforcement action"
       ]
     },
     {
       "name": "litigation",
-      "description": "Lawsuits and class actions",
+      "description": "A lawsuit or class action is filed against the company, or a court rules against it. Not law-firm adverts inviting investors to join a class action",
       "patterns": [
         "lawsuit",
         "sued",
-        "class action"
+        "class action",
+        "sues"
+      ]
+    },
+    {
+      "name": "capital_return_down",
+      "description": "The company cuts, suspends or scraps its dividend or share buyback",
+      "patterns": [
+        "cuts dividend",
+        "cut its dividend",
+        "dividend cut",
+        "suspends dividend",
+        "suspended its dividend",
+        "scraps dividend",
+        "halts buyback",
+        "suspends buyback",
+        "pauses buyback"
+      ]
+    },
+    {
+      "name": "capital_return_up",
+      "description": "The company raises its dividend, pays a special dividend, starts paying one, or announces or expands a share buyback. Not an unchanged regular dividend or buybacks done in past years",
+      "patterns": [
+        "special dividend",
+        "raises dividend",
+        "raised its dividend",
+        "raises its dividend",
+        "increases its dividend",
+        "dividend increase",
+        "new buyback",
+        "share buyback program",
+        "buyback program",
+        "repurchase program",
+        "buy-back"
       ]
     },
     {
@@ -386,7 +438,15 @@
       "if you only",
       "ceo on company's",
       "ceo on why",
-      "ceo on the ai"
+      "ceo on the ai",
+      "investors have opportunity to lead",
+      "encourages investors",
+      "reminds investors",
+      "lead plaintiff deadline",
+      "investors who lost",
+      "shareholder alert",
+      "investor alert",
+      "investors with losses"
     ],
     "deal_buyer": [
       "to acquire",

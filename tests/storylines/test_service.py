@@ -64,7 +64,31 @@ def test_apology_departure_succession_chain() -> None:
 
 
 def test_non_trigger_event_does_not_open_storyline() -> None:
-    assert Harness().news("regulatory_action") is None
+    assert Harness().news("legal_resolution") is None  # an outcome needs its case first
+
+
+def test_a_standalone_lawsuit_opens_a_legal_event_but_joins_an_open_recall() -> None:
+    h = Harness()
+    suit = h.news("litigation")
+    fine = h.news("regulatory_action", days=3, source="other")
+    settled = h.news("legal_resolution", days=40)
+    assert suit and suit.storyline.theme == "legal_regulatory"
+    assert fine and settled and settled.storyline.storyline_id == suit.storyline.storyline_id
+    legal = next(p for p in CATALOG.playbooks() if p.theme == "legal_regulatory")
+    assert _reading(fine.storyline, legal) == "mixed"  # a regulator and a lawsuit
+    recall = Harness()
+    first = recall.news("product_recall", ticker="ACME")
+    probe = recall.news("regulatory_action", days=5, ticker="ACME")
+    assert first and probe and probe.storyline.theme == "product_safety"
+
+
+def test_dividends_and_buybacks_read_raised_or_cut() -> None:
+    h = Harness()
+    raised = h.news("capital_return_up")
+    assert raised and raised.storyline.theme == "capital_return"
+    payout = next(p for p in CATALOG.playbooks() if p.theme == "capital_return")
+    assert _reading(raised.storyline, payout) == "raised"
+    assert payout.expectation(("raised", "payout_change")).expected == "up"  # type: ignore[union-attr]
 
 
 def test_event_outside_window_opens_new_storyline() -> None:

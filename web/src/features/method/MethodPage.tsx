@@ -41,15 +41,26 @@ export function MethodPage() {
   );
 }
 
-/** A row of steps: an icon, a short title and one line; the full explanation on hover. */
-export function Flow({ steps }: { steps: { icon: string; title: string; line: string; tip: string }[] }) {
+/** The opening of a tab: a kicker, a headline, one line of explanation. */
+export function Head({ kicker, title, dek }: { kicker: string; title: string; dek: ReactNode }) {
   return (
-    <ol className="flow">
-      {steps.map((s) => (
+    <header className="hiw-head">
+      <span className="hiw-kicker">{kicker}</span>
+      <h2>{title}</h2>
+      <p>{dek}</p>
+    </header>
+  );
+}
+
+/** Numbered steps on one line; the full explanation on hover. */
+export function Flow({ steps }: { steps: { title: string; line: string; tip: string }[] }) {
+  return (
+    <ol className="stepper">
+      {steps.map((s, i) => (
         <li key={s.title}>
-          <span className="flow-icon" aria-hidden="true">{s.icon}</span>
+          <span className="stepper-num">{String(i + 1).padStart(2, "0")}</span>
           <Term tip={s.tip}><b>{s.title}</b></Term>
-          <span className="flow-line">{s.line}</span>
+          <span className="stepper-line">{s.line}</span>
         </li>
       ))}
     </ol>

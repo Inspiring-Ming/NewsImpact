@@ -77,8 +77,9 @@ This follows how commercial news-analytics products work: premium wires plus sel
 - supply disruptions
 - cyber incidents (data breaches, outages)
 - job cuts
+- dividends and buybacks
 
-All eight are covered by playbooks (taxonomy-v4). Each company also carries its GICS sector in `entities.json`, the standard industry classification financial users filter by.
+All nine are covered by playbooks (taxonomy-v9). Until 2026-11-17 a regulator action or lawsuit only continued a product safety or cyber event; a check of 2,752 stored articles found 41 such articles about 13 of our companies (Intel shareholder suits, Meta's Italy fine, Nvidia DOJ probes, ASIC suing CBA) and 11 dividend or buyback articles about 7 (Costco, ExxonMobil) that opened no event, so both became event types (ADR 0035). Checked and not added: analyst rating changes (16 articles, mostly opinions or about another company), drug approvals (3), capital raisings, credit ratings, index changes and strikes (0–1 each). Each company also carries its GICS sector in `entities.json`, the standard industry classification financial users filter by.
 
 Firm-specific news that can be *identified* as a known event type explains far more stock volatility than unidentified news (Boudoukh, Feldman, Kogan & Richardson 2019). Other sentences are stored but do not open storylines.
 
@@ -102,6 +103,8 @@ Each playbook has a **link window**:
 | cyber_incident | 90 days | Regulator inquiries and class actions typically follow a breach disclosure by weeks to months. |
 | job_cuts | 30 days | Details (numbers, sites, costs) usually emerge within weeks of the first report. |
 | supply_disruption | 60 days | Supply problems tend to resolve or escalate (lost sales, guidance cuts) over one to two months. |
+| legal_regulatory | 180 days | Probes and lawsuits take months to settle or be decided, and follow-on suits arrive in waves; one case, its copycat suits and its outcome stay one story. |
+| capital_return | 30 days | Details (amount, dates, funding) follow within weeks; the next payout decision comes with the next results. |
 
 **Calibration rule** (`methodology.json` → validation):
 - **Formula:** once a playbook has ≥ 20 observed gaps between stages, the suggested window is the **90th percentile of observed gaps × 1.25**.
