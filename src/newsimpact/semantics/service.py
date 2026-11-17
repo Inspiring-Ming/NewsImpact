@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 
 from newsimpact.semantics.logic import DealRole, deal_role
 from newsimpact.semantics.models import OTHER, Claim, ClaimsExtracted
@@ -25,10 +25,12 @@ class SemanticsService:
         copy_novelty: float = 0.2,
         commentary_cues: Sequence[str] = (),
         deal_cues: Mapping[str, Sequence[str]] | None = None,
+        followed: Callable[[], Collection[str] | None] | None = None,
     ) -> None:
         self._bus = bus
         self._commentary = tuple(c.lower() for c in commentary_cues)
         self._deal_cues = deal_cues or {}
+        self._followed = followed  # tickers whose sentences are analysed; None = all
         self._copy_novelty = copy_novelty
         self._extractor = extractor
         self._steps = tuple(steps)
@@ -70,7 +72,12 @@ class SemanticsService:
 
     def claims_for(self, article: Article) -> tuple[Claim, ...]:
         """Analyse one article without publishing (also used by reports and evaluation)."""
-        claims = tuple(self.analyse(c) for c in self._extractor.extract(article))
+        found = self._extractor.extract(article)
+        followed = self._followed() if self._followed else None
+        if followed is not None:  # only companies we follow are analysed (AI cost)
+            resolve = self._resolver.resolve
+            found = [c for c in found if any(resolve(e.name) in followed for e in c.entities)]
+        claims = tuple(self.analyse(c) for c in found)
         if self.is_commentary(article):
             # Opinion or feature piece: talk about the news, not a new event.
             claims = tuple(c.model_copy(update={"event_type": OTHER,

@@ -32,7 +32,8 @@ def test_unknown_names_fail_at_start_up_with_the_known_ones() -> None:
 
 def test_round_steps_run_in_order_and_alone() -> None:
     assert [name for name, _ in ROUND] == [
-        "collect", "follow_up", "track_records", "assess", "briefs", "publish", "alerts",
+        "collect", "follow", "follow_up", "track_records", "assess", "briefs", "publish",
+        "alerts",
     ]  # fmt: skip
     svc = build_services(Settings(env="test", profile="demo"))
     run_step(svc, "collect")

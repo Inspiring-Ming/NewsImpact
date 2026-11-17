@@ -2,7 +2,8 @@
 
 *by Inspiring Ming*: <https://github.com/Inspiring-Ming/NewsImpact>
 
-NewsImpact reads financial news about 73 large US and Australian companies, spots
+NewsImpact reads financial news about the S&P 500 and ASX 200 companies, follows the ones
+the news is about (about 100 at a time, decided from the live news), spots
 market-moving events (a CEO leaving, a takeover, an earnings miss...), checks how
 well each one is sourced, and measures how the stock reacted against its market.
 

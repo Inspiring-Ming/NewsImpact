@@ -1,6 +1,6 @@
 {
   "_note": "Every number used to measure market reactions and to draw conclusions, with the reason for it. Change a value here (and bump version) rather than in code; each assessment records this file's hash. See docs/07-coverage-and-settings.md.",
-  "version": "methodology-v3",
+  "version": "methodology-v4",
   "market": {
     "estimation_days": 120,
     "gap_days": 10,
@@ -99,7 +99,21 @@
   "coverage": {
     "window_days": 7,
     "rationale": {
-      "window_days": "Every company we follow is large and covered weekly by the financial press, so a week with no article naming it means our sources or our name matching miss it (as with Apple before exact_case_aliases: 1 article in a year). Checked after every round: gaps are logged and listed at GET /v1/companies/coverage."
+      "window_days": "A followed company is named in the news every week (that is why it is followed), so a week with no article naming it means our sources or our name matching miss it (as with Apple before exact_case_aliases: 1 article in a year). Checked after every round."
+    }
+  },
+  "following": {
+    "min_articles": 3,
+    "window_days": 7,
+    "keep_days": 30,
+    "max_followed": 150,
+    "discover_per_round": 30,
+    "rationale": {
+      "min_articles": "A company is followed once 3 separate articles name it within the window: one mention is often a passing comparison or a list of names; three independent articles mean the news is about it.",
+      "window_days": "One week, the same window the coverage check uses: news about a large company comes in waves of days, not months.",
+      "keep_days": "A followed company stays for 30 days after its last article, and so does any company with an event in the last 30 days, so an event's later steps (results reactions, settlements, successors) are still caught; then it is dropped.",
+      "max_followed": "At most 150 followed at once (the most mentioned first): each followed company gets its own news feed every round and its sentences are read by the AI. 150 keeps the AI cost under the US$5 monthly cap (about US$3-4, measured on 73 companies at about US$1.5) and the feed requests modest.",
+      "discover_per_round": "Each round also reads the company news feed of 30 index members we do not follow yet, in turn, so every one of the ~700 is checked about once a day and can qualify from its own news, not only from general business pages. Their articles are only name-matched (free), not read by the AI, until the company is followed."
     }
   }
 }

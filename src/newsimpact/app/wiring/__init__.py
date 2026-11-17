@@ -21,6 +21,7 @@ import httpx
 from newsimpact.alerts.adapters.shared import SharedChannels
 from newsimpact.alerts.service import AlertsService
 from newsimpact.app.config import Settings
+from newsimpact.app.following import FollowingPolicy, FollowingStore, feed_tickers
 from newsimpact.app.views.briefs import BriefStore
 from newsimpact.app.views.news_data import SnapshotNewsData
 from newsimpact.app.views.snapshot import SnapshotStore
@@ -90,7 +91,9 @@ class Services:
     llm: LlmGateway | None
     llm_presets: dict[str, LlmPreset]
     playbooks: PlaybookCatalog
-    companies: tuple[Company, ...]  # the companies we follow (display names, countries)
+    companies: tuple[
+        Company, ...
+    ]  # every company we can recognise (app/following.py: which we follow)
     market_policy: MeasurementPolicy  # exchanges, windows (for labelling and charts)
     # read models served by the API and the views
     articles: ArticleStore
@@ -99,6 +102,8 @@ class Services:
     auth: Authenticator  # who is signed in (identity module)
     briefs: BriefStore  # three-line event briefs (app/views/briefs.py)
     snapshots: SnapshotStore  # what pages read, computed once per round (app/views/snapshot.py)
+    following: FollowingStore  # which companies we follow now, decided from the news
+    following_policy: FollowingPolicy | None  # None without a universe (demo): all followed
     assistant: AssistantService | None = None  # answers questions from our data (set below)
 
 
@@ -181,9 +186,28 @@ def build_services(settings: Settings | None = None) -> Services:
     catalog = JsonPlaybookCatalog.from_file(s.reference_dir / "playbooks.json")
     _check_reference_data(registry, taxonomy, catalog)
     duplicates = DuplicatePolicy.model_validate(method["sources"])
-    resolver = JsonEntityResolver.from_file(s.profile_dir / "entities.json")
+    universe = s.profile_dir / "universe.json"
+    if universe.exists():  # index members, followed when the news names them
+        resolver = JsonEntityResolver.from_files(s.profile_dir / "entities.json", universe)
+        following: FollowingPolicy | None = FollowingPolicy.model_validate(method["following"])
+    else:  # a fixed list, all followed (the demo profile)
+        resolver = JsonEntityResolver.from_file(s.profile_dir / "entities.json")
+        following = None
+    every = [c.ticker for c in resolver.companies()]
+
+    def read_feeds_of() -> list[str]:
+        if following is None:
+            return every
+        return feed_tickers(stores.following.get(), every, following.discover_per_round)
+
+    def analysed() -> set[str] | None:  # whose sentences the AI reads
+        if following is None:
+            return None
+        current = stores.following.get()
+        return set(current.followed) if current else set()
+
     ctx = Context(settings=s, http=http_client(s) if s.profile == "live" else None,
-                  tickers=tuple(c.ticker for c in resolver.companies()))  # fmt: skip
+                  tickers=read_feeds_of)  # fmt: skip
 
     def feed(source: Source, config: FeedConfig) -> Feed:
         return FEEDS[config.kind](ctx, source, config)
@@ -203,13 +227,15 @@ def build_services(settings: Settings | None = None) -> Services:
                                  copy_novelty=duplicates.copy_novelty,
                                  commentary_cues=taxonomy.words("commentary"),
                                  deal_cues={k: taxonomy.words(k) for k in taxonomy.word_lists
-                                            if k.startswith("deal_")})  # fmt: skip
+                                            if k.startswith("deal_")},
+                                 followed=analysed)  # fmt: skip
     reliability = ReliabilityService(bus, stores.tracked_sources, stores.evidence)
     storylines = StorylinesService(bus, stores.storylines, catalog)
 
     market_policy = MeasurementPolicy.model_validate(method["market"])
     market = _market(ctx, market_policy, stores)
     reference = [s.profile_dir / "sources.json", s.profile_dir / "entities.json"]
+    reference += [universe] if universe.exists() else []
     reference += [s.reference_dir / f for f in REFERENCE_FILES]
     provenance = Provenance(
         components={
@@ -252,6 +278,8 @@ def build_services(settings: Settings | None = None) -> Services:
         auth=pick(AUTH, s.auth, "sign-in provider")(s),
         briefs=stores.briefs,
         snapshots=stores.snapshots,
+        following=stores.following,
+        following_policy=following,
     )
     services.sources.register_listed()  # every listed source is tracked from the start
     # The assistant reads through the finished services (latest snapshot, article store).

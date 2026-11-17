@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Literal, Protocol
 
 from pydantic import Field, ValidationError
 
+from newsimpact.app.following import followed_companies
 from newsimpact.app.views.companies import CompanyCard, companies, mentions, source_names
 from newsimpact.app.views.system import TypeStats, event_types, outlet_coverage
 from newsimpact.shared.events import Model
@@ -101,7 +102,7 @@ def _coverage(
     since = datetime.now(UTC) - timedelta(days=days)
     names = source_names(svc)
     rows = []
-    for c in svc.companies:
+    for c in followed_companies(svc):
         recent = [a for a in by_ticker.get(c.ticker, []) if a.published_at >= since]
         sources = tuple(sorted({names.get(a.source_id, a.source_id) for a in recent}))
         rows.append(CompanyCoverage(ticker=c.ticker, name=c.name, articles=len(recent),

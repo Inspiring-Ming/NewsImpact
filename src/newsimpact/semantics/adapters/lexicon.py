@@ -37,13 +37,16 @@ class SentenceExtractor:
     ordinary words ("Apple", "Visa") and match only as written.
     """
 
-    version = "sentence-extractor-v2"
+    version = "sentence-extractor-v3"
 
     def __init__(self, known_entities: Iterable[str], exact_case: Iterable[str] = ()) -> None:
-        names = {e.lower(): re.IGNORECASE for e in known_entities}
-        names |= {e: re.NOFLAG for e in exact_case if e.lower() not in names}
-        longest_first = sorted(names.items(), key=lambda f: -len(f[0]))
-        self._patterns = [re.compile(rf"\b{re.escape(n)}\b", flags) for n, flags in longest_first]
+        names = {e.lower(): True for e in known_entities}
+        names |= {e: False for e in exact_case if e.lower() not in names}
+        # One pattern for all names (hundreds of companies), longest first so the longest
+        # name wins where two overlap; (?i:...) = any capitals, plain = exactly as written.
+        parts = [f"(?i:{re.escape(n)})" if ignore else re.escape(n)
+                 for n, ignore in sorted(names.items(), key=lambda f: -len(f[0]))]  # fmt: skip
+        self._pattern = re.compile(rf"\b(?:{'|'.join(parts)})\b") if parts else None
 
     def extract(self, article: Article) -> Sequence[Claim]:
         text = article.translated_body or article.body  # English pivot for non-English news
@@ -62,22 +65,16 @@ class SentenceExtractor:
         return claims
 
     def entities(self, sentence: str) -> tuple[EntityMention, ...]:
-        """Known entities in order of appearance (longest alias wins on overlap)."""
-        rest = sentence  # matched names are blanked out, so a shorter alias cannot match again
-        found: list[tuple[int, EntityMention]] = []
-        for pattern in self._patterns:
-            match = pattern.search(rest)
-            if match:
-                mention = EntityMention(
-                    name=sentence[match.start() : match.end()], entity_type="company"
-                )
-                found.append((match.start(), mention))
-                rest = (
-                    rest[: match.start()]
-                    + " " * (match.end() - match.start())
-                    + rest[match.end() :]
-                )
-        return tuple(m for _, m in sorted(found, key=lambda f: f[0]))
+        """Known entities in order of appearance, each name once (longest wins on overlap)."""
+        if self._pattern is None:
+            return ()
+        seen: set[str] = set()
+        found: list[EntityMention] = []
+        for match in self._pattern.finditer(sentence):
+            if match.group().lower() not in seen:
+                seen.add(match.group().lower())
+                found.append(EntityMention(name=match.group(), entity_type="company"))
+        return tuple(found)
 
 
 class TaxonomyClassifier:

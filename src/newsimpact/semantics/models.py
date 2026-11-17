@@ -97,6 +97,9 @@ class Company(Model):
     exact_case_aliases: tuple[str, ...] = Field(
         default=(), description="names that are also ordinary words: matched only as written"
     )
+    why: str = Field(
+        default="", description="why a company outside the S&P 500 and ASX 200 is included"
+    )
 
 
 class EntityMention(Model):

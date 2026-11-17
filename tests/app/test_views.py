@@ -98,3 +98,27 @@ def test_moved_as_expected_is_judged_against_chance() -> None:
     assert rises.verdict == "supports" and coin.verdict == "no_pattern"
     falls = group_record(up, [(-0.02, False)] * 20, min_events=20, z_needed=1.96)
     assert falls.verdict == "against" and falls.average == -0.02
+
+
+def test_companies_are_followed_when_the_news_names_them() -> None:
+    from newsimpact.app.following import FollowingPolicy, decide, feed_tickers
+
+    policy = FollowingPolicy(min_articles=3, window_days=7, keep_days=30, max_followed=2,
+                             discover_per_round=2)  # fmt: skip
+    days = lambda *ago: [NOW - timedelta(days=d) for d in ago]  # noqa: E731
+    seen = {"AAA": days(1, 2, 3, 4), "BBB": days(1, 2, 3), "CCC": days(1, 2), "DDD": days(20)}
+    first = decide(policy, seen, pinned=(), previous=None, now=NOW)
+    assert first.followed == ("AAA", "BBB")  # 3+ articles in 7 days, most named first
+    assert first.mentions["CCC"] == 2 and "DDD" not in first.mentions  # outside the window
+    # A user's company is always followed, ahead of the cap.
+    assert decide(policy, seen, pinned=("ZZZ",), previous=None, now=NOW).followed == ("ZZZ", "AAA")
+    # Quiet for less than keep_days: kept; longer: dropped.
+    quiet = {"AAA": days(10), "BBB": days(40)}
+    assert decide(policy, quiet, (), first, NOW).followed == ("AAA",)
+    # Feeds: followed ones, then a discovery slice of the others that moves on each round.
+    universe = ["AAA", "BBB", "CCC", "DDD", "EEE"]
+    assert feed_tickers(first, universe, 2) == ["AAA", "BBB", "CCC", "DDD"]
+    moved = first.model_copy(update={"discover_from": 2})
+    assert feed_tickers(moved, universe, 2) == ["AAA", "BBB", "EEE", "CCC"]
+    # A company with a recent event stays followed even with few articles.
+    assert "EEE" in decide(policy, {}, (), None, NOW, with_events=("EEE",)).followed

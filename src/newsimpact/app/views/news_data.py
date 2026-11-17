@@ -11,6 +11,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from newsimpact.app.following import followed_companies
 from newsimpact.app.views import snapshot
 from newsimpact.app.views.companies import CompanyCard, EventCard, source_names
 
@@ -24,7 +25,7 @@ class SnapshotNewsData:
 
     def companies(self) -> list[dict[str, Any]]:
         return [{"ticker": c.ticker, "name": c.name, "country": c.country, "sector": c.sector}
-                for c in self._svc.companies]  # fmt: skip
+                for c in followed_companies(self._svc)]  # fmt: skip
 
     def events(self, ticker: str | None, days: int) -> list[dict[str, Any]]:
         since = datetime.now(UTC) - timedelta(days=days)

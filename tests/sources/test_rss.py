@@ -61,7 +61,7 @@ def test_per_company_feed_reads_each_ticker_and_skips_failures() -> None:
 
     client = httpx.Client(transport=httpx.MockTransport(reply))
     source = Source(source_id="agg", name="Aggregator", domains=("x.test",))
-    feed = PerCompanyRssFeed(source, "https://x.test/rss?s={ticker}", ["NVDA", "BAD", "BHP.AX"],
-                             client)  # fmt: skip
+    tickers = ["NVDA", "BAD", "BHP.AX"]
+    feed = PerCompanyRssFeed(source, "https://x.test/rss?s={ticker}", lambda: tickers, client)
     assert len(list(feed.fetch())) == 2  # one dated item from each working ticker feed
     assert asked == ["NVDA", "BAD", "BHP.AX"]

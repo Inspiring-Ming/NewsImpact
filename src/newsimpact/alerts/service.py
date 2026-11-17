@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from newsimpact.alerts.logic import changes
 from newsimpact.alerts.models import Alert, EventSnapshot
@@ -27,6 +27,10 @@ class AlertsService:
 
     def follow(self, user_id: str, ticker: str, follow: bool = True) -> None:
         self._state.set_followed(user_id, ticker, follow)
+
+    def followers(self) -> Mapping[str, set[str]]:
+        """user_id -> followed tickers (companies people follow are always covered)."""
+        return self._state.followers()
 
     def check(self, events: Sequence[EventSnapshot]) -> list[Alert]:
         """Send each follower the alerts for what changed since the last round."""

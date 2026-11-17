@@ -5,6 +5,8 @@ write the function and add one line to ROUND. Each step can also run alone
 (`run_step`), e.g. as its own cloud function later.
 
   collect        read every enabled source (oldest first)
+  follow         decide which companies we follow from who the news names (app/following.py);
+                 newly followed ones have their recent articles read by the AI
   follow_up      search the listed sources for each open event's next update
   track_records  reliability learns which sources' reports others confirmed
   assess         re-check every event against evidence; market checks that were
@@ -29,6 +31,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from newsimpact.alerts.models import EventSnapshot
+from newsimpact.app import following
 from newsimpact.app.views import snapshot
 from newsimpact.app.views.briefs import ai_brief, facts_key
 from newsimpact.app.views.companies import brief_facts, companies
@@ -106,6 +109,12 @@ def _collect(svc: Services, r: RoundState) -> None:
     r.new_by_source = svc.sources.collect()
 
 
+def _follow(svc: Services, r: RoundState) -> None:
+    current = following.refresh(svc, datetime.now(UTC))
+    if current is not None:
+        log.info("following", extra={"followed": len(current.followed)})
+
+
 def _follow_up(svc: Services, r: RoundState) -> None:
     r.from_follow_up = svc.sources.follow_up()
 
@@ -136,6 +145,7 @@ def _alerts(svc: Services, r: RoundState) -> None:
 
 ROUND: tuple[tuple[str, Callable[[Services, RoundState], None]], ...] = (
     ("collect", _collect),
+    ("follow", _follow),
     ("follow_up", _follow_up),
     ("track_records", _track_records),
     ("assess", _assess),

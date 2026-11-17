@@ -11,7 +11,7 @@ from __future__ import annotations
 import html
 import logging
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from xml.etree.ElementTree import Element
@@ -102,18 +102,20 @@ class PerCompanyRssFeed:
     """One RSS URL per company ("{ticker}" in the URL), read as one feed.
 
     A provider's per-company feeds cover every tracked company, not only those a
-    general business section happens to mention. A failing company feed is
-    skipped so one bad symbol does not drop the rest.
+    general business section happens to mention. `tickers` is asked on every fetch,
+    because which companies are read changes from round to round. A failing company
+    feed is skipped so one bad symbol does not drop the rest.
     """
 
-    def __init__(
-        self, source: Source, url_template: str, tickers: Sequence[str], client: httpx.Client
-    ) -> None:
-        self._feeds = [RssFeed(source, url_template.format(ticker=t), client) for t in tickers]
+    def __init__(self, source: Source, url_template: str, tickers: Callable[[], Sequence[str]],
+                 client: httpx.Client) -> None:  # fmt: skip
+        self._source, self._url, self._tickers, self._client = source, url_template, tickers, client
 
     def fetch(self, since: datetime | None = None) -> Iterable[Article]:
         out: list[Article] = []
-        for feed in self._feeds:
+        feeds = [RssFeed(self._source, self._url.format(ticker=t), self._client)
+                 for t in self._tickers()]  # fmt: skip
+        for feed in feeds:
             try:
                 out += feed.fetch(since)
             except (httpx.HTTPError, ElementTree.ParseError, ValueError):  # ValueError: defusedxml

@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field
 
+from newsimpact.app.following import followed_companies
 from newsimpact.app.views.briefs import facts_key, rules_brief
 from newsimpact.app.views.guidance import (
     Check,
@@ -141,7 +142,7 @@ def companies(
     for storyline in svc.storyline_store.all():
         events[storyline.ticker].append(_event_card(svc, storyline, names, articles))
     cards = [_company_card(svc, c, by_ticker.get(c.ticker, []), events.get(c.ticker, []), names)
-             for c in svc.companies]  # fmt: skip
+             for c in followed_companies(svc)]  # fmt: skip
     cards = _with_guidance(svc, cards)
 
     def latest(c: CompanyCard) -> float:  # newest update of any event

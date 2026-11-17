@@ -16,7 +16,7 @@ name; an unknown name fails at start-up with the list of known ones.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
 import httpx
@@ -26,6 +26,7 @@ from newsimpact.alerts.adapters.memory import InMemoryAlertState
 from newsimpact.alerts.adapters.sqlite import SqliteAlertState
 from newsimpact.alerts.ports import AlertState, Notifier
 from newsimpact.app.config import Settings
+from newsimpact.app.following import FollowingStore, InMemoryFollowing, SqliteFollowing
 from newsimpact.app.views.briefs import BriefStore, InMemoryBriefs, SqliteBriefs
 from newsimpact.app.views.snapshot import InMemorySnapshots, SnapshotStore, SqliteSnapshots
 from newsimpact.assistant.adapters.memory import InMemoryQuestionLog
@@ -89,6 +90,7 @@ class Stores:
     briefs: BriefStore
     snapshots: SnapshotStore
     questions: QuestionLog
+    following: FollowingStore
 
 
 @dataclass(frozen=True)
@@ -97,7 +99,7 @@ class Context:
 
     settings: Settings
     http: httpx.Client | None  # None in the demo profile: nothing may touch the network
-    tickers: tuple[str, ...]  # the companies we follow
+    tickers: Callable[[], Sequence[str]]  # companies whose own feeds are read this round
 
 
 def pick[T](table: Mapping[str, T], name: str, what: str) -> T:
@@ -119,14 +121,14 @@ def _sqlite_stores(s: Settings) -> Stores:
     return Stores(db, SqliteArticleStore(db), SqliteSeenSources(db), SqliteWatchStore(db),
                   SqliteTrackedSources(db), SqliteEvidenceStore(db), SqliteStorylineStore(db),
                   SqliteAssessmentStore(db), SqliteAlertState(db), SqliteBriefs(db),
-                  SqliteSnapshots(db), SqliteQuestionLog(db))  # fmt: skip
+                  SqliteSnapshots(db), SqliteQuestionLog(db), SqliteFollowing(db))  # fmt: skip
 
 
 def _memory_stores(s: Settings) -> Stores:
     return Stores(None, InMemoryArticleStore(), InMemorySeenSources(), InMemoryWatchStore(),
                   InMemoryTrackedSources(), InMemoryEvidenceStore(), InMemoryStorylineStore(),
                   InMemoryAssessmentStore(), InMemoryAlertState(), InMemoryBriefs(),
-                  InMemorySnapshots(), InMemoryQuestionLog())  # fmt: skip
+                  InMemorySnapshots(), InMemoryQuestionLog(), InMemoryFollowing())  # fmt: skip
 
 
 STORES: dict[str, Callable[[Settings], Stores]] = {
