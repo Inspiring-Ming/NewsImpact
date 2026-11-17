@@ -31,8 +31,8 @@ export const api = {
   prices: (id: string) => request<S["PricePath"] | null>("GET", `/v1/storylines/${id}/prices`),
   sources: () => request<S["SourceWithReliability"][]>("GET", "/v1/sources"),
   coverage: () => request<S["OutletCoverage"][]>("GET", "/v1/coverage"),
-  calibration: () => request<S["Calibration"]>("GET", "/v1/calibration"),
   method: () => request<S["Method"]>("GET", "/v1/method"),
+  eventTypes: () => request<S["TypeStats"][]>("GET", "/v1/event-types"),
   assistant: () => request<S["AssistantStatus"]>("GET", "/v1/assistant"),
   ask: (question: string, eventId?: string) =>
     request<S["Answer"]>("POST", "/v1/assistant/ask", { question, event_id: eventId ?? null }),

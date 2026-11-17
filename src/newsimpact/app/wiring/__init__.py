@@ -201,7 +201,9 @@ def build_services(settings: Settings | None = None) -> Services:
     semantics = SemanticsService(bus, extractor,
                                  _semantic_steps(s, taxonomy, llm), resolver,
                                  copy_novelty=duplicates.copy_novelty,
-                                 commentary_cues=taxonomy.words("commentary"))  # fmt: skip
+                                 commentary_cues=taxonomy.words("commentary"),
+                                 deal_cues={k: taxonomy.words(k) for k in taxonomy.word_lists
+                                            if k.startswith("deal_")})  # fmt: skip
     reliability = ReliabilityService(bus, stores.tracked_sources, stores.evidence)
     storylines = StorylinesService(bus, stores.storylines, catalog)
 

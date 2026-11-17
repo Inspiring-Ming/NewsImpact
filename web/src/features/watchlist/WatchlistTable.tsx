@@ -2,7 +2,7 @@
 // question: who, what happened, how did the stock react, how well is it sourced.
 // On phones every row becomes a card (see styles.css "watchlist cards").
 import type { S } from "../../api/client";
-import { COUNTRY, date, eventLabel, NO_MOVE, pct, SECTOR_SHORT, vsWords } from "../../shared/labels";
+import { COUNTRY, date, eventLabel, NO_MOVE, pct, SECTOR_SHORT, SECTORS, vsWords } from "../../shared/labels";
 import { Term } from "../../shared/Term";
 import { Dots, MoveBar } from "../../shared/viz";
 import { PriorityBadge, Signals, SourceBadge } from "../../shared/badges";
@@ -28,14 +28,19 @@ export function WatchlistTable({ rows, starred, onStar }: {
             const e = c.events[0];
             const href = e ? `#/event/${e.event_id}` : undefined;
             return (
-              <tr key={c.ticker} className={href ? "clickable" : ""} onClick={() => href && (window.location.hash = href)}>
+              <tr key={c.ticker} className={href ? "clickable" : ""} onClick={() => href && (window.location.hash = href)}
+                  tabIndex={href ? 0 : undefined}
+                  onKeyDown={(ev) => { if (href && ev.key === "Enter" && ev.target === ev.currentTarget) window.location.hash = href; }}>
                 <td className="c-company">
                   <button className={`star ${starred.has(c.ticker) ? "on" : ""}`} aria-pressed={starred.has(c.ticker)}
                           title={starred.has(c.ticker) ? "Stop following" : "Follow this company"}
                           onClick={(ev) => { ev.stopPropagation(); onStar(c.ticker); }}>{starred.has(c.ticker) ? "★" : "☆"}</button>
                   <b>{c.name}</b>
                   <div className="muted small">
-                    {COUNTRY[c.country]?.flag} {c.ticker} · <Term tip={`${c.sector} (GICS sector)`}>{SECTOR_SHORT[c.sector] ?? c.sector}</Term>
+                    {COUNTRY[c.country]?.flag} {c.ticker}{" "}
+                    <span className={`sector-chip sec-${SECTORS.indexOf(c.sector) + 1}`}>
+                      <Term tip={`${c.sector} (GICS sector)`}>{SECTOR_SHORT[c.sector] ?? c.sector}</Term>
+                    </span>
                   </div>
                 </td>
                 {e ? (
@@ -44,8 +49,8 @@ export function WatchlistTable({ rows, starred, onStar }: {
                       <div className="event-top">
                         <PriorityBadge e={e} />
                         <span className="tag">{eventLabel(e)}</span>
-                        <span className="progress" title={`${e.updates.length} of ${e.stages_total} usual updates`}>
-                          <Dots n={e.updates.length} of={Math.max(e.stages_total, e.updates.length)} />
+                        <span className="progress" title={`${e.updates.length} update${e.updates.length > 1 ? "s" : ""} so far`}>
+                          <Dots n={e.updates.length} />
                         </span>
                         <Signals e={e} />
                         {c.events.length > 1 && <span className="muted small">+{c.events.length - 1} more</span>}
@@ -54,7 +59,7 @@ export function WatchlistTable({ rows, starred, onStar }: {
                          onClick={(ev) => ev.stopPropagation()}>{e.latest_headline} ↗</a>
                       <div className="muted small">
                         {e.latest_source} · {date(e.updates[e.updates.length - 1].published_at)}
-                        {e.next_update && <> · next: <b>{e.next_update}</b></>}
+                        {e.next_update && <> · possible next: <b>{e.next_update}</b></>}
                       </div>
                     </td>
                     <td className="c-move">

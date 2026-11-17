@@ -17,12 +17,9 @@ from newsimpact.sources.models import SourceType
 
 MODEL_VERSION = "reliability-beta-v0.2"
 
-# Starting estimate per source type: the chance a report holds up before any
-# track record exists. The order follows how content is checked before
-# publication: filings carry legal liability; agencies and newspapers have
-# editors and correction policies; press releases are accurate about the
-# company's own actions but selective; aggregators mix original reporting with
-# syndicated opinion; blogs and social posts are unchecked.
+# Starting estimate per source type: the chance a report holds up before any track record
+# exists, and why (shown on the website). The order follows how content is checked before
+# publication.
 PRIOR_MEANS: dict[SourceType, float] = {
     SourceType.REGULATORY_FILING: 0.95,
     SourceType.WIRE: 0.80,
@@ -32,6 +29,16 @@ PRIOR_MEANS: dict[SourceType, float] = {
     SourceType.BLOG: 0.50,
     SourceType.SOCIAL: 0.33,
     SourceType.UNKNOWN: 0.50,
+}
+PRIOR_WHY: dict[SourceType, str] = {
+    SourceType.REGULATORY_FILING: "Filed with a regulator: false statements carry legal liability.",
+    SourceType.WIRE: "News agencies check facts and publish corrections; others build on them.",
+    SourceType.MAJOR_OUTLET: "Newspapers and broadcasters have editors and correction policies.",
+    SourceType.COMPANY_PRESS_RELEASE: "Accurate about the company's own actions, but selective.",
+    SourceType.AGGREGATOR: "Mixes original reporting with syndicated stories and opinion.",
+    SourceType.BLOG: "Little or no checking before publication.",
+    SourceType.SOCIAL: "Unchecked posts.",
+    SourceType.UNKNOWN: "No information about how it checks: an even chance.",
 }
 # Every type starts with the weight of 10 reports, so the track record moves
 # all sources at the same pace: after 10 judged reports, the record and the

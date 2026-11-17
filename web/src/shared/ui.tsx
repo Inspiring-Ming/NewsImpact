@@ -1,12 +1,18 @@
 // Small presentational building blocks shared by every feature.
 import type { ReactNode } from "react";
 import type { Tone } from "./labels";
+import { useCountUp } from "./useCountUp";
+
+/** A key number that counts up when shown (see useCountUp). */
+export function CountUp({ value }: { value: ReactNode }) {
+  return <>{useCountUp(value)}</>;
+}
 
 export function Fact({ label, value, sub, tone }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: Tone }) {
   return (
     <div className="fact">
       <div className="fact-label">{label}</div>
-      <div className={`fact-value ${tone ?? ""}`}>{value}</div>
+      <div className={`fact-value ${tone ?? ""}`}><CountUp value={value} /></div>
       {sub && <div className="fact-sub">{sub}</div>}
     </div>
   );

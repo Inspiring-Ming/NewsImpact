@@ -237,6 +237,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/event-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Event Types
+         * @description Each event type: its steps and how often they happened, how many events are
+         *     confirmed, and how they moved stocks against the research (from the latest round).
+         */
+        get: operations["event_types_v1_event_types_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/events/{event_id}/summary": {
         parameters: {
             query?: never;
@@ -849,6 +870,8 @@ export interface components {
              * @description e.g. Leadership change, Results
              */
             event_type: string;
+            /** @description the usual share price move for this case, with its source */
+            expectation?: components["schemas"]["Expectation"] | null;
             /**
              * Final Measure On
              * @description close after which the move is final
@@ -880,7 +903,7 @@ export interface components {
             move_so_far: number | null;
             /**
              * Next Update
-             * @description the update this kind of event usually brings next
+             * @description the possible next step (research), if any
              */
             next_update: string | null;
             /**
@@ -904,13 +927,18 @@ export interface components {
              * @description for events that can read either way (results): 'better than expected', 'worse than expected', or 'mixed' when the reports disagree
              */
             reading?: string | null;
-            /** @description this event type's track record */
-            record?: components["schemas"]["TypeRecord"] | null;
+            /** @description how past events of this type and case moved the stock */
+            record?: components["schemas"]["GroupRecord"] | null;
             /**
              * Research
              * @description how markets usually react, cited
              */
             research: components["schemas"]["ResearchFinding"][];
+            /**
+             * Role
+             * @description the company's part in a deal, read from the reports
+             */
+            role?: ("buyer" | "target" | "seller") | null;
             /**
              * So Far Through
              * @description the latest close in move_so_far
@@ -923,11 +951,6 @@ export interface components {
              * @description independent news sources that reported the event
              */
             sources: number;
-            /**
-             * Stages Total
-             * @description updates this kind of event usually has
-             */
-            stages_total: number;
             /**
              * Stock Move
              * @description stock return minus its index, e.g. -0.185
@@ -971,6 +994,35 @@ export interface components {
              */
             watch: string[];
         };
+        /**
+         * Expectation
+         * @description How this kind of event usually moves the share price, for one case, with its source.
+         *
+         *     `when` picks the case: the company's part in a deal (buyer, target, seller), the
+         *     results reading (e.g. 'better than expected'), or the stage the event opened with.
+         */
+        Expectation: {
+            /**
+             * Expected
+             * @description up | down | flat (no unusual move) | uncertain (an unusual move either way)
+             * @enum {string}
+             */
+            expected: "up" | "down" | "flat" | "uncertain";
+            /** Finding */
+            finding: string;
+            /**
+             * Label
+             * @description the case in plain words, e.g. 'company is the buyer'
+             */
+            label: string;
+            /**
+             * Source
+             * @description authors (year), journal
+             */
+            source: string;
+            /** When */
+            when: string;
+        };
         /** ExpectedDecision */
         ExpectedDecision: {
             /**
@@ -1005,6 +1057,53 @@ export interface components {
             macro_f1: number;
             /** Per Label */
             per_label: components["schemas"]["LabelScore"][];
+        };
+        /**
+         * GroupRecord
+         * @description How events of one kind and case moved the stock, against what research expects.
+         */
+        GroupRecord: {
+            /** Average */
+            average: number | null;
+            /**
+             * Chance
+             * @description share that would match by chance alone
+             */
+            chance: number;
+            /**
+             * Expected
+             * @description up | down | flat | uncertain
+             */
+            expected: string;
+            /** Finding */
+            finding: string;
+            /**
+             * Label
+             * @description the case, e.g. 'company is the buyer'
+             */
+            label: string;
+            /**
+             * Met
+             * @description events that moved as research expects
+             */
+            met: number;
+            /**
+             * N
+             * @description events with a measured stock move
+             */
+            n: number;
+            /** Source */
+            source: string;
+            /**
+             * Unusual
+             * @description moves larger than on 19 of 20 normal days
+             */
+            unusual: number;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "too_few" | "supports" | "no_pattern" | "against";
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1069,6 +1168,15 @@ export interface components {
             };
             /** Playbooks */
             playbooks: components["schemas"]["Playbook"][];
+            /**
+             * Prior Strength
+             * @description the starting estimate counts as this many reports
+             */
+            prior_strength: number;
+            /** Source Priors */
+            source_priors: {
+                [key: string]: components["schemas"]["SourcePrior"];
+            };
         };
         /** MonitorStatus */
         MonitorStatus: {
@@ -1175,6 +1283,12 @@ export interface components {
         Playbook: {
             /** Description */
             description: string;
+            /**
+             * Expectations
+             * @description share price expectation per case; else the opening stage's
+             * @default []
+             */
+            expectations: components["schemas"]["Expectation"][];
             /**
              * Link Window Days
              * @description how long a storyline stays open for new stages
@@ -1433,6 +1547,16 @@ export interface components {
             /** Url */
             url: string;
         };
+        /** SourcePrior */
+        SourcePrior: {
+            /**
+             * Start
+             * @description chance a report of this kind holds up, before any record
+             */
+            start: number;
+            /** Why */
+            why: string;
+        };
         /**
          * SourceType
          * @description Kind of outlet. Sets the starting reliability before any track record exists.
@@ -1499,6 +1623,16 @@ export interface components {
             stage: number;
             /** Stage Name */
             stage_name: string;
+        };
+        /** StepCount */
+        StepCount: {
+            /**
+             * Reached
+             * @description events of this type that reached this step
+             */
+            reached: number;
+            /** Title */
+            title: string;
         };
         /** Storyline */
         Storyline: {
@@ -1585,26 +1719,51 @@ export interface components {
          */
         StorylineStatus: "developing" | "escalating" | "resolved";
         /**
-         * TypeRecord
-         * @description How this kind of event has moved stocks across the events we measured.
+         * TypeStats
+         * @description One event type on the How it works page: how we follow it, how often its steps really
+         *     happened, and how its events moved the stock against the research, case by case.
          */
-        TypeRecord: {
-            /** As Expected */
-            as_expected: number;
-            /** Average */
-            average: number | null;
+        TypeStats: {
             /**
-             * Expected
-             * @description up | down | uncertain: the usual share price move
+             * Cases
+             * @description share price expectation per case
              */
-            expected: string | null;
-            /** N */
-            n: number;
+            cases: components["schemas"]["GroupRecord"][];
             /**
-             * Unusual
-             * @description of those, moves larger than on 19 of 20 normal days
+             * Confirmed
+             * @description events confirmed (2+ independent sources or official)
              */
-            unusual: number;
+            confirmed: number;
+            /** Events */
+            events: number;
+            /**
+             * Gap Days
+             * @description median days between steps, in our events
+             */
+            gap_days: number | null;
+            /** Gaps Seen */
+            gaps_seen: number;
+            /**
+             * No Expectation
+             * @description events with no expectation (e.g. role unclear)
+             */
+            no_expectation: number;
+            /**
+             * Steps
+             * @description possible steps, in order (from research)
+             */
+            steps: components["schemas"]["StepCount"][];
+            /** Theme */
+            theme: string;
+            /** Title */
+            title: string;
+            /**
+             * Window Days
+             * @description how long new reports still join an event
+             */
+            window_days: number;
+            /** Window Why */
+            window_why: string;
         };
         /** UpdateItem */
         UpdateItem: {
@@ -1932,6 +2091,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Evaluation"];
+                };
+            };
+        };
+    };
+    event_types_v1_event_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeStats"][];
                 };
             };
         };

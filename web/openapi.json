@@ -769,6 +769,17 @@
             "title": "Event Type",
             "type": "string"
           },
+          "expectation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Expectation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the usual share price move for this case, with its source"
+          },
           "final_measure_on": {
             "anyOf": [
               {
@@ -833,7 +844,7 @@
                 "type": "null"
               }
             ],
-            "description": "the update this kind of event usually brings next",
+            "description": "the possible next step (research), if any",
             "title": "Next Update"
           },
           "notes": {
@@ -874,13 +885,13 @@
           "record": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/TypeRecord"
+                "$ref": "#/components/schemas/GroupRecord"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "this event type's track record"
+            "description": "how past events of this type and case moved the stock"
           },
           "research": {
             "description": "how markets usually react, cited",
@@ -889,6 +900,23 @@
             },
             "title": "Research",
             "type": "array"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "buyer",
+                  "target",
+                  "seller"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the company's part in a deal, read from the reports",
+            "title": "Role"
           },
           "so_far_through": {
             "anyOf": [
@@ -913,11 +941,6 @@
           "sources": {
             "description": "independent news sources that reported the event",
             "title": "Sources",
-            "type": "integer"
-          },
-          "stages_total": {
-            "description": "updates this kind of event usually has",
-            "title": "Stages Total",
             "type": "integer"
           },
           "stock_move": {
@@ -1004,7 +1027,6 @@
           "notes",
           "research",
           "watch",
-          "stages_total",
           "volume_ratio",
           "tone",
           "is_rumour",
@@ -1013,6 +1035,50 @@
           "final_measure_on"
         ],
         "title": "EventCard",
+        "type": "object"
+      },
+      "Expectation": {
+        "additionalProperties": false,
+        "description": "How this kind of event usually moves the share price, for one case, with its source.\n\n`when` picks the case: the company's part in a deal (buyer, target, seller), the\nresults reading (e.g. 'better than expected'), or the stage the event opened with.",
+        "properties": {
+          "expected": {
+            "description": "up | down | flat (no unusual move) | uncertain (an unusual move either way)",
+            "enum": [
+              "up",
+              "down",
+              "flat",
+              "uncertain"
+            ],
+            "title": "Expected",
+            "type": "string"
+          },
+          "finding": {
+            "title": "Finding",
+            "type": "string"
+          },
+          "label": {
+            "description": "the case in plain words, e.g. 'company is the buyer'",
+            "title": "Label",
+            "type": "string"
+          },
+          "source": {
+            "description": "authors (year), journal",
+            "title": "Source",
+            "type": "string"
+          },
+          "when": {
+            "title": "When",
+            "type": "string"
+          }
+        },
+        "required": [
+          "when",
+          "label",
+          "expected",
+          "finding",
+          "source"
+        ],
+        "title": "Expectation",
         "type": "object"
       },
       "ExpectedDecision": {
@@ -1097,6 +1163,85 @@
           "per_label"
         ],
         "title": "FieldScore",
+        "type": "object"
+      },
+      "GroupRecord": {
+        "additionalProperties": false,
+        "description": "How events of one kind and case moved the stock, against what research expects.",
+        "properties": {
+          "average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average"
+          },
+          "chance": {
+            "description": "share that would match by chance alone",
+            "title": "Chance",
+            "type": "number"
+          },
+          "expected": {
+            "description": "up | down | flat | uncertain",
+            "title": "Expected",
+            "type": "string"
+          },
+          "finding": {
+            "title": "Finding",
+            "type": "string"
+          },
+          "label": {
+            "description": "the case, e.g. 'company is the buyer'",
+            "title": "Label",
+            "type": "string"
+          },
+          "met": {
+            "description": "events that moved as research expects",
+            "title": "Met",
+            "type": "integer"
+          },
+          "n": {
+            "description": "events with a measured stock move",
+            "title": "N",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "unusual": {
+            "description": "moves larger than on 19 of 20 normal days",
+            "title": "Unusual",
+            "type": "integer"
+          },
+          "verdict": {
+            "enum": [
+              "too_few",
+              "supports",
+              "no_pattern",
+              "against"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "expected",
+          "finding",
+          "source",
+          "n",
+          "average",
+          "met",
+          "unusual",
+          "chance",
+          "verdict"
+        ],
+        "title": "GroupRecord",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1228,6 +1373,18 @@
             },
             "title": "Playbooks",
             "type": "array"
+          },
+          "prior_strength": {
+            "description": "the starting estimate counts as this many reports",
+            "title": "Prior Strength",
+            "type": "number"
+          },
+          "source_priors": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SourcePrior"
+            },
+            "title": "Source Priors",
+            "type": "object"
           }
         },
         "required": [
@@ -1235,7 +1392,9 @@
           "playbooks",
           "late_report_days",
           "llm_presets",
-          "llm_preset_in_use"
+          "llm_preset_in_use",
+          "source_priors",
+          "prior_strength"
         ],
         "title": "Method",
         "type": "object"
@@ -1459,6 +1618,15 @@
           "description": {
             "title": "Description",
             "type": "string"
+          },
+          "expectations": {
+            "default": [],
+            "description": "share price expectation per case; else the opening stage's",
+            "items": {
+              "$ref": "#/components/schemas/Expectation"
+            },
+            "title": "Expectations",
+            "type": "array"
           },
           "link_window_days": {
             "description": "how long a storyline stays open for new stages",
@@ -1926,6 +2094,26 @@
         "title": "SourceLink",
         "type": "object"
       },
+      "SourcePrior": {
+        "additionalProperties": false,
+        "properties": {
+          "start": {
+            "description": "chance a report of this kind holds up, before any record",
+            "title": "Start",
+            "type": "number"
+          },
+          "why": {
+            "title": "Why",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "why"
+        ],
+        "title": "SourcePrior",
+        "type": "object"
+      },
       "SourceType": {
         "description": "Kind of outlet. Sets the starting reliability before any track record exists.",
         "enum": [
@@ -2091,6 +2279,26 @@
         "title": "StageCheck",
         "type": "object"
       },
+      "StepCount": {
+        "additionalProperties": false,
+        "properties": {
+          "reached": {
+            "description": "events of this type that reached this step",
+            "title": "Reached",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "reached"
+        ],
+        "title": "StepCount",
+        "type": "object"
+      },
       "Storyline": {
         "additionalProperties": false,
         "properties": {
@@ -2246,15 +2454,28 @@
         "title": "StorylineStatus",
         "type": "string"
       },
-      "TypeRecord": {
+      "TypeStats": {
         "additionalProperties": false,
-        "description": "How this kind of event has moved stocks across the events we measured.",
+        "description": "One event type on the How it works page: how we follow it, how often its steps really\nhappened, and how its events moved the stock against the research, case by case.",
         "properties": {
-          "as_expected": {
-            "title": "As Expected",
+          "cases": {
+            "description": "share price expectation per case",
+            "items": {
+              "$ref": "#/components/schemas/GroupRecord"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "confirmed": {
+            "description": "events confirmed (2+ independent sources or official)",
+            "title": "Confirmed",
             "type": "integer"
           },
-          "average": {
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "gap_days": {
             "anyOf": [
               {
                 "type": "number"
@@ -2263,38 +2484,58 @@
                 "type": "null"
               }
             ],
-            "title": "Average"
+            "description": "median days between steps, in our events",
+            "title": "Gap Days"
           },
-          "expected": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "up | down | uncertain: the usual share price move",
-            "title": "Expected"
-          },
-          "n": {
-            "title": "N",
+          "gaps_seen": {
+            "title": "Gaps Seen",
             "type": "integer"
           },
-          "unusual": {
-            "description": "of those, moves larger than on 19 of 20 normal days",
-            "title": "Unusual",
+          "no_expectation": {
+            "description": "events with no expectation (e.g. role unclear)",
+            "title": "No Expectation",
             "type": "integer"
+          },
+          "steps": {
+            "description": "possible steps, in order (from research)",
+            "items": {
+              "$ref": "#/components/schemas/StepCount"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "theme": {
+            "title": "Theme",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "window_days": {
+            "description": "how long new reports still join an event",
+            "title": "Window Days",
+            "type": "integer"
+          },
+          "window_why": {
+            "title": "Window Why",
+            "type": "string"
           }
         },
         "required": [
-          "expected",
-          "n",
-          "average",
-          "as_expected",
-          "unusual"
+          "theme",
+          "title",
+          "events",
+          "confirmed",
+          "window_days",
+          "window_why",
+          "steps",
+          "gap_days",
+          "gaps_seen",
+          "cases",
+          "no_expectation"
         ],
-        "title": "TypeRecord",
+        "title": "TypeStats",
         "type": "object"
       },
       "UpdateItem": {
@@ -2728,6 +2969,29 @@
           }
         },
         "summary": "Evaluation"
+      }
+    },
+    "/v1/event-types": {
+      "get": {
+        "description": "Each event type: its steps and how often they happened, how many events are\nconfirmed, and how they moved stocks against the research (from the latest round).",
+        "operationId": "event_types_v1_event_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TypeStats"
+                  },
+                  "title": "Response Event Types V1 Event Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Event Types"
       }
     },
     "/v1/events/{event_id}/summary": {

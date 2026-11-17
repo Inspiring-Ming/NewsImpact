@@ -1,58 +1,52 @@
-// Tab 3 - does each kind of news really move the stock? The expectation from research
-// next to what happened in the events we measured.
-import { api, type S } from "../../api/client";
-import { label, pct } from "../../shared/labels";
-import { State } from "../../shared/ui";
-import { Term } from "../../shared/Term";
-import { useApi } from "../../shared/useApi";
-import { Meter, MoveBar } from "../../shared/viz";
-import { StepBlock } from "./StepBlock";
+// Tab 3 - does each kind of news really move the stock? For each case (e.g. the company is the
+// buyer or the target), what research expects, what our events did, and what chance alone gives.
+import { CHANCE_WORDS, EXPECT, pct, verdictText } from "../../shared/labels";
+import { Flow, setting, type MethodData } from "./MethodPage";
 
-const EXPECT: Record<string, { text: string; tone: string }> = {
-  down: { text: "↓ falls", tone: "bad" }, up: { text: "↑ rises", tone: "good" }, uncertain: { text: "↕ big move either way", tone: "warn" },
-};
+const measured = (t: MethodData["types"][number]) => t.cases.reduce((n, c) => n + c.n, 0);
 
-export function VerifyStep({ method }: { method: S["Method"] }) {
-  const companies = useApi(api.companies);
-  // The server computes each event type's track record (views/guidance.py); every event
-  // of a type carries the same one.
-  const records = new Map((companies.data ?? []).flatMap((c) => c.events).map((e) => [e.event_type, e.record]));
+export function VerifyStep({ method, types }: MethodData) {
+  const min = setting(method, "validation", "min_events_for_calibration") ?? 20;
   return (
-    <StepBlock term="marketTab">
-      <State error={companies.error} loading={companies.loading}>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Event type</th><th><Term id="expectShare" /></th><th className="num"><Term id="measured" /></th>
-                <th><Term id="avgMove" /></th><th className="num"><Term id="unusual">Unusual moves</Term></th>
-                <th><Term id="asExpected" /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {method.playbooks.map((p) => {
-                const name = p.title || label(p.theme);
-                const r = records.get(name);
-                const expected = r?.expected ?? p.stages.flatMap((s) => s.decisions).find((d) => d.market_channel === "price")?.expected_direction;
-                const n = r?.n ?? 0, avg = r?.average ?? null, unusual = r?.unusual ?? 0, hit = r?.as_expected ?? 0;
+    <section className="step-block">
+      <h2>Does this news move the stock?</h2>
+      <Flow steps={[
+        { title: "Expect", text: "Published research says how each kind of news usually moves a share price. It depends on the case: a takeover target's shares jump, the buyer's barely move." },
+        { title: "Measure", text: "For each event: the stock's move minus its market's move (S&P 500 or ASX 200) over the event days. 'Unusual' = larger than on 19 of 20 normal days for that stock." },
+        { title: "Compare with chance", text: <>A rise or fall happens half the time by chance, an unusual move 1 time in 20. We say research is matched or contradicted only after {min} events, and only when the result beats chance in a statistical test.</> },
+      ]} />
+      <div className="type-grid wide">
+        {types.map((t) => (
+          <article key={t.theme} className="type-card">
+            <header>
+              <h3>{t.title}</h3>
+              <span className="muted small">{measured(t)} event{measured(t) === 1 ? "" : "s"} measured</span>
+            </header>
+            <ul className="case-list">
+              {t.cases.map((c) => {
+                const e = EXPECT[c.expected], v = verdictText(c, min);
                 return (
-                  <tr key={p.theme}>
-                    <td><b>{name}</b></td>
-                    <td>{expected ? <span className={`expect ${EXPECT[expected].tone}`}>{EXPECT[expected].text}</span> : <span className="muted">not set</span>}</td>
-                    <td className="num">{n}</td>
-                    <td>{avg == null ? <span className="muted">–</span> : <div className="move-top"><MoveBar value={avg} unusual={Math.abs(avg) >= 0.02} span={0.1} /><b>{pct(avg)}</b></div>}</td>
-                    <td className="num">{n ? `${unusual} of ${n}` : "–"}</td>
-                    <td>{n && expected ? (
-                      <div className="conf"><Meter value={hit / n} tone={hit / n >= 0.6 ? "good" : hit / n >= 0.4 ? "warn" : "bad"} /> <b>{hit} of {n}</b></div>
-                    ) : <span className="muted">–</span>}</td>
-                  </tr>
+                  <li key={c.label} className="case">
+                    <div className="case-head">
+                      <b>{c.label[0].toUpperCase() + c.label.slice(1)}</b>
+                      <span className={`expect ${e.tone}`}>{e.text}</span>
+                    </div>
+                    <p className="small muted">{c.finding} <i>{c.source}</i></p>
+                    {c.n > 0 ? (
+                      <div className="case-result">
+                        {c.average != null && <p className="small">Average move <b>{pct(c.average)}</b></p>}
+                        <p className="small"><b>{c.met} of {c.n}</b> {e.did} · by chance alone: {CHANCE_WORDS[c.expected]}</p>
+                        <span className={`verdict ${v.tone}`}>{v.text}</span>
+                      </div>
+                    ) : <p className="small muted">No measured event in this case yet.</p>}
+                  </li>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-        <p className="small muted">Colour on the bars: green = matches the expectation in most events (60% or more), amber = mixed, red = rarely. Few events means the result can still change a lot.</p>
-      </State>
-    </StepBlock>
+            </ul>
+            {t.no_expectation > 0 && <p className="small muted">{t.no_expectation} event{t.no_expectation > 1 ? "s" : ""} without an expectation.</p>}
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }

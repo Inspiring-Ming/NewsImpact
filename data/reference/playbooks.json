@@ -1,6 +1,6 @@
 {
-  "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions). 'research' = published findings on how markets usually react to this kind of event (shown with their source); 'watch' = what investors typically check next, from common analyst practice.",
-  "version": "playbooks-v0.8",
+  "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions). 'research' = published findings on how markets usually react to this kind of event (shown with their source); 'watch' = what investors typically check next, from common analyst practice. 'expectations' = the usual share price move per case (the company's part in a deal, the results reading, or how the event started), each with its source; without one, the opening stage's price expectation applies. 'flat' = no unusual move expected.",
+  "version": "playbooks-v0.9",
   "late_report_days": 3,
   "late_report_why": "Outlets publish the same events in a different order than they happened (e.g. 'interim CEO in charge' before the resignation story). A resolved story therefore still absorbs reports of its earlier stages published within 3 days of its latest stage; later ones start a new story. 3 days covers same-week reporting across time zones (US and Australian outlets) without merging a new crisis weeks later.",
   "playbooks": [
@@ -165,6 +165,29 @@
         "Who leads next: interim or permanent, insider or outsider.",
         "Analyst rating and forecast changes in the following days.",
         "The board's stated reason and any regulator or legal follow-up."
+      ],
+      "expectations": [
+        {
+          "when": "public_pressure",
+          "label": "starts with the leader under pressure",
+          "expected": "uncertain",
+          "finding": "Share price swings rise after a CEO change, more so when the departure is forced.",
+          "source": "Clayton, Hartzell & Rosenberg (2005), Journal of Business"
+        },
+        {
+          "when": "leader_departure",
+          "label": "starts with the leader stepping down",
+          "expected": "uncertain",
+          "finding": "Share price swings rise after a CEO change, more so when the departure is forced.",
+          "source": "Clayton, Hartzell & Rosenberg (2005), Journal of Business"
+        },
+        {
+          "when": "succession",
+          "label": "a new leader named (planned succession)",
+          "expected": "flat",
+          "finding": "Share price swings settle once the succession is clear.",
+          "source": "Clayton, Hartzell & Rosenberg (2005), Journal of Business"
+        }
       ]
     },
     {
@@ -376,6 +399,36 @@
         "Offer price compared with the current share price.",
         "Regulator and shareholder approvals, and any rival bid.",
         "Whether the report is confirmed by the company (rumours often fade)."
+      ],
+      "expectations": [
+        {
+          "when": "target",
+          "label": "company is the target",
+          "expected": "up",
+          "finding": "Takeover targets' shares typically jump when a deal is announced or reported, because buyers pay a premium.",
+          "source": "Andrade, Mitchell & Stafford (2001), Journal of Economic Perspectives"
+        },
+        {
+          "when": "buyer",
+          "label": "company is the buyer",
+          "expected": "flat",
+          "finding": "Buyers' shares on average move little around a deal announcement (a small fall, not reliably different from zero).",
+          "source": "Andrade, Mitchell & Stafford (2001), Journal of Economic Perspectives"
+        },
+        {
+          "when": "seller",
+          "label": "company sells a unit or assets",
+          "expected": "up",
+          "finding": "Companies selling a unit or assets gain a little on average when the sale is announced.",
+          "source": "Jain (1985), Journal of Finance"
+        },
+        {
+          "when": "role unclear",
+          "label": "company's part unclear",
+          "expected": "uncertain",
+          "finding": "Targets jump and buyers move little; without knowing the company's side, only a larger-than-usual move is expected.",
+          "source": "Andrade, Mitchell & Stafford (2001), Journal of Economic Perspectives"
+        }
       ]
     },
     {
@@ -448,6 +501,29 @@
         "Guidance for the next period: a beat with weaker guidance can still fall.",
         "Analyst forecast revisions over the next one to two weeks.",
         "Whether revenue, not only profit, beat expectations, and whether a miss is one-off (costs) or lasting (demand)."
+      ],
+      "expectations": [
+        {
+          "when": "better than expected",
+          "label": "better than expected",
+          "expected": "up",
+          "finding": "Shares move in the direction of an earnings surprise, and keep drifting that way for weeks.",
+          "source": "Bernard & Thomas (1989), Journal of Accounting Research"
+        },
+        {
+          "when": "worse than expected",
+          "label": "worse than expected",
+          "expected": "down",
+          "finding": "Shares move in the direction of an earnings surprise, and keep drifting that way for weeks.",
+          "source": "Bernard & Thomas (1989), Journal of Accounting Research"
+        },
+        {
+          "when": "mixed",
+          "label": "mixed (e.g. profit beat, outlook disappointed)",
+          "expected": "uncertain",
+          "finding": "Trading volume and the size of price moves rise sharply in the week of an earnings announcement.",
+          "source": "Beaver (1968), Journal of Accounting Research"
+        }
       ]
     },
     {
@@ -578,9 +654,9 @@
           "decisions": [
             {
               "actor": "institutional_investors",
-              "decision": "weigh cost savings against weaker demand",
+              "decision": "weigh cost savings against weaker demand; on average they sell",
               "market_channel": "price",
-              "expected_direction": "uncertain",
+              "expected_direction": "down",
               "horizon": "days"
             },
             {

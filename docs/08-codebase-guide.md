@@ -53,7 +53,7 @@ flowchart LR
 | ↳ | `semantics` (on ArticleIngested) | splits the article into claims (company, event type, who said it, rumour, tone), publishes **ClaimsExtracted** |
 | ↳ | `reliability` (on ClaimsExtracted) | scores each claim by its source's reliability, publishes **ClaimsScored** |
 | ↳ | `storylines` (on ClaimsScored) | joins claims into events (storylines) update by update using the playbooks, publishes **StorylineUpdated** |
-| ↳ | `sources` (on StorylineUpdated) | remembers to search for that event's next usual update |
+| ↳ | `sources` (on StorylineUpdated) | remembers to search for that event's possible next step |
 | follow_up | `sources.follow_up()` | searches the listed sources for those next updates (GDELT) |
 | track_records | `validation.track_records()` → `reliability.set_corroboration()` | each source's reliability learns from how often others confirmed its reports |
 | assess | `validation.assess_and_store()` | checks every event: confirmed by independent sources? did the market react as expected? (asks `market`) |

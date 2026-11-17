@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Literal, Protocol
 from pydantic import Field, ValidationError
 
 from newsimpact.app.views.companies import CompanyCard, companies, mentions, source_names
-from newsimpact.app.views.system import outlet_coverage
+from newsimpact.app.views.system import TypeStats, event_types, outlet_coverage
 from newsimpact.shared.events import Model
 from newsimpact.shared.sqlite import Database
 from newsimpact.sources.models import Article, OutletCoverage
@@ -46,6 +46,7 @@ class Snapshot(Model):
     companies: tuple[CompanyCard, ...]
     coverage: tuple[CompanyCoverage, ...]
     outlets: tuple[OutletCoverage, ...] = Field(description="each source's volume and use")
+    types: tuple[TypeStats, ...] = Field(description="each event type: steps, cases, record")
 
 
 def build(svc: Services) -> Snapshot:
@@ -54,13 +55,15 @@ def build(svc: Services) -> Snapshot:
     by_ticker = mentions(svc, articles)
     with_company = {a.article_id for news in by_ticker.values() for a in news}
     days = coverage_window_days(svc)
+    cards = companies(svc, by_ticker)
     return Snapshot(
         computed_at=datetime.now(UTC),
         analysis=svc.semantics.model_version,
         coverage_window_days=days,
-        companies=tuple(companies(svc, by_ticker)),
+        companies=tuple(cards),
         coverage=tuple(_coverage(svc, by_ticker, days)),
         outlets=tuple(outlet_coverage(svc, articles, with_company)),
+        types=tuple(event_types(svc, cards)),
     )
 
 

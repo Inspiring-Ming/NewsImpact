@@ -60,7 +60,7 @@ def rules_brief(facts: dict[str, object]) -> Brief:
     market = str(facts["market"])
     research = facts.get("research")
     why = (f"{research} ({facts['research_source']})" if research
-           else f"Next usual update: {facts['next_update']}." if facts.get("next_update")
+           else f"Possible next step: {facts['next_update']}." if facts.get("next_update")
            else "No published finding for this kind of event yet.")  # fmt: skip
     return Brief(bullets=(what, market, why), by="rules", facts_key=facts_key(facts))
 

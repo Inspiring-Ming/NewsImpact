@@ -50,9 +50,6 @@ export const TERMS = {
   tone: { label: "Tone", tip: "Whether the latest update reads as good or bad news for the company, read automatically from its wording." },
   rumour: { label: "Rumour", tip: "Worded as unconfirmed: 'reportedly', 'is said to', 'sources say', 'considering'. Nobody has confirmed it on the record yet." },
   sources: { label: "Sources", tip: "How many of our news sources reported the event. Copies of the same article count once." },
-  reliability: { label: "Reliability", tip: "Chance a report from this source is right. = (starting estimate × 10 + reports confirmed) ÷ (10 + reports judged), where a report nobody else confirmed within 7 days counts as half a miss. So a source starts at its type's estimate and moves with its own record." },
-  prior: { label: "Starting estimate", tip: "Set by the kind of source, ordered by how content is checked before publishing: official filing 95% (legal liability), news agency 80% and newspaper 75% (editors, corrections policy), company press release 67% (accurate about itself but selective), news aggregator 67% (mixes reporting and opinion). It counts as much as 10 reports, then the track record takes over." },
-  trackRecord: { label: "Track record", tip: "Of this source's reports old enough to judge (7+ days), how many another independent source also reported. Sources whose news others confirm are more trustworthy (truth-discovery research: Yin, Han & Yu 2008)." },
   provisional: { label: "Provisional", tip: "The measurement window has not closed yet, so this is the stock's move against its index up to the latest close. It can still change; the final number replaces it once the window closes." },
   eventsWeek: { label: "Events this week", tip: "Events with a new update in the last 7 days." },
   biggest: { label: "Biggest move", tip: "The largest stock move against its market among all events." },
@@ -60,17 +57,6 @@ export const TERMS = {
   map: { label: "Impact map", tip: "Every event with a measured stock move. Left = the stock did worse than its market, right = better. Rows are sectors. Bigger dot = more sources. Click a dot to open the event." },
   volume: { label: "Trading volume", tip: "Shares traded compared with this stock's normal day, over the update day and the 2 days after." },
   expected: { label: "Expected vs actual", tip: "For each update: the reaction investors usually show (↑ rise, ↓ fall, ↕ big move either way) and what really happened (✓ as expected, ✗ the opposite, – no clear move)." },
-  relevance: { label: "About our companies", tip: "Share of this source's articles that name a company we follow. Low = the source mostly covers other things, so it adds little." },
-  usedInEvent: { label: "Led to an event", tip: "Share of this source's articles that became an update of an event. Shows whether the source reports the news that matters." },
-  window: { label: "Time window", tip: "A new report within this many days of the last update joins the same event; after that it starts a new event. Set from typical timelines, then checked against the gaps we measure." },
-  seen: { label: "Measured gap", tip: "Typical number of days between updates of this event type, measured from our own data." },
-  expectShare: { label: "Expected share price", tip: "What research on investor behaviour says this kind of news usually does to the share price." },
-  measured: { label: "Events measured", tip: "Events of this type with a completed stock measurement." },
-  avgMove: { label: "Average move", tip: "Average stock move against its market across those events." },
-  asExpected: { label: "Moved as expected", tip: "Events where the share price went the expected way (for 'big move either way': an unusual move). This is how we check that the expectation holds in real data." },
-  sourcesTab: { label: "Which news sources we read", tip: "We read a short list of trusted sources automatically. Each keeps its place only if it covers our companies and leads to events." },
-  eventsTab: { label: "Which events we detect", tip: "Each sentence naming a company is checked for an event type. Related news about the same company within the time window is joined into one event, update by update." },
-  marketTab: { label: "Does this news move the stock?", tip: "For each event type: what we expect the share price to do, and what really happened in the events measured so far." },
 } as const;
 
 /** GICS sector short names, as on trading screens. */
@@ -118,7 +104,31 @@ export const NO_MOVE: Record<string, string> = {
   no_data: "No price data yet",
 };
 
-export const ARROW: Record<string, string> = { up: "↑", down: "↓", uncertain: "↕" };
+export const ARROW: Record<string, string> = { up: "↑", down: "↓", uncertain: "↕", flat: "→" };
+
+/** What research expects the share price to do, and how a matching event is described. */
+export const EXPECT: Record<string, { text: string; did: string; tone: string }> = {
+  up: { text: "↑ rises", did: "rose", tone: "good" },
+  down: { text: "↓ falls", did: "fell", tone: "bad" },
+  flat: { text: "→ little change", did: "had no unusual move", tone: "neutral" },
+  uncertain: { text: "↕ a larger move than usual", did: "had an unusual move", tone: "warn" },
+};
+
+/** How often each expectation is met by chance alone (server: guidance.py CHANCE). */
+export const CHANCE_WORDS: Record<string, string> = {
+  up: "1 in 2", down: "1 in 2", uncertain: "1 in 20", flat: "19 in 20",
+};
+
+/** The verdict on a case's record against research (server: views/guidance.py group_record). */
+export function verdictText(r: { verdict: string }, minEvents?: number): { text: string; tone: string } {
+  return {
+    too_few: { text: `Too few events to judge${minEvents ? ` (needs ${minEvents})` : " yet"}`, tone: "neutral" },
+    supports: { text: "Matches the research", tone: "good" },
+    no_pattern: { text: "No clear pattern yet", tone: "warn" },
+    against: { text: "Goes against the research", tone: "bad" },
+  }[r.verdict] ?? { text: r.verdict, tone: "neutral" };
+}
+
 
 
 export function date(iso: string, year = false): string {

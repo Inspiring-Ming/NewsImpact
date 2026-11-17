@@ -6,11 +6,14 @@ import json
 from typing import Any
 
 from fastapi import APIRouter
+from pydantic import Field
 
 from newsimpact.app.api.context import ApiContext
+from newsimpact.app.views import snapshot
 from newsimpact.app.views import system as views
-from newsimpact.app.views.system import Evaluation, Overview
+from newsimpact.app.views.system import Evaluation, Overview, TypeStats
 from newsimpact.llm.models import LlmPreset
+from newsimpact.reliability.logic import PRIOR_MEANS, PRIOR_STRENGTH, PRIOR_WHY
 from newsimpact.shared.events import Model
 from newsimpact.storylines.models import Playbook
 from newsimpact.validation.models import StageChannelCalibration, WindowCalibration
@@ -21,6 +24,11 @@ class Calibration(Model):
     windows: tuple[WindowCalibration, ...]
 
 
+class SourcePrior(Model):
+    start: float = Field(description="chance a report of this kind holds up, before any record")
+    why: str
+
+
 class Method(Model):
     """Every setting with its reason - what the website's "How it works" page shows."""
 
@@ -29,6 +37,8 @@ class Method(Model):
     late_report_days: int
     llm_presets: dict[str, LlmPreset]
     llm_preset_in_use: str
+    source_priors: dict[str, SourcePrior]
+    prior_strength: float = Field(description="the starting estimate counts as this many reports")
 
 
 def router(api: ApiContext) -> APIRouter:
@@ -61,6 +71,15 @@ def router(api: ApiContext) -> APIRouter:
         return Method(methodology=raw, playbooks=tuple(svc.playbooks.playbooks()),
                       late_report_days=svc.playbooks.late_report_days,
                       llm_presets=svc.llm_presets,
-                      llm_preset_in_use=svc.settings.llm_preset)  # fmt: skip
+                      llm_preset_in_use=svc.settings.llm_preset,
+                      source_priors={t.value: SourcePrior(start=m, why=PRIOR_WHY[t])
+                                     for t, m in PRIOR_MEANS.items()},
+                      prior_strength=PRIOR_STRENGTH)  # fmt: skip
+
+    @r.get("/v1/event-types", response_model=list[TypeStats])
+    def event_types() -> list[TypeStats]:
+        """Each event type: its steps and how often they happened, how many events are
+        confirmed, and how they moved stocks against the research (from the latest round)."""
+        return list(snapshot.latest(svc).types)
 
     return r

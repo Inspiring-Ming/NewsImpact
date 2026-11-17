@@ -16,18 +16,18 @@ from pydantic import Field
 from newsimpact.app.views.briefs import facts_key, rules_brief
 from newsimpact.app.views.guidance import (
     Check,
+    GroupRecord,
     Priority,
-    TypeRecord,
     checks,
     close_after,
+    group_record,
     priority,
-    type_record,
 )
 from newsimpact.market.models import ChannelObservation
 from newsimpact.semantics.models import Company
 from newsimpact.shared.events import Model
 from newsimpact.sources.models import Article, SourceType
-from newsimpact.storylines.models import Playbook, ResearchFinding, Storyline
+from newsimpact.storylines.models import Expectation, Playbook, ResearchFinding, Storyline
 from newsimpact.validation.models import Assessment
 
 if TYPE_CHECKING:  # type hints only: the wiring builds the stores these views use
@@ -77,18 +77,25 @@ class EventCard(Model):
     notes: tuple[str, ...] = Field(description="status of the checks, e.g. what is still pending")
     research: tuple[ResearchFinding, ...] = Field(description="how markets usually react, cited")
     watch: tuple[str, ...] = Field(description="what investors typically check next")
-    stages_total: int = Field(description="updates this kind of event usually has")
     volume_ratio: float | None = Field(description="highest trading volume vs normal, e.g. 3.7")
     tone: float = Field(description="sentiment of the latest update, -1 (negative) to 1")
     is_rumour: bool = Field(description="the latest update is hedged or rumoured")
-    next_update: str | None = Field(description="the update this kind of event usually brings next")
+    next_update: str | None = Field(description="the possible next step (research), if any")
+    role: Literal["buyer", "target", "seller"] | None = Field(
+        default=None, description="the company's part in a deal, read from the reports"
+    )
+    expectation: Expectation | None = Field(
+        default=None, description="the usual share price move for this case, with its source"
+    )
     link_window_days: int | None = Field(description="how long new reports join this event")
     final_measure_on: date | None = Field(description="close after which the move is final")
     # Guidance (views/guidance.py) and the brief (views/briefs.py), filled in by companies()
     priority: Priority = "background"
     priority_reason: str = ""
     checks: tuple[Check, ...] = ()
-    record: TypeRecord | None = Field(default=None, description="this event type's track record")
+    record: GroupRecord | None = Field(
+        default=None, description="how past events of this type and case moved the stock"
+    )
     brief: tuple[str, ...] = ()
     brief_by: Literal["ai", "rules"] = "rules"
 
@@ -139,6 +146,14 @@ def companies(
     return sorted(cards, key=lambda c: (not c.events, -latest(c), c.name))
 
 
+EXPECTED_WORDS = {
+    "up": "a rise",
+    "down": "a fall",
+    "flat": "no unusual move",
+    "uncertain": "a larger move than usual, either way",
+}
+
+
 def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:
     """Everything a brief may say, as plain values (the AI may use nothing else)."""
     if e.stock_move is not None:
@@ -156,7 +171,8 @@ def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:
         )
     else:
         market = "The stock reaction is not measured yet."
-    finding = e.research[0] if e.research else None
+    # The research for this event's own case (e.g. 'company is the buyer'), else the lead one.
+    finding = e.expectation or (e.research[0] if e.research else None)
     r = e.record
     return {
         "company": c.name, "ticker": c.ticker, "sector": c.sector, "event_type": e.event_type,
@@ -168,8 +184,11 @@ def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:
         "volume": f"{e.volume_ratio:.1f}x a normal day" if e.volume_ratio else None,
         "research": finding.finding if finding else None,
         "research_source": finding.source if finding else None,
-        "past_record": (f"{r.n} past {e.event_type} events measured: average move "
-                        f"{r.average * 100:+.1f}%, {r.as_expected} of {r.n} as expected"
+        "expected": (f"{e.expectation.label}: research expects "
+                     f"{EXPECTED_WORDS[e.expectation.expected]} ({e.expectation.source})"
+                     if e.expectation else None),
+        "past_record": (f"{r.n} past {e.event_type} events ({r.label}) measured: average move "
+                        f"{r.average * 100:+.1f}%, {r.met} of {r.n} as research expects"
                         if r and r.n and r.average is not None else None),
         "next_update": e.next_update,
     }  # fmt: skip
@@ -177,12 +196,7 @@ def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:
 
 def _with_guidance(svc: Services, cards: list[CompanyCard]) -> list[CompanyCard]:
     """Add each event's priority, checks, its type's track record and its brief."""
-    playbooks = {p.title or p.theme: p for p in svc.playbooks.playbooks()}
-    moves: dict[str, list[tuple[float, bool]]] = defaultdict(list)
-    for c in cards:
-        for e in c.events:
-            if e.stock_move is not None:
-                moves[e.event_type].append((e.stock_move, e.stock_move_unusual))
+    records = type_records(svc, cards)
     now = datetime.now(UTC)
     out = []
     for c in cards:
@@ -192,7 +206,8 @@ def _with_guidance(svc: Services, cards: list[CompanyCard]) -> list[CompanyCard]
                                      last_update=e.updates[-1].published_at, now=now)  # fmt: skip
             e = e.model_copy(update={
                 "priority": level, "priority_reason": reason,
-                "record": type_record(playbooks.get(e.event_type), moves[e.event_type]),
+                "record": records.get((e.event_type, e.expectation.label))
+                if e.expectation else None,
                 "checks": tuple(checks(url=e.latest_url, confirmed=e.verified,
                                        unusual=e.stock_move_unusual, final_on=e.final_measure_on,
                                        sector=c.sector, next_update=e.next_update,
@@ -206,6 +221,45 @@ def _with_guidance(svc: Services, cards: list[CompanyCard]) -> list[CompanyCard]
             events.append(e.model_copy(update={"brief": brief.bullets, "brief_by": brief.by}))
         out.append(c.model_copy(update={"events": tuple(events)}))
     return out
+
+
+def type_records(svc: Services, cards: Sequence[CompanyCard]
+                 ) -> dict[tuple[str, str], GroupRecord]:  # fmt: skip
+    """(event type, case) -> how its measured events moved, against the research."""
+    moves: dict[tuple[str, str], list[tuple[float, bool]]] = defaultdict(list)
+    cases: dict[tuple[str, str], Expectation] = {}
+    for c in cards:
+        for e in c.events:
+            if e.expectation is None:
+                continue
+            key = (e.event_type, e.expectation.label)
+            cases[key] = e.expectation
+            if e.stock_move is not None:
+                moves[key].append((e.stock_move, e.stock_move_unusual))
+    policy = svc.validation.policy
+    return {key: group_record(exp, moves[key], min_events=policy.min_events_for_calibration,
+                              z_needed=policy.significance_z)
+            for key, exp in cases.items()}  # fmt: skip
+
+
+def expectation(svc: Services, storyline: Storyline, playbook: Playbook | None,
+                reading: str | None) -> tuple[Literal["buyer", "target", "seller"] | None,
+                                              Expectation | None]:  # fmt: skip
+    """The company's part in a deal (if this type depends on it) and the expected move."""
+    if playbook is None:
+        return None, None
+    events = sorted(storyline.events, key=lambda e: e.published_at)
+    opening = (
+        playbook.stages[events[0].stage].name if events[0].stage < len(playbook.stages) else ""
+    )
+    role = None
+    if any(x.when in ROLES for x in playbook.expectations):
+        role = svc.semantics.deal_role(storyline.ticker, [e.summary for e in events])
+        return role, playbook.expectation((role or "role unclear", opening))
+    return None, playbook.expectation((reading, opening))
+
+
+ROLES = ("buyer", "target", "seller")
 
 
 def source_names(svc: Services) -> dict[str, str]:
@@ -338,10 +392,14 @@ def _event_card(
     if move is None and not pending:  # this type expects no price reaction: measure anyway
         move = _observe(svc, storyline, "price", first_at)
     status = "measured" if move else "pending" if pending else "no_data"
+    reading = _reading(storyline, playbook)
+    role, expected = expectation(svc, storyline, playbook, reading)
     so_far = _so_far(svc, storyline) if status == "pending" else None
     return EventCard(
         event_id=storyline.storyline_id,
-        reading=_reading(storyline, playbook),
+        reading=reading,
+        role=role,
+        expectation=expected,
         event_type=(playbook.title if playbook and playbook.title else storyline.theme),
         updates=tuple(
             UpdateItem(title=title(st.stage_name), published_at=st.published_at,
@@ -375,7 +433,6 @@ def _event_card(
         notes=a.suggestions,
         research=playbook.research if playbook else (),
         watch=playbook.watch if playbook else (),
-        stages_total=len(playbook.stages) if playbook else len(a.stages),
         volume_ratio=max((d.evidence.value for st in a.stages for d in st.decisions
                           if d.evidence is not None and d.evidence.channel == "volume"),
                          default=None) or _measure(svc, storyline, "volume", first_at),

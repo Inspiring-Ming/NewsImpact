@@ -6,7 +6,7 @@ import { api, type S } from "../../api/client";
 import { eventLabel, pct, SECTORS, type Tone } from "../../shared/labels";
 import { useStarred } from "../../shared/starred";
 import { Term } from "../../shared/Term";
-import { State, Tabs } from "../../shared/ui";
+import { CountUp, State, Tabs } from "../../shared/ui";
 import { useApi } from "../../shared/useApi";
 import { PriorityBoard, priorityCount } from "./PriorityBoard";
 import { ImpactMap } from "./ImpactMap";
@@ -88,7 +88,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
           <button key={id} className={`fact kpi-btn ${open === id ? "open" : ""}`} aria-expanded={open === id}
                   onClick={() => setOpen(open === id ? null : id)}>
             <div className="fact-label">{label}</div>
-            <div className={`fact-value ${tone ?? ""}`}>{value}</div>
+            <div className={`fact-value ${tone ?? ""}`}><CountUp value={value} /></div>
             <div className="fact-sub">{sub}</div>
             <div className="kpi-more">{open === id ? "Hide detail ▴" : "Show detail ▾"}</div>
           </button>

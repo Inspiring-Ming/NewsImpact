@@ -2,11 +2,11 @@
 // market did, why it matters), what to check now, the price chart, then context: this
 // event type's track record, what to watch, and what published research shows.
 import { useState } from "react";
-import { pct } from "../../shared/labels";
+import { CHANCE_WORDS, EXPECT, pct, verdictText } from "../../shared/labels";
 import { useNames } from "../../shared/names";
 import { PriceChart } from "../../shared/PriceChart";
 import { Term } from "../../shared/Term";
-import { Meter, MoveBar } from "../../shared/viz";
+import { MoveBar } from "../../shared/viz";
 import type { EventData } from "./context";
 
 const BRIEF_LABELS = ["What happened", "What the market did", "Why it matters"];
@@ -15,7 +15,7 @@ export function Overview({ company, card, assessment, prices }: EventData) {
   const { title } = useNames();
   const [done, setDone] = useState<Set<number>>(new Set());
   const [lead, ...more] = card.research;
-  const past = card.record;
+  const past = card.record, expected = card.expectation;
   return (
     <>
       <div className="brief-row">
@@ -55,23 +55,23 @@ export function Overview({ company, card, assessment, prices }: EventData) {
         ) : <p className="muted">No price data connected yet, so the share price can't be shown.</p>}
       </div>
       <div className="overview-cards three">
-        {past && (
+        {expected && (
           <div className="card">
-            <h3 className="card-kicker">Past {card.event_type.toLowerCase()} events we measured</h3>
-            {past.n && past.average != null ? (
+            <h3 className="card-kicker">Expected for this case</h3>
+            <p><b>{expected.label[0].toUpperCase() + expected.label.slice(1)}</b>: research expects the share price <span className={`expect ${EXPECT[expected.expected].tone}`}>{EXPECT[expected.expected].text}</span>.</p>
+            <p className="small muted">{expected.finding} <i>{expected.source}</i></p>
+            {past && past.n > 0 && past.average != null ? (
               <>
                 <div className="move-top"><b className="big-num">{pct(past.average)}</b><MoveBar value={past.average} unusual={false} span={0.1} /></div>
-                <p className="small muted">average stock move vs its market, over {past.n} event{past.n > 1 ? "s" : ""}</p>
-                <div className="conf"><Meter value={past.as_expected / past.n} tone={past.as_expected / past.n >= 0.6 ? "good" : "warn"} />
-                  <span className="small">{past.as_expected} of {past.n} moved as expected</span></div>
-                {past.n < 20 && <p className="small muted">Few events so far: a first indication, not a rule.</p>}
+                <p className="small"><b>{past.met} of {past.n}</b> past events in this case {EXPECT[past.expected].did} (by chance alone: {CHANCE_WORDS[past.expected]}), average move above.</p>
+                <span className={`verdict ${verdictText(past).tone}`}>{verdictText(past).text}</span>
               </>
-            ) : <p className="small muted">None measured yet.</p>}
+            ) : <p className="small muted">No past event in this case measured yet.</p>}
           </div>
         )}
         <div className="card">
           <h3 className="card-kicker">Watch next</h3>
-          {card.next_update && <p className="next-update">→ <b>{card.next_update}</b> <span className="muted small">usually comes next</span></p>}
+          {card.next_update && <p className="next-update">→ <b>{card.next_update}</b> <span className="muted small">possible next step (from research; may not happen)</span></p>}
           <ul className="watch-chips">{card.watch.slice(0, 3).map((w) => <li key={w}>{w}</li>)}</ul>
         </div>
         {lead && (

@@ -130,6 +130,21 @@ class ResearchFinding(Model):
     source: str = Field(description="authors (year), journal")
 
 
+class Expectation(Model):
+    """How this kind of event usually moves the share price, for one case, with its source.
+
+    `when` picks the case: the company's part in a deal (buyer, target, seller), the
+    results reading (e.g. 'better than expected'), or the stage the event opened with."""
+
+    when: str
+    label: str = Field(description="the case in plain words, e.g. 'company is the buyer'")
+    expected: Literal["up", "down", "flat", "uncertain"] = Field(
+        description="up | down | flat (no unusual move) | uncertain (an unusual move either way)"
+    )
+    finding: str
+    source: str = Field(description="authors (year), journal")
+
+
 class Playbook(Model):
     """The typical progression of one kind of storyline (reference data, not code)."""
 
@@ -147,12 +162,35 @@ class Playbook(Model):
     stages: tuple[PlaybookStage, ...]
     research: tuple[ResearchFinding, ...] = ()
     watch: tuple[str, ...] = Field(default=(), description="what investors typically check next")
+    expectations: tuple[Expectation, ...] = Field(
+        default=(), description="share price expectation per case; else the opening stage's"
+    )
 
     def stage_of(self, event_type: str) -> int | None:
         return next((i for i, s in enumerate(self.stages) if event_type in s.event_types), None)
 
     def event_types(self) -> set[str]:
         return set(self.triggers) | {t for s in self.stages for t in s.event_types}
+
+    def expectation(self, keys: tuple[str | None, ...]) -> Expectation | None:
+        """The first case matching a key (role, reading, opening stage), else the opening
+        stage's own price expectation (keys[-1] = that stage's name), with the lead finding."""
+        for key in keys:
+            found = next((x for x in self.expectations if key and x.when == key), None)
+            if found:
+                return found
+        stage = next((s for s in self.stages if s.name == keys[-1]), None)
+        price = next((d.expected_direction for d in stage.decisions
+                      if d.market_channel == "price"), None) if stage else None  # fmt: skip
+        if stage is None or price is None or not self.research:
+            return None
+        return Expectation(
+            when=stage.name,
+            label=stage.title or stage.name,
+            expected=price,
+            finding=self.research[0].finding,
+            source=self.research[0].source,
+        )
 
     def terms_after(self, stage: int) -> tuple[str, ...]:
         """Search terms that would signal any later stage."""

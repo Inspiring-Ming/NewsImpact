@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
+from newsimpact.semantics.logic import DealRole, deal_role
 from newsimpact.semantics.models import OTHER, Claim, ClaimsExtracted
 from newsimpact.semantics.ports import ClaimExtractor, ClaimStep, EntityResolver
 from newsimpact.shared.bus import EventBus
@@ -23,9 +24,11 @@ class SemanticsService:
         *,
         copy_novelty: float = 0.2,
         commentary_cues: Sequence[str] = (),
+        deal_cues: Mapping[str, Sequence[str]] | None = None,
     ) -> None:
         self._bus = bus
         self._commentary = tuple(c.lower() for c in commentary_cues)
+        self._deal_cues = deal_cues or {}
         self._copy_novelty = copy_novelty
         self._extractor = extractor
         self._steps = tuple(steps)
@@ -48,6 +51,16 @@ class SemanticsService:
         300 characters cover both."""
         lead = f" {article.body[:300].lower()} "
         return any(cue in lead for cue in self._commentary)
+
+    def deal_role(self, ticker: str, sentences: Iterable[str]) -> DealRole | None:
+        """The company's part in a deal (buyer, target, seller): the first sentence that
+        makes it clear, from where its names stand in the deal wording. None if unclear."""
+        company = next((c for c in self._resolver.companies() if c.ticker == ticker), None)
+        if company is None:
+            return None
+        names = {company.name, *company.aliases, *company.exact_case_aliases}
+        return next((r for s in sentences if (r := deal_role(s, tuple(names), self._deal_cues))),
+                    None)  # fmt: skip
 
     def mentioned_tickers(self, article: Article) -> set[str]:
         """Companies the article names. Free: name matching only, no analysis or LLM calls."""

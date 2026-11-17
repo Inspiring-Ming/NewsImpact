@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import Field
 
-from newsimpact.app.views.companies import source_names
+from newsimpact.app.views.companies import CompanyCard, source_names, type_records
+from newsimpact.app.views.guidance import CHANCE, GroupRecord
 from newsimpact.semantics.logic import FieldScore, score_field
 from newsimpact.semantics.models import Claim, EntityMention
 from newsimpact.shared.events import Model
@@ -33,6 +34,70 @@ class Overview(Model):
     llm: str = Field(description="LLM preset and model, or 'off'")
     llm_spent_this_month: float | None
     monitor_every_minutes: float
+
+
+class StepCount(Model):
+    title: str
+    reached: int = Field(description="events of this type that reached this step")
+
+
+class TypeStats(Model):
+    """One event type on the How it works page: how we follow it, how often its steps really
+    happened, and how its events moved the stock against the research, case by case."""
+
+    theme: str
+    title: str
+    events: int
+    confirmed: int = Field(description="events confirmed (2+ independent sources or official)")
+    window_days: int = Field(description="how long new reports still join an event")
+    window_why: str
+    steps: tuple[StepCount, ...] = Field(description="possible steps, in order (from research)")
+    gap_days: float | None = Field(description="median days between steps, in our events")
+    gaps_seen: int
+    cases: tuple[GroupRecord, ...] = Field(description="share price expectation per case")
+    no_expectation: int = Field(description="events with no expectation (e.g. role unclear)")
+
+
+def event_types(svc: Services, cards: Sequence[CompanyCard]) -> list[TypeStats]:
+    storylines = svc.storyline_store.all()
+    gaps = {w.theme: w for w in svc.validation.calibrate(storylines)[1]}
+    records = type_records(svc, cards)
+    events = [e for c in cards for e in c.events]
+    out = []
+    for p in svc.playbooks.playbooks():
+        title = p.title or p.theme
+        mine = [s for s in storylines if s.theme == p.theme]
+        reached = Counter(e.stage for s in mine for e in {x.stage: x for x in s.events}.values())
+        cases = [r for (t, _), r in records.items() if t == title]
+        seen = {r.label for r in cases}
+        for x in p.expectations:  # cases research describes but no event has shown yet
+            if x.label not in seen:
+                cases.append(GroupRecord(label=x.label, expected=x.expected, finding=x.finding,
+                                         source=x.source, n=0, average=None, met=0, unusual=0,
+                                         chance=CHANCE[x.expected], verdict="too_few"))  # fmt: skip
+        order = [x.label for x in p.expectations]
+        cases.sort(key=lambda r: (order.index(r.label) if r.label in order else -1, -r.n))
+        g = gaps.get(p.theme)
+        typed = [e for e in events if e.event_type == title]
+        out.append(
+            TypeStats(
+                theme=p.theme,
+                title=title,
+                events=len(typed),
+                confirmed=sum(e.verified for e in typed),
+                window_days=p.link_window_days,
+                window_why=p.window_why,
+                steps=tuple(
+                    StepCount(title=st.title or st.name, reached=reached.get(i, 0))
+                    for i, st in enumerate(p.stages)
+                ),
+                gap_days=g.median_days if g else None,
+                gaps_seen=g.n_gaps if g else 0,
+                cases=tuple(cases),
+                no_expectation=sum(e.expectation is None for e in typed),
+            )
+        )
+    return out
 
 
 class EvaluationMiss(Model):

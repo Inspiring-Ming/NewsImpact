@@ -1,10 +1,12 @@
-"""Guidance: priority rules, check wording, and the brief's safety checks."""
+"""Guidance: priority rules, check wording, the brief's safety checks, and how a type's
+record is judged against chance."""
 
 from datetime import UTC, date, datetime, timedelta
 
 from newsimpact.app.views.briefs import _safe, rules_brief
-from newsimpact.app.views.guidance import checks, close_after, priority
+from newsimpact.app.views.guidance import checks, close_after, group_record, met, priority
 from newsimpact.shared.guardrails import ADVICE
+from newsimpact.storylines.models import Expectation
 
 NOW = datetime(2026, 11, 16, 12, tzinfo=UTC)
 
@@ -79,3 +81,20 @@ def test_ai_brief_is_used_only_when_it_passes_the_checks() -> None:
     assert ai_brief(FakeLlm(advice), FACTS) is None  # type: ignore[arg-type]
     assert ai_brief(FakeLlm(error=BudgetExceededError("cap")), FACTS) is None  # type: ignore[arg-type]
     assert ai_brief(FakeLlm(error=RuntimeError("down")), FACTS) is None  # type: ignore[arg-type]
+
+
+def test_moved_as_expected_is_judged_against_chance() -> None:
+    assert met("up", 0.001, False) and not met("down", 0.001, False)
+    assert met("uncertain", -0.04, True) and not met("uncertain", -0.04, False)
+    assert met("flat", 0.01, False) and not met("flat", 0.08, True)
+    buyer = Expectation(when="buyer", label="company is the buyer", expected="flat",
+                        finding="Buyers move little.", source="A (2001), J")  # fmt: skip
+    few = group_record(buyer, [(0.01, False)] * 5, min_events=20, z_needed=1.96)
+    assert few.verdict == "too_few" and few.met == 5 and few.chance == 0.95
+    up = buyer.model_copy(update={"expected": "up"})
+    rises = group_record(up, [(0.02, False)] * 18 + [(-0.01, False)] * 2, min_events=20,
+                         z_needed=1.96)  # fmt: skip
+    coin = group_record(up, [(0.02, False), (-0.02, False)] * 10, min_events=20, z_needed=1.96)
+    assert rises.verdict == "supports" and coin.verdict == "no_pattern"
+    falls = group_record(up, [(-0.02, False)] * 20, min_events=20, z_needed=1.96)
+    assert falls.verdict == "against" and falls.average == -0.02

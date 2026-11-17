@@ -47,7 +47,7 @@ def test_api_contract_for_the_website() -> None:
     assert all(u["articles"] for u in change["updates"])
     assert -1 <= change["tone"] <= 1 and change["next_update"] is None
     assert change["sources"] >= 3 and change["notes"] and change["watch"]
-    assert change["research"][0]["source"] and change["stages_total"] == 3
+    assert change["research"][0]["source"] and change["expectation"]["source"]
     orbit = next(c for c in companies if c["ticker"] == "ORBT")
     assert orbit["events"] == [] and orbit["name"] == "Orbit Auto"
     summary = client.get(f"/v1/events/{change['event_id']}/summary").json()
@@ -77,3 +77,18 @@ def test_a_new_release_shows_at_once(tmp_path) -> None:  # type: ignore[no-untyp
     client = TestClient(create_app(build_services(settings)))
     assert client.get("/").headers["cache-control"] == "no-cache"  # the page is re-checked
     assert "immutable" in client.get("/assets/index-abc123.js").headers["cache-control"]
+
+
+def test_how_it_works_explains_its_numbers() -> None:
+    client = TestClient(create_app(build_services(Settings(env="test", profile="demo"))))
+    client.post("/v1/demo/load")
+    method = client.get("/v1/method").json()
+    assert method["source_priors"]["wire"]["why"] and method["prior_strength"] == 10
+    types = {t["theme"]: t for t in client.get("/v1/event-types").json()}
+    assert set(types) == {p["theme"] for p in method["playbooks"]}
+    for t in types.values():
+        assert t["window_why"] and t["steps"] and t["confirmed"] <= t["events"]
+        assert all(c["finding"] and c["source"] and 0 < c["chance"] < 1 for c in t["cases"])
+    takeover = types["m_and_a"]
+    assert [c["label"] for c in takeover["cases"][:2]] == ["company is the target",
+                                                           "company is the buyer"]  # fmt: skip

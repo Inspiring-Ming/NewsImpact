@@ -40,10 +40,10 @@ export function EventPage({ id }: { id: string }) {
               <div className="event-top">
                 <PriorityBadge e={card} />
                 <span className="tag">{eventLabel(card)}</span>
-                <Dots n={card.updates.length} of={Math.max(card.stages_total, card.updates.length)} />
+                <Dots n={card.updates.length} />
                 <span className="small muted">
-                  {card.updates.length} of {card.stages_total} usual updates
-                  {card.next_update ? <> · next to watch: <b>{card.next_update}</b></> : " · all usual updates reported"}
+                  {card.updates.length} update{card.updates.length > 1 ? "s" : ""} so far
+                  {card.next_update && <> · possible next step: <b>{card.next_update}</b></>}
                 </span>
               </div>
               <h1>{company.name}</h1>
