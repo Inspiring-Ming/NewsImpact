@@ -15,6 +15,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 from starlette.types import Scope
@@ -50,6 +51,8 @@ def create_app(services: Services | None = None) -> FastAPI:
         api.monitor.stop()
 
     app = FastAPI(title="NewsImpact API", version=__version__, lifespan=lifespan)
+    # Pages carry every company's events (~0.5 MB of JSON): compressed, about a tenth.
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     @app.get("/health")
     def health() -> dict[str, str]:

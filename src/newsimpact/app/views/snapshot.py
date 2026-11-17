@@ -146,17 +146,27 @@ class InMemorySnapshots:
 
 
 class SqliteSnapshots:
-    """One row: the latest snapshot (older ones are not needed - each round replaces it)."""
+    """One row: the latest snapshot (older ones are not needed - each round replaces it).
+    The parsed snapshot is kept in memory until the row changes (its computed time), so
+    page requests do not re-read and re-check ~0.5 MB each time."""
 
     def __init__(self, db: Database) -> None:
         self._c = db.collection("snapshot")
+        self._cached: tuple[str, Snapshot] | None = None
 
     def get(self) -> Snapshot | None:
+        stamp = self._c.at("latest")
+        if stamp is None:
+            return None
+        if self._cached and self._cached[0] == stamp:
+            return self._cached[1]
         doc = self._c.get("latest")
         try:
-            return Snapshot.model_validate_json(doc) if doc else None
+            snap = Snapshot.model_validate_json(doc) if doc else None
         except ValidationError:  # stored by an older release: rebuilt by latest()
             return None
+        self._cached = (stamp, snap) if snap else None
+        return snap
 
     def put(self, snapshot: Snapshot) -> None:
-        self._c.put("latest", snapshot.model_dump_json())
+        self._c.put("latest", snapshot.model_dump_json(), at=snapshot.computed_at.isoformat())

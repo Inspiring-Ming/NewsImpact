@@ -7,6 +7,7 @@ from pydantic import Field
 from newsimpact.shared.events import Model
 
 ADMIN = "admin"  # may run updates, load demo data, test alert channels
+GUEST = "guest"  # an anonymous visitor of a public demo: may read and ask, not change anything
 
 
 class User(Model):
@@ -17,3 +18,7 @@ class User(Model):
     @property
     def is_admin(self) -> bool:
         return ADMIN in self.roles
+
+    @property
+    def is_guest(self) -> bool:
+        return GUEST in self.roles

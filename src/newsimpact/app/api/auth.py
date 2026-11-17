@@ -27,6 +27,20 @@ def current_user(api: ApiContext) -> Callable[[Request], User]:
     return dependency
 
 
+def member_user(api: ApiContext) -> Callable[[Request], User]:
+    """A signed-in person, not an anonymous demo visitor: may change their own settings
+    (followed companies are always covered, so a shared visitor must not change them)."""
+    signed_in = current_user(api)
+
+    def dependency(request: Request) -> User:
+        user = signed_in(request)
+        if user.is_guest:
+            raise HTTPException(403, "visitors of the demo can read, not change this")
+        return user
+
+    return dependency
+
+
 def admin_user(api: ApiContext) -> Callable[[Request], User]:
     signed_in = current_user(api)
 

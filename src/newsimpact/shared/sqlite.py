@@ -65,6 +65,13 @@ class Collection:
         )
         return rows[0][0] if rows else None
 
+    def at(self, key: str) -> str | None:
+        """The `at` value of one document (cheap: tells whether it changed, without reading it)."""
+        rows = self._db.execute(
+            "SELECT at FROM documents WHERE collection=? AND key=?", (self._name, key)
+        )
+        return rows[0][0] if rows else None
+
     def delete(self, key: str) -> None:
         self._db.execute("DELETE FROM documents WHERE collection=? AND key=?", (self._name, key))
 

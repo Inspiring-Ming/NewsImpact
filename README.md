@@ -45,6 +45,15 @@ For live news, copy `.env.example` to `.env` (git-ignored, keys stay there) and 
 
 Then `make docker` serves the site on <http://localhost:8000>.
 
+### Put it online as a demo
+Set in `.env` on the server: `NI_PROFILE=live`, `NI_STORE=sqlite`, `NI_AUTH=demo` and
+`NI_ADMIN_TOKEN` (24+ random characters, never committed). Visitors then read every page
+and may ask the assistant (20 questions a day shared by all); stars stay in their browser.
+Only requests carrying `Authorization: Bearer <NI_ADMIN_TOKEN>` run updates or change the
+followed companies. Run **one** instance (it runs the hourly round itself on one SQLite
+file); see [ADR 0037](docs/adr/0037-hosting-a-public-demo.md) for what else to check
+(feed terms, the host's rate limits).
+
 ## How it works
 
 ```

@@ -21,6 +21,7 @@ export const api = {
   runRound: () => request<S["MonitorStatus"]>("POST", "/v1/monitor/run"),
   loadDemo: () => request<Record<string, number>>("POST", "/v1/demo/load"),
   companies: () => request<S["CompanyCard"][]>("GET", "/v1/companies"),
+  me: () => request<{ user_id: string; admin: boolean; guest: boolean }>("GET", "/v1/me"),
   watchlist: () => request<string[]>("GET", "/v1/watchlist"),
   follow: (ticker: string) => request<string[]>("PUT", `/v1/watchlist/${encodeURIComponent(ticker)}`),
   unfollow: (ticker: string) => request<string[]>("DELETE", `/v1/watchlist/${encodeURIComponent(ticker)}`),

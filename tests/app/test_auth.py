@@ -57,3 +57,26 @@ def test_alert_routes_answer_per_user() -> None:
     client.put("/v1/watchlist/GLBX", headers=_as("ana-token"))
     assert client.delete("/v1/watchlist/GLBX", headers=_as("ana-token")).json() == []
     assert client.put("/v1/watchlist/NOPE", headers=_as("ana-token")).status_code == 404
+
+
+def test_a_public_demo_lets_everyone_read_and_only_the_owner_change_things() -> None:
+    import pytest
+    from pydantic import SecretStr
+
+    key = "k" * 32
+    settings = Settings(env="test", profile="demo", auth="demo", admin_token=SecretStr(key))
+    client = TestClient(create_app(build_services(settings)))
+    owner = {"Authorization": f"Bearer {key}"}
+    assert client.get("/v1/me").json() == {"user_id": "visitor", "admin": False, "guest": True}
+    assert client.get("/v1/companies").status_code == 200  # reading needs no sign-in
+    assert client.put("/v1/watchlist/GLBX").status_code == 403  # the followed list is shared
+    assert client.post("/v1/monitor/run").status_code == 403  # rounds cost money
+    assert client.post("/v1/alerts/test").status_code == 403
+    assert client.get("/v1/me", headers=owner).json()["admin"] is True
+    assert client.put("/v1/watchlist/GLBX", headers=owner).json() == ["GLBX"]
+    big = client.get("/v1/companies", headers={"Accept-Encoding": "gzip"})
+    assert big.headers.get("content-encoding") == "gzip" or len(big.content) < 1000
+    with pytest.raises(ValueError, match="at least 24"):
+        build_services(
+            Settings(env="test", profile="demo", auth="demo", admin_token=SecretStr("short"))
+        )

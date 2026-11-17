@@ -410,7 +410,9 @@ def _vs_index(svc: Services, storyline: Storyline) -> list[tuple[date, float]]:
     first = min(e.published_at for e in storyline.events)
     day = svc.market.event_day(storyline.ticker, first)
     try:
-        path = svc.market.price_path(storyline.ticker, day - timedelta(days=14), date.today())
+        path = svc.market.price_path(
+            storyline.ticker, day - timedelta(days=14), datetime.now(UTC).date()
+        )
     except ValueError:
         return []
     before = [p for p in path.points if p.day < day]
@@ -472,7 +474,7 @@ def _event_card(
         end = close_after(
             svc.market.event_day(storyline.ticker, first_at), svc.market_policy.windows["price"][1]
         )
-        pending = end >= date.today()
+        pending = end >= datetime.now(UTC).date()
     status = "measured" if move else "pending" if pending else "no_data"
     days = _measured_days(svc, storyline, a, move, first_at)
     reading = _reading(storyline, playbook)

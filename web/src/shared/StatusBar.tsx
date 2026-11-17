@@ -1,4 +1,5 @@
-// Header pill: is monitoring live, when did it last update, and an "Update now" action.
+// Header pill: is monitoring live, when did it last update, and (for the owner) "Update now".
+// In a public demo, visitors see the status only: updates run on the schedule.
 import { useState } from "react";
 import { api } from "../api/client";
 import { useApi } from "./useApi";
@@ -6,6 +7,8 @@ import { useApi } from "./useApi";
 export function StatusBar({ onChanged }: { onChanged: () => void }) {
   const overview = useApi(api.overview);
   const monitor = useApi(api.monitor);
+  const me = useApi(api.me);
+  const owner = me.data?.admin ?? false;
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const o = overview.data;
@@ -28,7 +31,7 @@ export function StatusBar({ onChanged }: { onChanged: () => void }) {
         {last && ` · updated ${new Date(last).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
         {!demo && o?.monitor_every_minutes ? ` · updates every ${o.monitor_every_minutes} min` : ""}
       </span>
-      {empty ? (
+      {!owner ? null : empty ? (
         <button className="small primary" disabled={busy} onClick={() => act(api.loadDemo)}>{busy ? "Loading…" : "Load demo"}</button>
       ) : (
         <button className="small" disabled={busy || !o} onClick={() => act(api.runRound)} title="Fetch the latest news now, update events and re-measure stock moves. Can take a few minutes.">

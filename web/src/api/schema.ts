@@ -146,7 +146,8 @@ export interface paths {
         /**
          * Companies
          * @description Every company we follow: sector, latest news, and its events with stock moves.
-         *     From the latest snapshot (computed once per round).
+         *     From the latest snapshot (computed once per round); its JSON is made once per
+         *     snapshot and reused for every visitor until the next round.
          */
         get: operations["companies_v1_companies_get"];
         put?: never;
@@ -246,6 +247,26 @@ export interface paths {
         };
         /** Event Summary */
         get: operations["event_summary_v1_events__event_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Me
+         * @description Who is asking, and whether they may change things (the website hides what not).
+         */
+        get: operations["me_v1_me_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2095,6 +2116,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_v1_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

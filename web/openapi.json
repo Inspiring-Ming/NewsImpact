@@ -2842,7 +2842,7 @@
     },
     "/v1/companies": {
       "get": {
-        "description": "Every company we follow: sector, latest news, and its events with stock moves.\nFrom the latest snapshot (computed once per round).",
+        "description": "Every company we follow: sector, latest news, and its events with stock moves.\nFrom the latest snapshot (computed once per round); its JSON is made once per\nsnapshot and reused for every visitor until the next round.",
         "operationId": "companies_v1_companies_get",
         "responses": {
           "200": {
@@ -2987,6 +2987,27 @@
           }
         },
         "summary": "Event Summary"
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "description": "Who is asking, and whether they may change things (the website hides what not).",
+        "operationId": "me_v1_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Me V1 Me Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Me"
       }
     },
     "/v1/method": {

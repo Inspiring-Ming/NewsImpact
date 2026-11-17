@@ -57,3 +57,4 @@ earlier one rather than editing it. New ones start from [adr/0000-template.md](a
 | [0034](adr/0034-expectations-per-case-and-chance.md) | Share price expectations per case, judged against chance; How it works explains every number |
 | [0035](adr/0035-legal-and-capital-return-events.md) | Two more event types: Legal & regulatory, Dividends & buybacks |
 | [0036](adr/0036-companies-followed-from-the-news.md) | Which companies we follow: decided from the live news, within the S&P 500 and ASX 200 |
+| [0037](adr/0037-hosting-a-public-demo.md) | Hosting a public demo: visitors read, the owner changes |
