@@ -13,6 +13,7 @@ becomes one row or object; the pages do not change.
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Literal, Protocol
 
@@ -51,8 +52,10 @@ class Snapshot(Model):
 
 
 def build(svc: Services) -> Snapshot:
-    """Read every stored article once; derive the company cards and coverage from it."""
-    articles = svc.articles.recent(10**6)
+    """Read the articles of the pages window once; derive the cards and coverage from them.
+    The window is fixed (methodology.json "pages"), so a round costs the same as the store
+    grows; an older event still shows its own articles."""
+    articles = window_articles(svc)
     by_ticker = mentions(svc, articles)
     with_company = {a.article_id for news in by_ticker.values() for a in news}
     days = coverage_window_days(svc)
@@ -94,6 +97,21 @@ def publish(svc: Services) -> Snapshot:
 def coverage_window_days(svc: Services) -> int:
     raw = json.loads((svc.settings.reference_dir / "methodology.json").read_text())
     return int(raw["coverage"]["window_days"])
+
+
+def window_articles(svc: Services) -> Sequence[Article]:
+    """The pages window: the last `pages.window_days` of news we have (ending at the newest
+    stored article, which is now on a live system; the demo's news is dated in the past)."""
+    raw = json.loads((svc.settings.reference_dir / "methodology.json").read_text())
+    newest = svc.articles.recent(1)
+    end = newest[0].published_at if newest else datetime.now(UTC)
+    return svc.articles.since(end - timedelta(days=int(raw["pages"]["window_days"])))
+
+
+def current_cards(svc: Services) -> list[CompanyCard]:
+    """Company cards computed now from the pages window (the round's steps that need fresh
+    facts before the snapshot is published)."""
+    return companies(svc, mentions(svc, window_articles(svc)))
 
 
 def _coverage(

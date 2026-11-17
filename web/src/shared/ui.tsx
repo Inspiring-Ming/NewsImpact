@@ -43,7 +43,7 @@ export function Tabs<T extends string>({ tabs, active, onChange }: {
 }
 
 /** Shimmering placeholders while data loads: the layout appears at once, then fills in. */
-export function Skeleton({ rows = 4 }: { rows?: number }) {
+function Skeleton({ rows = 4 }: { rows?: number }) {
   return (
     <div className="skeleton" role="status" aria-label="Loading">
       <div className="sk-row sk-cards">{[0, 1, 2, 3].map((i) => <span key={i} className="sk-block" />)}</div>

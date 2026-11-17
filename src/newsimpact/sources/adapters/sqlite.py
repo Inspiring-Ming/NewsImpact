@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from newsimpact.shared.sqlite import Database
 from newsimpact.sources.models import Article
@@ -14,8 +15,9 @@ class SqliteArticleStore:
         self._c = db.collection("articles")
 
     def add(self, article: Article) -> None:
+        # `at` in UTC, so time ranges compare correctly whatever offset a feed used.
         self._c.put(article.article_id, article.model_dump_json(), tag=article.content_hash,
-                    at=article.published_at.isoformat())  # fmt: skip
+                    at=article.published_at.astimezone(UTC).isoformat())  # fmt: skip
 
     def exists_hash(self, content_hash: str) -> bool:
         return self._c.has_tag(content_hash)
@@ -24,6 +26,19 @@ class SqliteArticleStore:
         return [
             Article.model_validate_json(d) for d in self._c.find(newest_first=True, limit=limit)
         ]
+
+    def since(self, after: datetime) -> Sequence[Article]:
+        start = after.astimezone(UTC).isoformat()
+        return [
+            Article.model_validate_json(d) for d in self._c.find(newest_first=True, after=start)
+        ]
+
+    def get(self, article_id: str) -> Article | None:
+        doc = self._c.get(article_id)
+        return Article.model_validate_json(doc) if doc else None
+
+    def count(self) -> int:
+        return self._c.count()
 
 
 class SqliteSeenSources:

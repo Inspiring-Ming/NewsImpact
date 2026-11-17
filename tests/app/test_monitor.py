@@ -4,6 +4,7 @@ from pathlib import Path
 
 from newsimpact.app.config import Settings
 from newsimpact.app.monitor import BackgroundMonitor
+from newsimpact.app.views import snapshot
 from newsimpact.app.wiring import build_services
 
 
@@ -46,14 +47,13 @@ def test_briefs_are_written_once_per_change_and_shown() -> None:
 
     from newsimpact.app.demo import run_demo
     from newsimpact.app.monitor import write_briefs
-    from newsimpact.app.views.companies import companies
 
     svc = build_services(Settings(env="test", profile="demo"))
     run_demo(svc)
     svc = replace(svc, llm=FakeLlm())  # type: ignore[arg-type]
     written = write_briefs(svc)
     assert written > 0 and write_briefs(svc) == 0  # unchanged facts: not written again
-    assert all(e.brief_by == "ai" for c in companies(svc) for e in c.events)
+    assert all(e.brief_by == "ai" for c in snapshot.current_cards(svc) for e in c.events)
 
 
 def test_background_monitor_runs_on_its_timer_and_stops() -> None:

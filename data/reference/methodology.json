@@ -1,6 +1,6 @@
 {
   "_note": "Every number used to measure market reactions and to draw conclusions, with the reason for it. Change a value here (and bump version) rather than in code; each assessment records this file's hash. See docs/07-coverage-and-settings.md.",
-  "version": "methodology-v4",
+  "version": "methodology-v5",
   "market": {
     "estimation_days": 120,
     "gap_days": 10,
@@ -114,6 +114,12 @@
       "keep_days": "A followed company stays for 30 days after its last article, and so does any company with an event in the last 30 days, so an event's later steps (results reactions, settlements, successors) are still caught; then it is dropped.",
       "max_followed": "At most 150 followed at once (the most mentioned first): each followed company gets its own news feed every round and its sentences are read by the AI. 150 keeps the AI cost under the US$5 monthly cap (about US$3-4, measured on 73 companies at about US$1.5) and the feed requests modest.",
       "discover_per_round": "Each round also reads the company news feed of 30 index members we do not follow yet, in turn, so every one of the ~700 is checked about once a day and can qualify from its own news, not only from general business pages. Their articles are only name-matched (free), not read by the AI, until the company is followed."
+    }
+  },
+  "pages": {
+    "window_days": 30,
+    "rationale": {
+      "window_days": "The website and the coverage check read the last 30 days of articles, not every article ever stored: news older than a month no longer changes what a page shows (an event keeps its own articles), and a fixed window keeps each round equally fast as the store grows by about 1,000 articles a day. 30 = the shortest event window. (The follow rule reads its own window: following.keep_days.)"
     }
   }
 }

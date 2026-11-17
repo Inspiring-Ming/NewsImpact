@@ -46,9 +46,7 @@ class SnapshotNewsData:
         since = datetime.now(UTC) - timedelta(days=days)
         names = source_names(self._svc)
         found = []
-        for a in self._svc.articles.recent(10**6):
-            if a.published_at < since:
-                continue
+        for a in self._svc.articles.since(since):
             body = f"{a.title} {a.body}".lower()
             if not all(w in body for w in words):
                 continue

@@ -5,8 +5,10 @@
 accuracy, macro-F1 and per-label precision/recall. Any change to the taxonomy, a
 new step or an LLM must be compared here before it is used in the product.
 
+Each row has `text` and `company` (the company the sentence is about, given to the chain).
 Labels: `event_type` (taxonomy name or `other`), `is_speculative`, `attribution_kind`,
-`cited_outlets` (taxonomy outlet ids), `is_background`. `note` explains hard cases
+`cited_outlets` (taxonomy outlet ids), `is_background`. All but `cited_outlets` are scored
+(it is labelled, not scored yet), and every `event_type` miss is listed. `note` explains hard cases
 (paraphrases, history, traps). Rules: one label per field; label what the sentence
 *reports as new*, not what it mentions. Add real-world-style examples, never copied
 article text.

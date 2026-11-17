@@ -1,4 +1,5 @@
-"""System status for the website: overview counts, source coverage, reading accuracy."""
+"""System status for the website: overview counts, source coverage, each event type's
+steps and record (How it works), reading accuracy."""
 
 from __future__ import annotations
 
@@ -52,15 +53,13 @@ class TypeStats(Model):
     window_days: int = Field(description="how long new reports still join an event")
     window_why: str
     steps: tuple[StepCount, ...] = Field(description="possible steps, in order (from research)")
-    gap_days: float | None = Field(description="median days between steps, in our events")
-    gaps_seen: int
     cases: tuple[GroupRecord, ...] = Field(description="share price expectation per case")
     no_expectation: int = Field(description="events with no expectation (e.g. role unclear)")
 
 
 def event_types(svc: Services, cards: Sequence[CompanyCard]) -> list[TypeStats]:
-    storylines = svc.storyline_store.all()
-    gaps = {w.theme: w for w in svc.validation.calibrate(storylines)[1]}
+    shown = {c.ticker for c in cards}  # the same companies as the events counted below
+    storylines = [s for s in svc.storyline_store.all() if s.ticker in shown]
     records = type_records(svc, cards)
     events = [e for c in cards for e in c.events]
     out = []
@@ -77,7 +76,6 @@ def event_types(svc: Services, cards: Sequence[CompanyCard]) -> list[TypeStats]:
                                          chance=CHANCE[x.expected], verdict="too_few"))  # fmt: skip
         order = [x.label for x in p.expectations]
         cases.sort(key=lambda r: (order.index(r.label) if r.label in order else -1, -r.n))
-        g = gaps.get(p.theme)
         typed = [e for e in events if e.event_type == title]
         out.append(
             TypeStats(
@@ -91,8 +89,6 @@ def event_types(svc: Services, cards: Sequence[CompanyCard]) -> list[TypeStats]:
                     StepCount(title=st.title or st.name, reached=reached.get(i, 0))
                     for i, st in enumerate(p.stages)
                 ),
-                gap_days=g.median_days if g else None,
-                gaps_seen=g.n_gaps if g else 0,
                 cases=tuple(cases),
                 no_expectation=sum(e.expectation is None for e in typed),
             )
@@ -117,8 +113,8 @@ def overview(svc: Services) -> Overview:
     storylines = svc.storyline_store.all()
     resolved = sum(s.status.value == "resolved" for s in storylines)
     s = svc.settings
-    articles = list(svc.articles.recent(10**6))
     day_ago = datetime.now(UTC) - timedelta(days=1)
+    last_day = svc.articles.since(day_ago)
     names = source_names(svc)
     llm = "off"
     if svc.llm is not None:
@@ -126,13 +122,9 @@ def overview(svc: Services) -> Overview:
     return Overview(
         profile=s.profile,
         outlets_enabled=sum(x.enabled for x in svc.sources.listed()),
-        articles=len(articles),
-        articles_24h=sum(a.published_at >= day_ago for a in articles),
-        articles_24h_by_source=dict(
-            Counter(
-                names.get(a.source_id, a.source_id) for a in articles if a.published_at >= day_ago
-            )
-        ),
+        articles=svc.articles.count(),
+        articles_24h=len(last_day),
+        articles_24h_by_source=dict(Counter(names.get(a.source_id, a.source_id) for a in last_day)),
         storylines_open=len(storylines) - resolved,
         storylines_resolved=resolved,
         market_data=(
@@ -152,7 +144,7 @@ def outlet_coverage(
     svc: Services, articles: Sequence[Article], with_company: set[str]
 ) -> list[OutletCoverage]:
     """Per outlet: volume, relevance, part in storylines, speed. Free: no analysis or LLM calls.
-    `with_company`: ids of the articles that name a company we follow."""
+    `with_company`: ids of the articles that name a company we recognise (S&P 500, ASX 200)."""
     storylines = svc.storyline_store.all()
     in_stories = {r.article_id for s in storylines for e in s.events for r in e.reports}
     stage_reports = [[(r.source_id, r.published_at) for r in e.reports]

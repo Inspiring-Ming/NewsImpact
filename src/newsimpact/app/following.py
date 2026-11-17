@@ -100,7 +100,7 @@ def refresh(svc: Services, now: datetime) -> Following | None:
         followed = tuple(c.ticker for c in shown.companies) if shown else ()
         previous = Following(computed_at=now, followed=followed, mentions={}, last_seen={})
     horizon = now - timedelta(days=max(policy.keep_days, policy.window_days))
-    recent = [a for a in svc.articles.recent(10**6) if a.published_at >= horizon]
+    recent = svc.articles.since(horizon)
     seen: dict[str, list[datetime]] = {}
     for article in recent:
         for ticker in svc.semantics.mentioned_tickers(article):

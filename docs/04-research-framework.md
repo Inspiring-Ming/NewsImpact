@@ -34,7 +34,7 @@ and extension point, so "more" means adding a row, not redesigning.
 | Layer | What | Today | Extend by |
 |---|---|---|---|
 | Document | outlet, time, language, headline, summary | RSS headline + summary; GDELT headline | new feed kind (licensed full text, filings) – `sources/adapters/` |
-| Mentions | companies → tickers | alias list, `entities.json` | entity master (OpenFIGI/GLEIF), people → roles (point-in-time) |
+| Mentions | companies → tickers | S&P 500 + ASX 200 names (`universe.json`) plus hand-written aliases (`entities.json`), one combined pattern | entity master (OpenFIGI/GLEIF), people → roles (point-in-time) |
 | Claim | one checkable statement per sentence naming a company | `SentenceExtractor` | LLM extractor behind `ClaimExtractor` |
 | Event type | the semantic trigger (apology, departure, recall, rumour…) | `taxonomy.json` patterns | add an event type to `taxonomy.json` |
 | Aspect | which part of the business (revenue, supply chain, leadership…) | `taxonomy.json` keywords | edit `taxonomy.json` |
@@ -43,6 +43,7 @@ and extension point, so "more" means adding a row, not redesigning.
 | Attribution | own reporting, cited outlet, company statement, filing, anonymous | `AttributionStep` (taxonomy wording) | taxonomy wording or the LLM step |
 | Originality | copy of another outlet? (exact or ≥ 80% shingle overlap) | `sources` copy detection | `methodology.json` → sources |
 | Background | history vs. new event ("has issued several recalls in the past") | taxonomy `background` words | taxonomy or the LLM step |
+| Deal role | the company's part in a deal: buyer, target or seller | `deal_role` (`semantics/logic.py`, taxonomy `deal_*` words) | the LLM step |
 | Story | which storyline and stage; which independent origins reported it | `storylines` playbooks | new playbook |
 
 The analysis chain is configured by `NI_SEMANTIC_STEPS` and every claim
@@ -124,7 +125,7 @@ into trading decisions. Each becomes a measurable feature or hypothesis:
 | Activity | abnormal volume, turnover | attention / disagreement |
 | Liquidity | bid-ask spread, depth | execution cost |
 | Credit | CDS spreads, bond yields | credit funds, treasurers |
-| Contagion | spill-over to suppliers, customers, competitors, sector | ✅ graph propagation v0.1 |
+| Contagion | spill-over to suppliers, customers, competitors, sector | ⏳ (named in playbooks as `peer_spillover`, not measured yet) |
 | **Confidence / sentiment indices** | VIX, investor & consumer sentiment surveys, put/call ratios, fund flows | macro & market confidence |
 | Analyst behaviour | estimate revisions, rating changes, forecast dispersion | sell-side & IR clients |
 | Attention | search trends, social volume, news volume | early-warning |

@@ -4,7 +4,10 @@ config.py   deployment settings from NI_* environment variables (.env)
 wiring/     picks the technology behind every port (the only place that does);
             plugins.py has one table per kind of technology
 api/        versioned JSON API (/v1), one router file per area, and the website at /
-monitor.py  the hourly round: collect, follow up, check evidence, briefs, alerts
+monitor.py  the hourly round: collect, follow, follow up, track records, assess, briefs,
+            publish, alerts (ROUND)
+following.py which companies we follow, decided from the live news (ADR 0036)
+mcp.py      MCP server: the assistant's read-only tools for AI assistants (ADR 0033)
 demo.py     loads the fictional demo data through the real pipeline
 logs.py     JSON logging
 views/      what the website and API show, composed from the modules

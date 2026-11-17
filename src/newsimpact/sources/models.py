@@ -99,7 +99,7 @@ class OutletCoverage(Model):
     source_id: str
     articles: int
     per_day: float
-    with_company: float = Field(description="share of articles naming a watched company")
+    with_company: float = Field(description="share of articles naming a company we recognise")
     in_stories: float = Field(description="share of articles that became part of a story")
     copies: float = Field(description="share that copy another outlet's article")
     stages_reported: int

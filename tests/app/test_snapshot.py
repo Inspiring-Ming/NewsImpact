@@ -7,7 +7,6 @@ from newsimpact.app.config import Settings
 from newsimpact.app.demo import run_demo
 from newsimpact.app.monitor import run_step
 from newsimpact.app.views import snapshot
-from newsimpact.app.views.companies import companies
 from newsimpact.app.wiring import build_services
 
 
@@ -18,7 +17,7 @@ def test_the_round_publishes_what_pages_read_and_when_and_how(tmp_path: Path) ->
     snap = svc.snapshots.get()
     assert snap is not None
     assert snap.analysis == svc.semantics.model_version  # which reading made these numbers
-    assert [c.ticker for c in snap.companies] == [c.ticker for c in companies(svc)]
+    assert [c.ticker for c in snap.companies] == [c.ticker for c in snapshot.current_cards(svc)]
     assert snapshot.latest(svc) == snap  # a page visit does not recompute
 
     run_step(svc, "publish")

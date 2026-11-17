@@ -34,7 +34,7 @@ from newsimpact.alerts.models import EventSnapshot
 from newsimpact.app import following
 from newsimpact.app.views import snapshot
 from newsimpact.app.views.briefs import ai_brief, facts_key
-from newsimpact.app.views.companies import brief_facts, companies
+from newsimpact.app.views.companies import brief_facts
 from newsimpact.app.wiring import Services
 
 log = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ def write_briefs(svc: Services) -> int:
     if svc.llm is None:
         return 0
     written = 0
-    for c in companies(svc):
+    for c in snapshot.current_cards(svc):
         for e in c.events:
             facts = brief_facts(c, e)
             stored = svc.briefs.get(e.event_id)

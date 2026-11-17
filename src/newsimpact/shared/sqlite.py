@@ -68,6 +68,10 @@ class Collection:
     def delete(self, key: str) -> None:
         self._db.execute("DELETE FROM documents WHERE collection=? AND key=?", (self._name, key))
 
+    def count(self) -> int:
+        rows = self._db.execute("SELECT COUNT(*) FROM documents WHERE collection=?", (self._name,))
+        return int(rows[0][0])
+
     def has_tag(self, tag: str) -> bool:
         rows = self._db.execute(
             "SELECT 1 FROM documents WHERE collection=? AND tag=? LIMIT 1", (self._name, tag)
@@ -75,12 +79,20 @@ class Collection:
         return bool(rows)
 
     def find(
-        self, tag: str | None = None, *, newest_first: bool = False, limit: int = -1
+        self,
+        tag: str | None = None,
+        *,
+        newest_first: bool = False,
+        limit: int = -1,
+        after: str | None = None,
     ) -> list[str]:
+        """Documents in `at` order; `after` keeps those with `at` >= it (an ISO time)."""
         where: str = "collection=?"
         params: tuple[str, ...] = (self._name,)
         if tag is not None:
             where, params = ("collection=? AND tag=?", (self._name, tag))
+        if after is not None:
+            where, params = (f"{where} AND at>=?", (*params, after))
         order = "DESC" if newest_first else "ASC"
         sql = f"SELECT doc FROM documents WHERE {where} ORDER BY at {order}, key LIMIT {int(limit)}"  # noqa: S608 - no user input in the SQL text
         return [r[0] for r in self._db.execute(sql, params)]

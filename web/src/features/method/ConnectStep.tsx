@@ -9,27 +9,31 @@ import { Flow, Head, setting, type MethodData } from "./MethodPage";
 const fmt = (n: number) => n.toLocaleString("en-US");
 
 export function ConnectStep({ method, types }: MethodData) {
-  const overview = useApi(api.overview);
   const coverage = useApi(api.coverage);
+  const cards = useApi(api.companies);
   const origins = setting(method, "validation", "corroborating_origins") ?? 2;
   const research = new Map(method.playbooks.map((p) => [p.theme, p.research[0]]));
-  const events = types.reduce((n, t) => n + t.events, 0);
-  const confirmed = types.reduce((n, t) => n + t.confirmed, 0);
+  // One window for every row: the pages window (methodology.json "pages"), ending at the
+  // newest article, as the server counts it.
+  const days = setting(method, "pages", "window_days") ?? 30;
   const outlets = coverage.data ?? [];
+  const recent = (cards.data ?? []).flatMap((c) => c.events)
+    .filter((e) => Date.now() - Date.parse(e.updates[e.updates.length - 1].published_at) < days * 86_400_000);
+  const events = recent.length, confirmed = recent.filter((e) => e.verified).length;
   const naming = outlets.reduce((n, c) => n + Math.round(c.articles * c.with_company), 0);
   const used = outlets.reduce((n, c) => n + Math.round(c.articles * c.in_stories), 0);
   const funnel = [
-    { label: "articles read", what: "everything our sources published", n: overview.data?.articles ?? 0 },
-    { label: "name one of our companies", what: "a sentence names one of our companies (names matched exactly)", n: naming },
+    { label: "articles read", what: "everything our sources published", n: outlets.reduce((n, c) => n + c.articles, 0) },
+    { label: "name an index company", what: "a sentence names an S&P 500 or ASX 200 company (names matched exactly)", n: naming },
     { label: "report an event", what: "that sentence reports something that moves share prices: not opinion, a preview or old news", n: used },
-    { label: "events", what: `articles about the same company and story are joined: ${fmt(used)} articles make ${fmt(events)} events`, n: events },
+    { label: "events", what: "articles about the same company and story are joined into one event (with an update in the window)", n: events },
     { label: "confirmed events", what: `${origins}+ independent outlets, or the company or a regulator filing itself, reported it`, n: confirmed },
   ];
   const top = Math.max(1, funnel[0].n);
   return (
     <section className="hiw">
       <Head kicker="Step 2 · Events" title="From a sentence to a confirmed event"
-            dek="Most news is not an event. Live counts of what passes each step." />
+            dek={`Most news is not an event. What passed each step in the last ${days} days.`} />
       <ol className="funnel">
         {funnel.map((f, i) => (
           <li key={f.label} className={i === funnel.length - 1 ? "last" : ""}>

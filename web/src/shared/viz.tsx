@@ -43,8 +43,6 @@ export function Dots({ n, of, max = 6 }: { n: number; of?: number; max?: number 
   );
 }
 
-/** Source reliability: a newspaper's 75% starting estimate is already good evidence. */
-export const reliabilityTone = (x: number): Tone => (x >= 0.75 ? "good" : x >= 0.6 ? "warn" : "bad");
 
 /** Stock minus its index at each close, as a small line: 0 = the close before the event
  *  (dashed), the event day marked. Drawn in on first view. */

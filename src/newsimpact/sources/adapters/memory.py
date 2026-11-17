@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import datetime
 
 from newsimpact.sources.models import Article
 from newsimpact.storylines.models import FollowUpRequest
@@ -22,6 +23,15 @@ class InMemoryArticleStore:
 
     def recent(self, limit: int) -> Sequence[Article]:
         return sorted(self._articles, key=lambda a: a.published_at, reverse=True)[:limit]
+
+    def since(self, after: datetime) -> Sequence[Article]:
+        return [a for a in self.recent(len(self._articles)) if a.published_at >= after]
+
+    def get(self, article_id: str) -> Article | None:
+        return next((a for a in self._articles if a.article_id == article_id), None)
+
+    def count(self) -> int:
+        return len(self._articles)
 
 
 class InMemorySeenSources:

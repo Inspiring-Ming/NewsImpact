@@ -122,35 +122,38 @@ class CompanyCard(Model):
     sector: str
     exchange: str
     index_name: str = Field(description="the index the stock is compared with, e.g. S&P 500")
-    articles: int = Field(description="stored articles that name the company")
+    articles: int = Field(description="articles naming the company in the pages window")
     articles_24h: int = Field(description="of those, published in the last 24 hours")
     articles_24h_by_source: dict[str, int] = Field(description="source name -> those articles")
     latest_news: NewsItem | None
     events: tuple[EventCard, ...]
 
 
-def mentions(svc: Services, articles: Sequence[Article] | None = None) -> dict[str, list[Article]]:
-    """Ticker -> stored articles that name the company (name matching only, no AI)."""
+def mentions(svc: Services, articles: Sequence[Article]) -> dict[str, list[Article]]:
+    """Ticker -> the given articles that name the company (name matching only, no AI)."""
     by_ticker: dict[str, list[Article]] = defaultdict(list)
-    for article in svc.articles.recent(10**6) if articles is None else articles:
+    for article in articles:
         for ticker in svc.semantics.mentioned_tickers(article):
             by_ticker[ticker].append(article)
     return by_ticker
 
 
-def companies(
-    svc: Services, by_ticker: dict[str, list[Article]] | None = None
-) -> list[CompanyCard]:
-    """Every company we follow, with its events (most recent first) and latest news.
-    Pages read these from the snapshot (views/snapshot.py), computed once per round."""
+def companies(svc: Services, by_ticker: dict[str, list[Article]]) -> list[CompanyCard]:
+    """Every company we follow, with its events (most recent first) and its news in the
+    pages window (`by_ticker`). Pages read these from the snapshot, computed once per round."""
     names = source_names(svc)
-    by_ticker = mentions(svc) if by_ticker is None else by_ticker
+    followed = followed_companies(svc)
+    tickers = {c.ticker for c in followed}
+    storylines = [s for s in svc.storyline_store.all() if s.ticker in tickers]
     articles = {a.article_id: a for news in by_ticker.values() for a in news}
+    for article_id in {r.article_id for s in storylines for e in s.events for r in e.reports}:
+        if article_id not in articles and (article := svc.articles.get(article_id)):
+            articles[article_id] = article  # an older event keeps its own articles
     events: dict[str, list[EventCard]] = defaultdict(list)
-    for storyline in svc.storyline_store.all():
+    for storyline in storylines:
         events[storyline.ticker].append(_event_card(svc, storyline, names, articles))
     cards = [_company_card(svc, c, by_ticker.get(c.ticker, []), events.get(c.ticker, []), names)
-             for c in followed_companies(svc)]  # fmt: skip
+             for c in followed]  # fmt: skip
     cards = _with_guidance(svc, cards)
 
     def latest(c: CompanyCard) -> float:  # newest update of any event

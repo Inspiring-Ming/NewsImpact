@@ -460,7 +460,7 @@
         "additionalProperties": false,
         "properties": {
           "articles": {
-            "description": "stored articles that name the company",
+            "description": "articles naming the company in the pages window",
             "title": "Articles",
             "type": "integer"
           },
@@ -534,83 +534,6 @@
           "events"
         ],
         "title": "CompanyCard",
-        "type": "object"
-      },
-      "CompanyCoverage": {
-        "additionalProperties": false,
-        "properties": {
-          "articles": {
-            "description": "articles naming the company in the coverage window",
-            "title": "Articles",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "sources": {
-            "description": "sources of those articles",
-            "items": {
-              "type": "string"
-            },
-            "title": "Sources",
-            "type": "array"
-          },
-          "status": {
-            "description": "gap = no article in the window",
-            "enum": [
-              "ok",
-              "gap"
-            ],
-            "title": "Status",
-            "type": "string"
-          },
-          "ticker": {
-            "title": "Ticker",
-            "type": "string"
-          }
-        },
-        "required": [
-          "ticker",
-          "name",
-          "articles",
-          "sources",
-          "status"
-        ],
-        "title": "CompanyCoverage",
-        "type": "object"
-      },
-      "CoverageReport": {
-        "additionalProperties": false,
-        "properties": {
-          "analysis": {
-            "title": "Analysis",
-            "type": "string"
-          },
-          "companies": {
-            "items": {
-              "$ref": "#/components/schemas/CompanyCoverage"
-            },
-            "title": "Companies",
-            "type": "array"
-          },
-          "computed_at": {
-            "format": "date-time",
-            "title": "Computed At",
-            "type": "string"
-          },
-          "window_days": {
-            "title": "Window Days",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "computed_at",
-          "analysis",
-          "window_days",
-          "companies"
-        ],
-        "title": "CoverageReport",
         "type": "object"
       },
       "DecisionCheck": {
@@ -1571,7 +1494,7 @@
             "type": "integer"
           },
           "with_company": {
-            "description": "share of articles naming a watched company",
+            "description": "share of articles naming a company we recognise",
             "title": "With Company",
             "type": "number"
           }
@@ -2545,22 +2468,6 @@
             "title": "Events",
             "type": "integer"
           },
-          "gap_days": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "median days between steps, in our events",
-            "title": "Gap Days"
-          },
-          "gaps_seen": {
-            "title": "Gaps Seen",
-            "type": "integer"
-          },
           "no_expectation": {
             "description": "events with no expectation (e.g. role unclear)",
             "title": "No Expectation",
@@ -2600,8 +2507,6 @@
           "window_days",
           "window_why",
           "steps",
-          "gap_days",
-          "gaps_seen",
           "cases",
           "no_expectation"
         ],
@@ -2937,7 +2842,7 @@
     },
     "/v1/companies": {
       "get": {
-        "description": "Every company we follow: sector, latest news, and its events with stock moves.\nFrom the latest snapshot (computed once per round; see /v1/companies/coverage).",
+        "description": "Every company we follow: sector, latest news, and its events with stock moves.\nFrom the latest snapshot (computed once per round).",
         "operationId": "companies_v1_companies_get",
         "responses": {
           "200": {
@@ -2956,25 +2861,6 @@
           }
         },
         "summary": "Companies"
-      }
-    },
-    "/v1/companies/coverage": {
-      "get": {
-        "description": "News found per company in the coverage window; a gap = none found (check the\nsources or the names we match). Also when the pages were computed, and how.",
-        "operationId": "coverage_v1_companies_coverage_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CoverageReport"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Coverage"
       }
     },
     "/v1/coverage": {
