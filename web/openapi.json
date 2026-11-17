@@ -823,6 +823,19 @@
             "description": "how long new reports join this event",
             "title": "Link Window Days"
           },
+          "move_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "first trading day of the move",
+            "title": "Move From"
+          },
           "move_so_far": {
             "anyOf": [
               {
@@ -834,6 +847,19 @@
             ],
             "description": "provisional stock move vs its index to the latest close, while pending",
             "title": "Move So Far"
+          },
+          "move_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "last close of the move",
+            "title": "Move To"
           },
           "next_update": {
             "anyOf": [
@@ -918,6 +944,15 @@
             "description": "the company's part in a deal, read from the reports",
             "title": "Role"
           },
+          "shares_move_with": {
+            "default": [],
+            "description": "other events of this company measured over overlapping days: the move cannot be split between them",
+            "items": {
+              "type": "string"
+            },
+            "title": "Shares Move With",
+            "type": "array"
+          },
           "so_far_through": {
             "anyOf": [
               {
@@ -977,7 +1012,7 @@
             "title": "Stock Move"
           },
           "stock_move_period": {
-            "description": "e.g. '9-13 Nov'",
+            "description": "the trading days the move covers, e.g. '9-11 Nov'",
             "title": "Stock Move Period",
             "type": "string"
           },
@@ -1636,6 +1671,20 @@
         "additionalProperties": false,
         "description": "The typical progression of one kind of storyline (reference data, not code).",
         "properties": {
+          "absorbs": {
+            "default": [],
+            "description": "event types that are part of this event when the same article reports both (e.g. a dividend announced with results)",
+            "items": {
+              "type": "string"
+            },
+            "title": "Absorbs",
+            "type": "array"
+          },
+          "absorbs_why": {
+            "default": "",
+            "title": "Absorbs Why",
+            "type": "string"
+          },
           "description": {
             "title": "Description",
             "type": "string"

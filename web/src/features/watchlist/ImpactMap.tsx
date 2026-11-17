@@ -38,18 +38,32 @@ export function ImpactMap({ companies }: { companies: S["CompanyCard"][] }) {
   const x = (v: number) => PAD.l + ((v + span) / (2 * span)) * (W - PAD.l - PAD.r);
   const y = (sector: string) => PAD.t + sectors.indexOf(sector) * ROW + ROW / 2;
   const r = (sources: number) => 4 + Math.min(sources, 6);
-  // Labels go above their dot; one that would overlap a neighbour's label in the same row goes below.
-  const placed: { sector: string; x: number; len: number }[] = [];
-  const below = new Set<string>();
-  const labelled = new Set<string>(); // event ids that get a label: one per company
-  const named = new Set<string>(); // tickers already labelled
-  for (const d of dots.filter((d) => d.e.stock_move_unusual).sort((a, b) => a.e.stock_move! - b.e.stock_move!)) {
+  // Labels: one per company (unusual moves only), biggest move first. Each tries above, below,
+  // right, then left of its dot and takes the first spot that overlaps no other label or dot;
+  // with none free it stays unlabelled (the hover card still names it).
+  type Box = { x0: number; x1: number; y0: number; y1: number };
+  const CH = 6.4, LH = 12;
+  const hits = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  const dotBoxes = dots.map((d) => {
+    const cx = x(d.e.stock_move!), cy = y(d.c.sector), rr = r(d.e.sources);
+    return { id: d.e.event_id, b: { x0: cx - rr, x1: cx + rr, y0: cy - rr, y1: cy + rr } };
+  });
+  const taken: Box[] = [];
+  const labels = new Map<string, { x: number; y: number; anchor: "start" | "middle" | "end" }>();
+  const named = new Set<string>();
+  for (const d of dots.filter((d) => d.e.stock_move_unusual).sort((a, b) => Math.abs(b.e.stock_move!) - Math.abs(a.e.stock_move!))) {
     if (named.has(d.c.ticker)) continue;
     named.add(d.c.ticker);
-    labelled.add(d.e.event_id);
-    const cx = x(d.e.stock_move!);
-    const near = placed.some((p) => p.sector === d.c.sector && Math.abs(p.x - cx) < 7 * (p.len + shortName(d.c.name).length) / 2 + 8);
-    if (near) below.add(d.e.event_id); else placed.push({ sector: d.c.sector, x: cx, len: shortName(d.c.name).length });
+    const name = shortName(d.c.name), w = name.length * CH, cx = x(d.e.stock_move!), cy = y(d.c.sector), rr = r(d.e.sources);
+    const spots = [
+      { x: cx, y: cy - rr - 4, anchor: "middle" as const, b: { x0: cx - w / 2, x1: cx + w / 2, y0: cy - rr - 4 - LH, y1: cy - rr - 2 } },
+      { x: cx, y: cy + rr + 12, anchor: "middle" as const, b: { x0: cx - w / 2, x1: cx + w / 2, y0: cy + rr + 1, y1: cy + rr + 2 + LH } },
+      { x: cx + rr + 4, y: cy + 4, anchor: "start" as const, b: { x0: cx + rr + 3, x1: cx + rr + 4 + w, y0: cy - LH / 2, y1: cy + LH / 2 } },
+      { x: cx - rr - 4, y: cy + 4, anchor: "end" as const, b: { x0: cx - rr - 4 - w, x1: cx - rr - 3, y0: cy - LH / 2, y1: cy + LH / 2 } },
+    ];
+    const free = spots.find((sp) => sp.b.x0 >= PAD.l - 4 && sp.b.x1 <= W - PAD.r + 4 && sp.b.y0 >= 0
+      && !taken.some((t) => hits(t, sp.b)) && !dotBoxes.some((o) => o.id !== d.e.event_id && hits(o.b, sp.b)));
+    if (free) { taken.push(free.b); labels.set(d.e.event_id, free); }
   }
   const now = Date.now();
   const test = SHOW.find((f) => f.id === show)!.test;
@@ -113,10 +127,10 @@ export function ImpactMap({ companies }: { companies: S["CompanyCard"][] }) {
                 <circle className="hit" cx={cx} cy={cy} r={r(d.e.sources) + 6} />
                 {fresh(d) && <circle className={`pulse ${d.e.stock_move_unusual ? "unusual" : "normal"}`} cx={cx} cy={cy} r={r(d.e.sources)} />}
                 <circle className={`dot ${d.e.stock_move_unusual ? "unusual" : "normal"}`} cx={cx} cy={cy} r={r(d.e.sources)} />
-                {labelled.has(d.e.event_id) && (
-                  <text className="dot-label" x={cx} textAnchor="middle"
-                        y={below.has(d.e.event_id) ? cy + r(d.e.sources) + 12 : cy - r(d.e.sources) - 4}>{shortName(d.c.name)}</text>
-                )}
+                {labels.has(d.e.event_id) && (() => {
+                  const l = labels.get(d.e.event_id)!;
+                  return <text className="dot-label" x={l.x} y={l.y} textAnchor={l.anchor}>{shortName(d.c.name)}</text>;
+                })()}
               </g>
             );
           })}

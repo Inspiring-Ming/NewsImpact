@@ -43,7 +43,7 @@ def test_api_contract_for_the_website() -> None:
     assert change["verified"] and change["latest_url"].startswith("http")
     assert change["priority"] in {"act", "check"} and change["checks"][0]["url"]
     assert len(change["brief"]) == 3 and change["brief_by"] == "rules"
-    assert change["record"]["n"] >= 1
+    assert change["record"]["n"] == 0  # the only such event: it is not its own evidence
     assert all(u["articles"] for u in change["updates"])
     assert -1 <= change["tone"] <= 1 and change["next_update"] is None
     assert change["sources"] >= 3 and change["notes"] and change["watch"]

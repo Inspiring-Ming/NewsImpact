@@ -897,10 +897,20 @@ export interface components {
              */
             link_window_days: number | null;
             /**
+             * Move From
+             * @description first trading day of the move
+             */
+            move_from?: string | null;
+            /**
              * Move So Far
              * @description provisional stock move vs its index to the latest close, while pending
              */
             move_so_far: number | null;
+            /**
+             * Move To
+             * @description last close of the move
+             */
+            move_to?: string | null;
             /**
              * Next Update
              * @description the possible next step (research), if any
@@ -940,6 +950,12 @@ export interface components {
              */
             role?: ("buyer" | "target" | "seller") | null;
             /**
+             * Shares Move With
+             * @description other events of this company measured over overlapping days: the move cannot be split between them
+             * @default []
+             */
+            shares_move_with: string[];
+            /**
              * So Far Through
              * @description the latest close in move_so_far
              */
@@ -969,7 +985,7 @@ export interface components {
             stock_move: number | null;
             /**
              * Stock Move Period
-             * @description e.g. '9-13 Nov'
+             * @description the trading days the move covers, e.g. '9-11 Nov'
              */
             stock_move_period: string;
             /**
@@ -1292,6 +1308,17 @@ export interface components {
          * @description The typical progression of one kind of storyline (reference data, not code).
          */
         Playbook: {
+            /**
+             * Absorbs
+             * @description event types that are part of this event when the same article reports both (e.g. a dividend announced with results)
+             * @default []
+             */
+            absorbs: string[];
+            /**
+             * Absorbs Why
+             * @default
+             */
+            absorbs_why: string;
             /** Description */
             description: string;
             /**

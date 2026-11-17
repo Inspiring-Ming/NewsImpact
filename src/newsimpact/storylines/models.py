@@ -162,6 +162,12 @@ class Playbook(Model):
     stages: tuple[PlaybookStage, ...]
     research: tuple[ResearchFinding, ...] = ()
     watch: tuple[str, ...] = Field(default=(), description="what investors typically check next")
+    absorbs: tuple[str, ...] = Field(
+        default=(),
+        description="event types that are part of this event when the same article "
+        "reports both (e.g. a dividend announced with results)",
+    )
+    absorbs_why: str = ""
     expectations: tuple[Expectation, ...] = Field(
         default=(), description="share price expectation per case; else the opening stage's"
     )

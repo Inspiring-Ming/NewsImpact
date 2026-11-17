@@ -167,3 +167,17 @@ def test_a_results_release_is_one_event_even_when_reports_disagree() -> None:
     results = next(p for p in CATALOG.playbooks() if p.theme == "results")
     assert _reading(beat.storyline, results) == "better than expected"
     assert _reading(miss.storyline, results) == "mixed"  # shown as "Results · mixed"
+
+
+def test_a_dividend_announced_with_results_is_part_of_the_results_event() -> None:
+    results = next(p for p in CATALOG.playbooks() if p.theme == "results")
+    assert "capital_return_up" in results.absorbs and results.absorbs_why
+    service = StorylinesService(InMemoryEventBus(), InMemoryStorylineStore(), CATALOG)
+    who = (EntityMention(name="Globex Motors", entity_type="company", ticker="GLBX"),)
+    claims = [Claim(claim_id=f"c{t}", article_id="a", text=t, event_type=t, model_version="t",
+                    entities=who) for t in ("earnings_positive", "capital_return_up")]  # fmt: skip
+    assert service._absorbed(claims) == {
+        ("GLBX", "capital_return_up"),
+        ("GLBX", "capital_return_down"),
+    }
+    assert service._absorbed(claims[1:]) == set()  # a dividend on its own is its own event

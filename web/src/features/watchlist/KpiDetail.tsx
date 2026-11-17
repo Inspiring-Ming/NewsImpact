@@ -10,14 +10,29 @@ export type Kpi = "events" | "unusual" | "biggest" | "news";
 
 interface Ev { c: S["CompanyCard"]; e: S["EventCard"] }
 
-function MoveRows({ rows }: { rows: Ev[] }) {
-  if (!rows.length) return <p className="muted small">None yet.</p>;
-  const span = Math.max(0.05, ...rows.map((r) => Math.abs(r.e.stock_move!)));
+/** One row per stock move: events of a company measured over the same days share one move
+ *  (it cannot be split between them), so they are one row, with both events named. */
+function oneRowPerMove(rows: Ev[]): (Ev & { also: string[] })[] {
+  const out: (Ev & { also: string[] })[] = [];
+  for (const r of rows) {
+    const twin = out.find((o) => o.c.ticker === r.c.ticker && o.e.shares_move_with.includes(r.e.event_type));
+    if (twin) twin.also.push(eventLabel(r.e)); else out.push({ ...r, also: [] });
+  }
+  return out;
+}
+
+const INDEX_NOTE = "Each stock is compared with the index of the market it trades on: the S&P 500 for US listings, the ASX 200 for ASX listings.";
+
+function MoveRows({ rows, limit }: { rows: Ev[]; limit?: number }) {
+  const grouped = oneRowPerMove(rows).slice(0, limit);
+  if (!grouped.length) return <p className="muted small">None yet.</p>;
+  const span = Math.max(0.05, ...grouped.map((r) => Math.abs(r.e.stock_move!)));
   return (
     <div className="rank moves">
-      {rows.map(({ c, e }) => (
+      {grouped.map(({ c, e, also }) => (
         <a key={e.event_id} className="rank-row" href={`#/event/${e.event_id}`}>
-          <span className="rank-label"><b>{c.name}</b><span className="muted small"> · {eventLabel(e)}</span></span>
+          <span className="rank-label"><b>{c.name}</b><span className="muted small"> · {[eventLabel(e), ...also].join(" + ")}</span>
+            <span className="muted small rank-sub">{e.stock_move_period}{also.length ? " · one move on the same days: it cannot be split between the events" : ""}</span></span>
           <MoveBar value={e.stock_move!} unusual={e.stock_move_unusual} span={span} />
           <span className="rank-value"><b>{pct(e.stock_move!)}</b><span className="muted small"> {vsWords(e.stock_move!, c.index_name)}</span></span>
         </a>
@@ -92,25 +107,32 @@ export function KpiDetail({ kpi, companies, newsCompanies, overview }: {
     const week = all.filter(({ e }) => lastUpdate(e).slice(0, 10) >= days[0]).sort((a, b) => lastUpdate(b.e).localeCompare(lastUpdate(a.e)));
     const perDay = days.map((d) => week.filter(({ e }) => lastUpdate(e).slice(0, 10) === d).length);
     const max = Math.max(1, ...perDay);
+    const SHOWN = 6;
     return (
       <div className="kpi-detail">
-        <h3>Events with a new update, by day</h3>
-        <div className="day-cols">
-          {days.map((d, i) => (
-            <div key={d} className="day-col">
-              <span className="day-n">{perDay[i] || ""}</span>
-              <span className="day-bar" style={{ height: `${(perDay[i] / max) * 100}%` }} />
-              <span className="day-label">{date(d)}</span>
-            </div>
-          ))}
-        </div>
-        <h3>This week's events</h3>
-        <div className="chips-list">
-          {week.map(({ c, e }) => (
-            <a key={e.event_id} href={`#/event/${e.event_id}`} className="event-chip">
-              <b>{c.name}</b> <span className="tag">{eventLabel(e)}</span> <span className="muted small">{date(lastUpdate(e))}</span>
-            </a>
-          ))}
+        <h3>This week, day by day <span className="muted small">· events with a new update · coloured edge = priority</span></h3>
+        <div className="week-board">
+          {days.map((d, i) => {
+            const items = week.filter(({ e }) => lastUpdate(e).slice(0, 10) === d);
+            const today = i === days.length - 1;
+            return (
+              <section key={d} className={`week-day${today ? " today" : ""}${items.length ? "" : " empty"}`}>
+                <header>
+                  <span>{today ? "Today" : new Date(d).toLocaleDateString(undefined, { weekday: "short" })}<small>{date(d)}</small></span>
+                  <b>{perDay[i]}</b>
+                </header>
+                <span className="week-bar"><i style={{ width: `${(perDay[i] / max) * 100}%` }} /></span>
+                <ul>
+                  {items.slice(0, SHOWN).map(({ c, e }) => (
+                    <li key={e.event_id} className={`p-${e.priority}`}>
+                      <a href={`#/event/${e.event_id}`}><b>{c.name}</b><small>{eventLabel(e)}</small></a>
+                    </li>
+                  ))}
+                </ul>
+                {items.length > SHOWN && <small className="muted">+{items.length - SHOWN} more</small>}
+              </section>
+            );
+          })}
         </div>
       </div>
     );
@@ -120,17 +142,19 @@ export function KpiDetail({ kpi, companies, newsCompanies, overview }: {
     return (
       <div className="kpi-detail">
         <h3>Unusual stock moves: larger than on 19 of 20 normal days for that stock</h3>
+        <p className="small muted">{INDEX_NOTE}</p>
         <MoveRows rows={rows} />
       </div>
     );
   }
   if (kpi === "biggest") {
     const rows = all.filter(({ e }) => e.stock_move != null)
-      .sort((a, b) => Math.abs(b.e.stock_move!) - Math.abs(a.e.stock_move!)).slice(0, 10);
+      .sort((a, b) => Math.abs(b.e.stock_move!) - Math.abs(a.e.stock_move!));
     return (
       <div className="kpi-detail">
-        <h3>The 10 largest moves against the market (bar colour = unusual move)</h3>
-        <MoveRows rows={rows} />
+        <h3>The 10 largest moves against the market (coloured = unusual move)</h3>
+        <p className="small muted">{INDEX_NOTE} The dates under each name are the days measured: the trading day of the news and the next one.</p>
+        <MoveRows rows={rows} limit={10} />
       </div>
     );
   }

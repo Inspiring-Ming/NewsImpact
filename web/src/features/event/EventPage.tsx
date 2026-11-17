@@ -62,21 +62,24 @@ export function EventPage({ id }: { id: string }) {
                     tone={card.stock_move_unusual ? (card.stock_move! < 0 ? "bad" : "good") : undefined}
                     sub={card.stock_move == null ? (card.move_so_far != null
                       ? <><MoveBar value={card.move_so_far} unusual={false} /><div>so far, to {date(card.so_far_through!)} close · <Term id="provisional">provisional</Term></div></>
-                      : NO_MOVE[card.stock_move_status])
+                      : card.final_measure_on ? `Measured after the close on ${date(card.final_measure_on)}` : NO_MOVE[card.stock_move_status])
                       : <><MoveBar value={card.stock_move} unusual={card.stock_move_unusual} />
                           <div>{vsWords(card.stock_move, company.index_name)} · {card.stock_move_period}</div>
-                          <Term id="unusual">{card.stock_move_unusual ? "⚠ unusual move" : "normal range"}</Term></>} />
+                          <Term id="unusual">{card.stock_move_unusual ? "⚠ unusual move" : "normal range"}</Term>
+                          {card.shares_move_with.length > 0 && <Term tip={`This company also had ${card.shares_move_with.join(" and ")} news measured over overlapping days. The stock had one move on those days; it cannot be split between the events.`}>
+                            <div className="warn small">shared with: {card.shares_move_with.join(", ")}</div></Term>}</>} />
               <Fact label={<Term id="volume" />} value={card.volume_ratio == null ? "–" : `${card.volume_ratio.toFixed(1)}×`}
                     sub={card.volume_ratio == null
                       // Volume needs the update day and 2 more trading days: recent news is simply too early.
-                      ? NO_MOVE[Date.now() - Date.parse(card.updates[0].published_at) < 10 * 86_400_000 ? "pending" : "no_data"]
+                      ? (card.final_measure_on ? `Measured after the close on ${date(card.final_measure_on)}`
+                        : NO_MOVE[Date.now() - Date.parse(card.updates[0].published_at) < 10 * 86_400_000 ? "pending" : "no_data"])
                       : <><RatioBar value={card.volume_ratio} /><div>{card.volume_ratio >= 2 ? "far above" : "close to"} a normal day (1×)</div></>} />
               <Fact label={<Term id="sources" />} value={card.sources}
                     sub={<SourceBadge confirmed={card.verified} names={card.source_names} />} />
               <Fact label={<Term id="expected">Reactions as expected</Term>}
                     value={measured.length ? `${hits} of ${measured.length}` : "–"}
                     sub={measured.length ? <><Meter value={hits / measured.length} tone={hits / measured.length >= 0.6 ? "good" : "warn"} />
-                          <div>measured market reactions that matched</div></> : "waiting for the next trading days to close"} />
+                          <div>measured market reactions that matched</div></> : card.final_measure_on ? `checked after the close on ${date(card.final_measure_on)}` : "waiting for the next trading days to close"} />
             </div>
             <Tabs tabs={TABS} active={tab} onChange={setTab} />
             <Body company={company} card={card} storyline={s} assessment={a} prices={prices.data ?? null} />

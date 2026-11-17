@@ -29,6 +29,7 @@ from newsimpact.semantics.models import Company
 from newsimpact.shared.events import Model
 from newsimpact.sources.models import Article, SourceType
 from newsimpact.storylines.models import Expectation, Playbook, ResearchFinding, Storyline
+from newsimpact.validation.logic import overlapping
 from newsimpact.validation.models import Assessment
 
 if TYPE_CHECKING:  # type hints only: the wiring builds the stores these views use
@@ -65,7 +66,14 @@ class EventCard(Model):
     )
     stock_move: float | None = Field(description="stock return minus its index, e.g. -0.185")
     stock_move_unusual: bool = Field(description="larger than on 19 of 20 normal trading days")
-    stock_move_period: str = Field(description="e.g. '9-13 Nov'")
+    stock_move_period: str = Field(description="the trading days the move covers, e.g. '9-11 Nov'")
+    move_from: date | None = Field(default=None, description="first trading day of the move")
+    move_to: date | None = Field(default=None, description="last close of the move")
+    shares_move_with: tuple[str, ...] = Field(
+        default=(),
+        description="other events of this company measured over overlapping days: "
+        "the move cannot be split between them",
+    )
     move_so_far: float | None = Field(
         description="provisional stock move vs its index to the latest close, while pending"
     )
@@ -203,6 +211,7 @@ def brief_facts(c: CompanyCard, e: EventCard) -> dict[str, object]:
 
 def _with_guidance(svc: Services, cards: list[CompanyCard]) -> list[CompanyCard]:
     """Add each event's priority, checks, its type's track record and its brief."""
+    cards = [_with_shared_moves(c) for c in cards]
     records = type_records(svc, cards)
     now = datetime.now(UTC)
     out = []
@@ -213,7 +222,7 @@ def _with_guidance(svc: Services, cards: list[CompanyCard]) -> list[CompanyCard]
                                      last_update=e.updates[-1].published_at, now=now)  # fmt: skip
             e = e.model_copy(update={
                 "priority": level, "priority_reason": reason,
-                "record": records.get((e.event_type, e.expectation.label))
+                "record": _without(records.get((e.event_type, e.expectation.label)), e, svc, cards)
                 if e.expectation else None,
                 "checks": tuple(checks(url=e.latest_url, confirmed=e.verified,
                                        unusual=e.stock_move_unusual, final_on=e.final_measure_on,
@@ -230,9 +239,35 @@ def _with_guidance(svc: Services, cards: list[CompanyCard]) -> list[CompanyCard]
     return out
 
 
-def type_records(svc: Services, cards: Sequence[CompanyCard]
+def _with_shared_moves(card: CompanyCard) -> CompanyCard:
+    """Mark events of one company whose measured days overlap: the stock had one move on
+    those days, and it cannot be split between the events."""
+    spans = [(e, e.move_from, e.move_to) for e in card.events if e.move_from and e.move_to]
+    shared = {e.event_id: tuple(o.event_type for o, f2, t2 in spans
+                                if o is not e and f1 <= t2 and f2 <= t1)
+              for e, f1, t1 in spans}  # fmt: skip
+    return card.model_copy(
+        update={
+            "events": tuple(
+                e.model_copy(update={"shares_move_with": shared.get(e.event_id, ())})
+                for e in card.events
+            )
+        }
+    )
+
+
+def _without(record: GroupRecord | None, e: EventCard, svc: Services,
+             cards: Sequence[CompanyCard]) -> GroupRecord | None:  # fmt: skip
+    """This event's case record from the OTHER events (an event is not its own evidence)."""
+    if record is None or e.stock_move is None or e.shares_move_with:
+        return record
+    return type_records(svc, cards, skip=e.event_id).get((e.event_type, record.label), record)
+
+
+def type_records(svc: Services, cards: Sequence[CompanyCard], skip: str = ""
                  ) -> dict[tuple[str, str], GroupRecord]:  # fmt: skip
-    """(event type, case) -> how its measured events moved, against the research."""
+    """(event type, case) -> how its measured events moved, against the research. A move
+    shared with another event of the same company is left out: it cannot be attributed."""
     moves: dict[tuple[str, str], list[tuple[float, bool]]] = defaultdict(list)
     cases: dict[tuple[str, str], Expectation] = {}
     for c in cards:
@@ -241,7 +276,7 @@ def type_records(svc: Services, cards: Sequence[CompanyCard]
                 continue
             key = (e.event_type, e.expectation.label)
             cases[key] = e.expectation
-            if e.stock_move is not None:
+            if e.stock_move is not None and not e.shares_move_with and e.event_id != skip:
                 moves[key].append((e.stock_move, e.stock_move_unusual))
     policy = svc.validation.policy
     return {key: group_record(exp, moves[key], min_events=policy.min_events_for_calibration,
@@ -334,6 +369,36 @@ def _measure(svc: Services, storyline: Storyline, channel: str, at: datetime) ->
 SPARK_DAYS_BEFORE = 5  # trading days shown before the event, so the line shows its reaction
 
 
+def _measured_days(
+    svc: Services,
+    storyline: Storyline,
+    a: Assessment,
+    move: ChannelObservation | None,
+    first_at: datetime,
+) -> tuple[date, date] | None:
+    """The trading days a reported move covers: the event day of the update it was measured
+    for (or of the first and last of a run of close updates, measured as one) to the last
+    close of the price window."""
+    if move is None or svc.market is None:
+        return None
+    stamps = [st.published_at for st in a.stages]
+    if move is a.combined_reaction and any(overlapping(stamps, svc.validation.policy)):
+        close = overlapping(stamps, svc.validation.policy)
+        i = close.index(True) - 1
+        j = i + 1
+        while j + 1 < len(close) and close[j + 1]:
+            j += 1
+        start, end = stamps[i], stamps[j]
+    else:
+        start = end = next((st.published_at for st in a.stages for d in st.decisions
+                            if d.evidence is move), first_at)  # fmt: skip
+    ticker = storyline.ticker
+    return (
+        svc.market.event_day(ticker, start),
+        close_after(svc.market.event_day(ticker, end), svc.market_policy.windows["price"][1]),
+    )
+
+
 def _vs_index(svc: Services, storyline: Storyline) -> list[tuple[date, float]]:
     """Stock return minus its index, each close from a few days before the first update to the
     latest close, relative to the close before the first update (0 = no difference)."""
@@ -393,9 +458,6 @@ def _event_card(
     move = a.combined_reaction or (
         None if pending else max(prices, key=lambda o: abs(o.statistic or 0), default=None)
     )
-    first, last = a.stages[0].published_at, a.stages[-1].published_at
-    period = (f"{first:%-d %b}" if first.date() == last.date()
-              else f"{first:%-d %b}-{last:%-d %b}")  # fmt: skip
     source_ids = sorted({o for st in a.stages for o in st.claim.outlets})
     latest_sources = next(
         (st.claim.outlets for st in a.stages if st.published_at == latest.published_at), ()
@@ -403,7 +465,13 @@ def _event_card(
     first_at = min(e.published_at for e in storyline.events)
     if move is None and not pending:  # this type expects no price reaction: measure anyway
         move = _observe(svc, storyline, "price", first_at)
+    if move is None and not pending and svc.market is not None:  # too recent to have closes yet
+        end = close_after(
+            svc.market.event_day(storyline.ticker, first_at), svc.market_policy.windows["price"][1]
+        )
+        pending = end >= date.today()
     status = "measured" if move else "pending" if pending else "no_data"
+    days = _measured_days(svc, storyline, a, move, first_at)
     reading = _reading(storyline, playbook)
     role, expected = expectation(svc, storyline, playbook, reading)
     vs_index = _vs_index(svc, storyline)
@@ -437,7 +505,10 @@ def _event_card(
         latest_source=names.get(latest_sources[0], latest_sources[0]) if latest_sources else "",
         stock_move=move.value if move else None,
         stock_move_unusual=bool(move and move.significant),
-        stock_move_period=period,
+        stock_move_period=(f"{days[0]:%-d %b}" if days and days[0] == days[1] else
+                           f"{days[0]:%-d %b}-{days[1]:%-d %b}" if days else ""),
+        move_from=days[0] if days else None,
+        move_to=days[1] if days else None,
         stock_move_status=status,
         link_window_days=playbook.link_window_days if playbook else None,
         final_measure_on=(close_after(svc.market.event_day(storyline.ticker, first_at),

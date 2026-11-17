@@ -16,6 +16,7 @@ Roadmap: embedding similarity and LLM adjudication for ambiguous links.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 
 from newsimpact.reliability.models import ClaimsScored
@@ -49,10 +50,13 @@ class StorylinesService:
         event = ClaimsScored.model_validate(envelope.data)
         reliability = {r.claim_id: r.score for r in event.claim_reliability}
         seen: set[tuple[str, str]] = set()
+        absorbed = self._absorbed(event.claims)
         for claim in event.claims:
             entity = next((e for e in claim.entities if e.ticker), None)
             if claim.event_type == OTHER or entity is None or entity.ticker is None:
                 continue
+            if (entity.ticker, claim.event_type) in absorbed:
+                continue  # part of a bigger event in the same article (playbook "absorbs")
             key = (entity.ticker, claim.event_type)
             if key in seen:  # one storyline event per ticker/event type per article
                 continue
@@ -68,6 +72,16 @@ class StorylinesService:
                 event_type=claim.event_type,
             )
             self._apply(claim, entity, report, envelope)
+
+    def _absorbed(self, claims: Sequence[Claim]) -> set[tuple[str, str]]:
+        """(ticker, event type) pairs that another event in this article absorbs: a results
+        release that also announces a dividend is one event, not two."""
+        reported = {(e.ticker, c.event_type) for c in claims for e in c.entities[:1] if e.ticker}
+        out: set[tuple[str, str]] = set()
+        for p in self._catalog.playbooks():
+            for ticker, _ in {r for r in reported if r[1] in p.triggers}:
+                out |= {(ticker, t) for t in p.absorbs}
+        return out
 
     # ------------------------------------------------------------- linking
     def _apply(

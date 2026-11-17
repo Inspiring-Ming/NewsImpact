@@ -1,6 +1,6 @@
 {
   "_note": "Kinds of storylines. link_window_days = how long after the latest stage a new report still belongs to the same story, and how long follow-up search keeps looking. Each window is a judgment prior with its reason; `newsimpact calibrate` reports observed gaps between stages so the prior can be replaced by data (rule in docs/07-coverage-and-settings.md). 'title' is the plain-English name shown to people (website, suggestions). 'research' = published findings on how markets usually react to this kind of event (shown with their source); 'watch' = what investors typically check next, from common analyst practice. 'expectations' = the usual share price move per case (the company's part in a deal, the results reading, or how the event started), each with its source; without one, the opening stage's price expectation applies. 'flat' = no unusual move expected.",
-  "version": "playbooks-v1.0",
+  "version": "playbooks-v1.1",
   "late_report_days": 3,
   "late_report_why": "Outlets publish the same events in a different order than they happened (e.g. 'interim CEO in charge' before the resignation story). A resolved story therefore still absorbs reports of its earlier stages published within 3 days of its latest stage; later ones start a new story. 3 days covers same-week reporting across time zones (US and Australian outlets) without merging a new crisis weeks later.",
   "playbooks": [
@@ -524,7 +524,12 @@
           "finding": "Trading volume and the size of price moves rise sharply in the week of an earnings announcement.",
           "source": "Beaver (1968), Journal of Accounting Research"
         }
-      ]
+      ],
+      "absorbs": [
+        "capital_return_up",
+        "capital_return_down"
+      ],
+      "absorbs_why": "Results releases routinely announce the dividend and any buyback; the share price reacts to the release as a whole (Bernard & Thomas 1989 measure the announcement, not its parts), so they are one event. Seen on the live feed: Xero and Telstra, 2026-11-17."
     },
     {
       "theme": "cyber_incident",
