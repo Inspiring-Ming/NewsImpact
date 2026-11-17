@@ -1,109 +1,118 @@
-// The watchlist: one compact row per company, paged. Four columns, each answering one
-// question: who, what happened, how did the stock react, how well is it sourced.
-// On phones every row becomes a card (see styles.css "watchlist cards").
+// The watchlist as a feed: one row per company, newest first, under day headings when sorted
+// by latest. A coloured edge = priority; then who, what happened, how the stock did against its
+// market (number + line), and how well it is sourced. On phones each row becomes a card.
 import type { S } from "../../api/client";
-import { COUNTRY, date, eventLabel, NO_MOVE, pct, SECTOR_SHORT, SECTORS, vsWords } from "../../shared/labels";
+import { COUNTRY, date, eventLabel, NO_MOVE, pct, SECTOR_SHORT, SECTORS, tone, vsWords } from "../../shared/labels";
+import { level } from "../../shared/priority";
 import { Term } from "../../shared/Term";
-import { Dots, MoveBar, Sparkline } from "../../shared/viz";
-import { PriorityBadge, Signals, SourceBadge } from "../../shared/badges";
+import { Dots, Sparkline } from "../../shared/viz";
+import { Confirmation, PriorityBadge } from "../../shared/badges";
 
-export function WatchlistTable({ rows, starred, onStar }: {
-  rows: S["CompanyCard"][]; starred: Set<string>; onStar: (ticker: string) => void;
+const latestAt = (c: S["CompanyCard"]) =>
+  c.events[0] ? c.events[0].updates[c.events[0].updates.length - 1].published_at : c.latest_news?.published_at;
+
+function dayHeading(iso: string): string {
+  const d = new Date(iso), today = new Date();
+  const days = Math.round((new Date(today.toDateString()).getTime() - new Date(d.toDateString()).getTime()) / 86_400_000);
+  return days === 0 ? "Today" : days === 1 ? "Yesterday" : d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
+}
+
+export function WatchlistTable({ rows, starred, onStar, byDay }: {
+  rows: S["CompanyCard"][]; starred: Set<string>; onStar: (ticker: string) => void; byDay: boolean;
 }) {
+  let last = "";
   return (
-    <div className="table-wrap card flush">
-      <table className="watchlist">
-        {/* Fixed widths, so columns line up on every page whatever text a row holds. */}
-        <colgroup>
-          <col style={{ width: "19%" }} /><col style={{ width: "45%" }} /><col style={{ width: "19%" }} /><col style={{ width: "17%" }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Company · <Term id="sector" /></th><th><Term id="event" /></th>
-            <th><Term id="move" /></th><th><Term id="sources" /></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((c) => {
-            const e = c.events[0];
-            const href = e ? `#/event/${e.event_id}` : undefined;
-            return (
-              <tr key={c.ticker} className={href ? "clickable" : ""} onClick={() => href && (window.location.hash = href)}
-                  tabIndex={href ? 0 : undefined}
-                  onKeyDown={(ev) => { if (href && ev.key === "Enter" && ev.target === ev.currentTarget) window.location.hash = href; }}>
-                <td className="c-company">
-                  <button className={`star ${starred.has(c.ticker) ? "on" : ""}`} aria-pressed={starred.has(c.ticker)}
-                          title={starred.has(c.ticker) ? "Stop following" : "Follow this company"}
-                          onClick={(ev) => { ev.stopPropagation(); onStar(c.ticker); }}>{starred.has(c.ticker) ? "★" : "☆"}</button>
-                  <b>{c.name}</b>
-                  <div className="muted small">
-                    {COUNTRY[c.country]?.flag} {c.ticker}{" "}
-                    <span className={`sector-chip sec-${SECTORS.indexOf(c.sector) + 1}`}>
-                      <Term tip={`${c.sector} (GICS sector)`}>{SECTOR_SHORT[c.sector] ?? c.sector}</Term>
-                    </span>
-                  </div>
-                </td>
-                {e ? (
-                  <>
-                    <td className="c-event">
-                      <div className="event-top">
-                        <PriorityBadge e={e} />
-                        <span className="tag">{eventLabel(e)}</span>
-                        <span className="progress" title={`${e.updates.length} update${e.updates.length > 1 ? "s" : ""} so far`}>
-                          <Dots n={e.updates.length} />
-                        </span>
-                        <Signals e={e} />
-                        {c.events.length > 1 && <span className="muted small">+{c.events.length - 1} more</span>}
-                      </div>
-                      <a className="headline-1" href={e.latest_url} target="_blank" rel="noreferrer"
-                         onClick={(ev) => ev.stopPropagation()}>{e.latest_headline} ↗</a>
-                      <div className="muted small">
-                        {e.latest_source} · {date(e.updates[e.updates.length - 1].published_at)}
-                        {e.next_update && <> · possible next: <b>{e.next_update}</b></>}
-                      </div>
-                    </td>
-                    <td className="c-move">
-                      {e.stock_move != null ? (
-                        <>
-                          <div className="move-top">
-                            <b className={e.stock_move_unusual ? (e.stock_move < 0 ? "bad" : "good") : ""}>{pct(e.stock_move)}</b>
-                            {e.spark.length > 1
-                              ? <Sparkline values={e.spark} eventAt={e.spark_event_at} label={`${c.name} vs ${c.index_name}, each close from just before the event (dashed line = no difference)`} />
-                              : <MoveBar value={e.stock_move} unusual={e.stock_move_unusual} />}
-                          </div>
-                          <div className="muted small">{vsWords(e.stock_move, c.index_name)} · {e.stock_move_period}</div>
-                          <div className={`small ${e.stock_move_unusual ? "warn" : "muted"}`}>{e.stock_move_unusual ? "⚠ Unusual move" : "Normal range"}</div>
-                        </>
-                      ) : e.move_so_far != null ? (
-                        <>
-                          <div className="move-top"><b className="muted">{pct(e.move_so_far)}</b>
-                            {e.spark.length > 1
-                              ? <Sparkline values={e.spark} eventAt={e.spark_event_at} label={`${c.name} vs ${c.index_name} so far, each close from just before the event`} />
-                              : <MoveBar value={e.move_so_far} unusual={false} />}</div>
-                          <div className="muted small">so far, to {date(e.so_far_through!)} close</div>
-                          <div className="small muted"><Term id="provisional">Provisional</Term></div>
-                        </>
-                      ) : <span className="muted small">{NO_MOVE[e.stock_move_status] ?? ""}</span>}
-                    </td>
-                    <td className="c-sources"><SourceBadge confirmed={e.verified} names={e.source_names} /></td>
-                  </>
-                ) : (
-                  <td className="c-event c-news" colSpan={3}>
-                    {c.latest_news ? (
-                      <>
-                        <span className="muted small">No event detected · latest news:</span>
-                        <a className="headline-1" href={c.latest_news.url} target="_blank" rel="noreferrer"
-                           onClick={(ev) => ev.stopPropagation()}>{c.latest_news.title} ↗</a>
-                        <div className="muted small">{c.latest_news.source} · {date(c.latest_news.published_at)}</div>
-                      </>
-                    ) : <span className="muted small">No recent news</span>}
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="feed" role="list">
+      <div className="feed-head" aria-hidden="true">
+        <span>Company</span><span><Term id="event" /></span><span><Term id="move" /></span><span><Term id="sources" /></span>
+      </div>
+      {rows.map((c) => {
+        const at = latestAt(c), heading = byDay && at ? dayHeading(at) : "";
+        const showHeading = heading && heading !== last;
+        last = heading || last;
+        return (
+          <div key={c.ticker} role="listitem">
+            {showHeading && <h3 className="feed-day">{heading}</h3>}
+            <Row c={c} starred={starred.has(c.ticker)} onStar={onStar} />
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+function Row({ c, starred, onStar }: { c: S["CompanyCard"]; starred: boolean; onStar: (ticker: string) => void }) {
+  const e = c.events[0];
+  const href = e ? `#/event/${e.event_id}` : undefined;
+  const p = e ? level(e.priority) : null;
+  const go = () => href && (window.location.hash = href);
+  return (
+    <div className={`feed-row ${p ? `p-${p.id}` : "quiet"}${href ? " clickable" : ""}`} onClick={go} tabIndex={href ? 0 : undefined}
+         onKeyDown={(ev) => { if (href && ev.key === "Enter" && ev.target === ev.currentTarget) go(); }}>
+      <div className="f-company">
+        <button className={`star ${starred ? "on" : ""}`} aria-pressed={starred} title={starred ? "Stop following" : "Follow this company"}
+                onClick={(ev) => { ev.stopPropagation(); onStar(c.ticker); }}>{starred ? "★" : "☆"}</button>
+        <div>
+          <b>{c.name}</b>
+          <div className="small muted">
+            {COUNTRY[c.country]?.flag} {c.ticker}{" "}
+            <span className={`sector-chip sec-${SECTORS.indexOf(c.sector) + 1}`}>
+              <Term tip={`${c.sector} (GICS sector)`}>{SECTOR_SHORT[c.sector] ?? c.sector}</Term>
+            </span>
+          </div>
+        </div>
+      </div>
+      {e ? <EventCells c={c} e={e} /> : (
+        <div className="f-news">
+          {c.latest_news ? <>
+            <span className="small muted">No event · latest news </span>
+            <a href={c.latest_news.url} target="_blank" rel="noreferrer" onClick={(ev) => ev.stopPropagation()}>{c.latest_news.title} ↗</a>
+            <span className="small muted"> · {c.latest_news.source}, {date(c.latest_news.published_at)}</span>
+          </> : <span className="small muted">No recent news</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EventCells({ c, e }: { c: S["CompanyCard"]; e: S["EventCard"] }) {
+  const t = tone(e.tone);
+  const move = e.stock_move ?? e.move_so_far;
+  const updated = e.updates[e.updates.length - 1].published_at;
+  return (
+    <>
+      <div className="f-event">
+        <div className="f-tags">
+          {e.priority !== "background" && <PriorityBadge e={e} />}
+          <span className="tag">{eventLabel(e)}</span>
+          <Term id="tone"><span className={`f-tone ${t.tone}`} aria-label={t.text}>{t.icon}</span></Term>
+          {e.is_rumour && <Term id="rumour"><span className="f-rumour">rumour</span></Term>}
+          {e.updates.length > 1 && <span className="small muted">{e.updates.length} updates</span>}
+        </div>
+        <a className="f-headline" href={e.latest_url} target="_blank" rel="noreferrer" onClick={(ev) => ev.stopPropagation()}>{e.latest_headline}</a>
+        <div className="small muted">
+          {e.latest_source} · {date(updated)}{e.next_update && <> · possible next: <b>{e.next_update}</b></>}
+        </div>
+      </div>
+      <div className="f-move">
+        {move != null ? <>
+          <div className="f-move-top">
+            <b className={`f-move-n ${e.stock_move_unusual ? (move < 0 ? "bad" : "good") : ""}`}>{pct(move)}</b>
+            {e.spark.length > 1 && <Sparkline values={e.spark} eventAt={e.spark_event_at} label={`${c.name} vs ${c.index_name}, each close from just before the event (dashed line = no difference)`} />}
+          </div>
+          <div className="small muted">
+            {e.stock_move != null
+              ? <>{vsWords(move, c.index_name)} · {e.stock_move_unusual ? <span className="warn">⚠ unusual</span> : "normal range"}</>
+              : <>so far, to {date(e.so_far_through!)} · <Term id="provisional">provisional</Term></>}
+          </div>
+        </> : <span className="small muted">{NO_MOVE[e.stock_move_status] ?? ""}</span>}
+      </div>
+      <div className="f-sources">
+        <Term tip={e.source_names.length ? `Reported by: ${e.source_names.join(", ")}` : "No source listed"}>
+          <span className="f-src"><Dots n={e.sources} /> <b>{e.sources}</b> {e.sources === 1 ? "source" : "sources"}</span>
+        </Term>
+        <Confirmation confirmed={e.verified} />
+      </div>
+    </>
   );
 }

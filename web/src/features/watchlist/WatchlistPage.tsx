@@ -124,7 +124,7 @@ export function WatchlistPage({ refreshKey }: { refreshKey: number }) {
              empty={data && rows.length === 0 && (view === "mine"
                ? <p>No companies followed yet. Click ☆ next to a company, or search for one, to follow it here.</p>
                : <p>No companies match these filters.</p>)}>
-        <WatchlistTable rows={rows.slice(current * PAGE, current * PAGE + PAGE)} starred={starred} onStar={toggle} />
+        <WatchlistTable rows={rows.slice(current * PAGE, current * PAGE + PAGE)} starred={starred} onStar={toggle} byDay={sort === "latest"} />
         <div className="pager">
           <span className="muted small">{current * PAGE + 1}–{Math.min(rows.length, current * PAGE + PAGE)} of {rows.length}</span>
           <button className="small" disabled={current === 0} onClick={() => setPage(current - 1)}>← Previous</button>
